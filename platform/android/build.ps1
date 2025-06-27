@@ -1,0 +1,1 @@
+./gradlew installDebug --info -PCMAKE_CXX_FLAGS="-DCHAPTER_TO_BUILD_FOR_ANDROID=Chapter02" > build.log
