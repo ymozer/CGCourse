@@ -7,14 +7,18 @@
     #include <glad/egl.h>
     #include <glad/gles2.h>
     #define IMGUI_IMPL_OPENGL_ES3
-#elif PLATFORM_EMSCRIPTEN || PLATFORM_IOS
+#elif PLATFORM_EMSCRIPTEN
     #include <glad/gles2.h>
-    #define IMGUI_IMPL_OPENGL_ES2
+    #define IMGUI_IMPL_OPENGL_ES3
 #endif
 
 #include <SDL3/SDL.h>
 #if PLATFORM_ANDROID
     #include <SDL3/SDL_filesystem.h>
+#endif
+
+#if PLATFORM_EMSCRIPTEN
+    #include <emscripten.h>
 #endif
 
 #ifdef PLATFORM_WINDOWS
@@ -36,14 +40,14 @@
 #include "Input.hpp"
 #include "Debug.hpp"
 #include "Log.hpp"
-//clang-format on
+// clang-format on
 
 namespace Base
 {
     Application *Base::Application::s_Instance = nullptr;
 
-    Application::Application(std::string title, int width, int height)
-        : m_Title(std::move(title)), m_Width(width), m_Height(height)
+    Application::Application(std::string title, int width, int height, int numOfThreads)
+        : m_Title(std::move(title)), m_Width(width), m_Height(height), m_EventBus(numOfThreads)
     {
         s_Instance = this;
     }
@@ -85,26 +89,24 @@ namespace Base
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-#elif PLATFORM_EMSCRIPTEN || PLATFORM_IOS
+#elif PLATFORM_EMSCRIPTEN || PLATFORM_IOS || PLATFORM_ANDROID
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-#elif PLATFORM_ANDROID
-        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0); 
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
         SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
-        // *** FIX: Set window flags based on platform ***
-        SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+        SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 #if PLATFORM_DESKTOP
-        window_flags = (SDL_WindowFlags)(window_flags | SDL_WINDOW_MAXIMIZED);
+        window_flags = (SDL_WindowFlags)(window_flags | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
 #elif PLATFORM_IOS || PLATFORM_ANDROID
         window_flags = (SDL_WindowFlags)(window_flags | SDL_WINDOW_FULLSCREEN);
+#elif PLATFORM_EMSCRIPTEN
+        window_flags = (SDL_WindowFlags)(window_flags | SDL_WINDOW_MAXIMIZED);
 #endif
 
         appContext.window = SDL_CreateWindow(m_Title.c_str(), m_Width, m_Height, window_flags);
@@ -114,11 +116,8 @@ namespace Base
             throw std::runtime_error("Failed to create SDL window: " + std::string(SDL_GetError()));
         }
 
-        // We don't need to manually center if maximized/fullscreen
-        // SDL_SetWindowPosition(appContext.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-
         appContext.glcontext = SDL_GL_CreateContext(appContext.window);
-        if (appContext.glcontext == nullptr) 
+        if (appContext.glcontext == nullptr)
         {
             SDL_DestroyWindow(appContext.window);
             SDL_Quit();
@@ -127,33 +126,60 @@ namespace Base
         SDL_GL_MakeCurrent(appContext.window, appContext.glcontext);
         SDL_GL_SetSwapInterval(m_VSync ? 1 : 0);
 
-        // Get the initial window pixel size *after* it's been created and maximized/fullscreened
         SDL_GetWindowSizeInPixels(appContext.window, &m_Width, &m_Height);
         SDL_ShowWindow(appContext.window);
 
-        Input::init(); 
+        m_AppQuitSubscription = m_EventBus.subscribe<ApplicationQuitEvent>([this](ApplicationQuitEvent &event)
+                                                                           {
+        LOG_INFO("ApplicationQuitEvent received, initiating shutdown.");
+        this->m_Running = false; // m_Running should be std::atomic<bool> for thread safety
+        event.handled = true; });
+
+        m_WindowCloseSubscription = m_EventBus.subscribe<WindowCloseEvent>([this](WindowCloseEvent &event)
+                                                                           {
+        LOG_INFO("WindowCloseEvent received, initiating shutdown.");
+        this->m_Running = false;
+        event.handled = true; });
+
+        if (!Input::Get().Initialize(m_EventBus, m_imGuiEnabled))
+        {
+            LOG_CRITICAL("Failed to initialize Input system!");
+        }
 
 #if PLATFORM_ANDROID
         EGLDisplay display = SDL_EGL_GetCurrentDisplay();
-        if (display == EGL_NO_DISPLAY) { throw std::runtime_error("Failed to get EGL display from SDL"); }
-        if (!gladLoadEGL(display, (GLADloadfunc)SDL_GL_GetProcAddress)) { throw std::runtime_error("Failed to initialize EGL with GLAD"); }
-        if (!gladLoadGLES2((GLADloadfunc)SDL_GL_GetProcAddress)) { throw std::runtime_error("Failed to initialize GLES2 with GLAD"); }
+        if (display == EGL_NO_DISPLAY)
+        {
+            throw std::runtime_error("Failed to get EGL display from SDL");
+        }
+        if (!gladLoadEGL(display, (GLADloadfunc)SDL_GL_GetProcAddress))
+        {
+            throw std::runtime_error("Failed to initialize EGL with GLAD");
+        }
+        if (!gladLoadGLES2((GLADloadfunc)SDL_GL_GetProcAddress))
+        {
+            throw std::runtime_error("Failed to initialize GLES2 with GLAD");
+        }
 #elif PLATFORM_DESKTOP
-        if (!gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress)) { throw std::runtime_error("Failed to initialize GLAD for Desktop GL"); }
+        if (!gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress))
+        {
+            throw std::runtime_error("Failed to initialize GLAD for Desktop GL");
+        }
 #elif PLATFORM_EMSCRIPTEN || PLATFORM_IOS
-        if (!gladLoadGLES2((GLADloadfunc)SDL_GL_GetProcAddress)) { throw std::runtime_error("Failed to initialize GLES2 with GLAD"); }
+        if (!gladLoadGLES2((GLADloadfunc)SDL_GL_GetProcAddress))
+        {
+            throw std::runtime_error("Failed to initialize GLES2 with GLAD");
+        }
 #endif
 
-#if PLATFORM_DESKTOP
         Base::Debug::enableGLDebugOutput();
-#endif
+
         LOG_INFO("OpenGL Version: {}", reinterpret_cast<const char *>(glGetString(GL_VERSION)));
         m_PerfCounterFreq = SDL_GetPerformanceFrequency();
         m_LastFrameTimeCounter = SDL_GetPerformanceCounter();
 
-        // Update the work area for the first time
         updateRenderingAndWorkAreas();
-        
+
         createFramebuffer();
 #if PLATFORM_DESKTOP
         glGenQueries(2, m_GpuTimeQueries);
@@ -161,7 +187,6 @@ namespace Base
         initImGui();
         setup();
     }
-
 
     void Application::handleEvents()
     {
@@ -172,38 +197,73 @@ namespace Base
 
             switch (event.type)
             {
-                case SDL_EVENT_QUIT:
-                case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-                    m_Running = false;
-                    break;
+            case SDL_EVENT_QUIT:
+            {
+                ApplicationQuitEvent quitEvent{};
+                m_EventBus.dispatch(quitEvent);
+                break;
+            }
+            case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+            {
+                WindowCloseEvent closeEvent(event.window.windowID);
+                m_EventBus.dispatch(closeEvent);
+                break;
+            }
 
-                case SDL_EVENT_WINDOW_RESIZED:
-                case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-                    SDL_GetWindowSizeInPixels(appContext.window, &m_Width, &m_Height);
-                    m_isMinimized = false;
-                    updateRenderingAndWorkAreas(); // This is the critical call
-                    LOG_INFO("Window resized to {}x{}", m_Width, m_Height);
-                    break;
+            case SDL_EVENT_WINDOW_RESIZED:
+            case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+            {
+                SDL_GetWindowSizeInPixels(appContext.window, &m_Width, &m_Height);
+                m_isMinimized = false;
+                updateRenderingAndWorkAreas();
+                LOG_INFO("Window resized to {}x{}", m_Width, m_Height);
+                m_EventBus.dispatchAsync(WindowResizeEvent(event.window.windowID, m_Width, m_Height));
 
-                case SDL_EVENT_WINDOW_SAFE_AREA_CHANGED:
-                    updateRenderingAndWorkAreas(); // Crucial for mobile device rotation
-                    break;
-
-                case SDL_EVENT_WINDOW_MINIMIZED:
-                    m_isMinimized = true;
-                    LOG_INFO("Window was minimized.");
-                    break;
-
-                case SDL_EVENT_WINDOW_RESTORED:
-                    m_isMinimized = false;
-                    break;
+                break;
+            }
+            case SDL_EVENT_WINDOW_SAFE_AREA_CHANGED:
+            {
+                updateRenderingAndWorkAreas();
+                break;
+            }
+            case SDL_EVENT_WINDOW_MINIMIZED:
+            {
+                m_isMinimized = true;
+                m_EventBus.dispatchAsync(WindowMinimizeEvent(event.window.windowID));
+                break;
+            }
+            case SDL_EVENT_WINDOW_RESTORED:
+            {
+                m_isMinimized = false;
+                m_EventBus.dispatchAsync(WindowRestoreEvent(event.window.windowID));
+                break;
+            }
+            case SDL_EVENT_KEY_DOWN:
+            {
+                if (!ImGui::GetIO().WantCaptureKeyboard) // Only dispatch if ImGui doesn't want it
+                {
+                    m_EventBus.dispatchAsync(KeyPressedEvent(
+                        event.key.scancode, event.key.key,
+                        event.key.mod, event.key.repeat != 0));
+                }
+                break;
+            }
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            {
+                if (!ImGui::GetIO().WantCaptureMouse)
+                {
+                    m_EventBus.dispatchAsync(MouseButtonPressedEvent(
+                        event.button.button, event.button.clicks,
+                        event.button.x, event.button.y, event.button.windowID));
+                }
+                break;
+            }
             }
         }
     }
 
- void Application::updateRenderingAndWorkAreas()
+    void Application::updateRenderingAndWorkAreas()
     {
-        // --- 1. Calculate m_RenderArea (for main scene FBO and DockSpace size) ---
         // This area should be the maximum usable space on the display.
         SDL_Rect usableBounds;
         SDL_DisplayID displayID = SDL_GetDisplayForWindow(appContext.window);
@@ -211,12 +271,15 @@ namespace Base
         {
             LOG_WARN("Could not get display usable bounds: {}. Using full window.", SDL_GetError());
             SDL_GetWindowSizeInPixels(appContext.window, &usableBounds.w, &usableBounds.h);
-            usableBounds.x = 0; usableBounds.y = 0;
+            usableBounds.x = 0;
+            usableBounds.y = 0;
         }
 
-        int winX, winY; SDL_GetWindowPosition(appContext.window, &winX, &winY);
-        int winW, winH; SDL_GetWindowSizeInPixels(appContext.window, &winW, &winH);
-        
+        int winX, winY;
+        SDL_GetWindowPosition(appContext.window, &winX, &winY);
+        int winW, winH;
+        SDL_GetWindowSizeInPixels(appContext.window, &winW, &winH);
+
         int overlap_x1 = std::max(winX, usableBounds.x);
         int overlap_y1 = std::max(winY, usableBounds.y);
         int overlap_x2 = std::min(winX + winW, usableBounds.x + usableBounds.w);
@@ -228,22 +291,21 @@ namespace Base
         m_RenderArea.h = std::max(0, overlap_y2 - overlap_y1);
         LOG_INFO("Render Area updated to: x={}, y={}, w={}, h={}", m_RenderArea.x, m_RenderArea.y, m_RenderArea.w, m_RenderArea.h);
 
-        // --- 2. Calculate m_WorkArea (for ImGui UI constraints) ---
 #if PLATFORM_IOS || PLATFORM_ANDROID
         // On mobile, the UI is constrained to the safe area.
         if (!SDL_GetWindowSafeArea(appContext.window, &m_WorkArea))
         {
             LOG_WARN("Could not get window safe area: {}. Using full window.", SDL_GetError());
-            m_WorkArea = m_RenderArea; // Fallback to render area
+            m_WorkArea = m_RenderArea;
         }
 #else
-        // On desktop, the UI can use the entire window, which is already sized appropriately.
-        m_WorkArea.x = 0; m_WorkArea.y = 0;
-        m_WorkArea.w = m_Width; m_WorkArea.h = m_Height;
+        m_WorkArea.x = 0;
+        m_WorkArea.y = 0;
+        m_WorkArea.w = m_Width;
+        m_WorkArea.h = m_Height;
 #endif
         LOG_INFO("UI Work Area updated to: x={}, y={}, w={}, h={}", m_WorkArea.x, m_WorkArea.y, m_WorkArea.w, m_WorkArea.h);
     }
-
 
     void Application::mainLoopIteration()
     {
@@ -251,11 +313,13 @@ namespace Base
         uint64_t cpuWorkStartTimeCounter = 0;
 
         handleEvents();
-        if (!m_Running) return;
-        
-        if (m_isMinimized) {
-             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-             return;
+        if (!m_Running)
+            return;
+
+        if (m_isMinimized)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            return;
         }
 
         cpuWorkStartTimeCounter = SDL_GetPerformanceCounter();
@@ -264,7 +328,10 @@ namespace Base
         if (m_FrameCount > 0)
         {
             GLint query_available = 0;
-            while (!query_available) { glGetQueryObjectiv(m_GpuTimeQueries[1], GL_QUERY_RESULT_AVAILABLE, &query_available); }
+            while (!query_available)
+            {
+                glGetQueryObjectiv(m_GpuTimeQueries[1], GL_QUERY_RESULT_AVAILABLE, &query_available);
+            }
             GLuint64 gpu_time_start, gpu_time_end;
             glGetQueryObjectui64v(m_GpuTimeQueries[0], GL_QUERY_RESULT, &gpu_time_start);
             glGetQueryObjectui64v(m_GpuTimeQueries[1], GL_QUERY_RESULT, &gpu_time_end);
@@ -281,28 +348,27 @@ namespace Base
 #if PLATFORM_DESKTOP
         glQueryCounter(m_GpuTimeQueries[0], GL_TIMESTAMP);
 #endif
-        
+
         beginImGuiFrame();
         renderUI();
 
-        // 1. Render scene to FBO
+        // Render scene to FBO
         glBindFramebuffer(GL_FRAMEBUFFER, m_FboID);
         glViewport(0, 0, m_ViewportWidth, m_ViewportHeight);
         glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         render();
 
-        // 2. Prepare to render to main window
+        // Prepare to render to main window
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, m_Width, m_Height);
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black bars for letterboxing
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // 3. Composite ImGui UI on top
         endImGuiFrame();
-        
+
 #if PLATFORM_DESKTOP
-        glQueryCounter(m_GpuTimeQueries[1], GL_TIMESTAMP); 
+        glQueryCounter(m_GpuTimeQueries[1], GL_TIMESTAMP);
 #endif
 
         m_CpuTime_ms = (float)(((double)(SDL_GetPerformanceCounter() - cpuWorkStartTimeCounter) * 1000.0) / m_PerfCounterFreq);
@@ -317,7 +383,7 @@ namespace Base
                 SDL_Delay((Uint32)((targetFrameTime - frameDuration) * 1000.0));
             }
         }
-        
+
         m_FrameCount++;
     }
 
@@ -328,9 +394,15 @@ namespace Base
     void Application::cleanup()
     {
         shutdown();
-    #if PLATFORM_DESKTOP
+        m_EventBus.unsubscribe(m_KeySub);
+        m_EventBus.unsubscribe(m_MouseSub);
+
+        m_EventBus.unsubscribe(m_AppQuitSubscription);
+        m_EventBus.unsubscribe(m_WindowCloseSubscription);
+
+#if PLATFORM_DESKTOP
         glDeleteQueries(2, m_GpuTimeQueries);
-    #endif    
+#endif
         cleanupFramebuffer();
 
         ImGui_ImplOpenGL3_Shutdown();
@@ -352,17 +424,17 @@ namespace Base
 #if PLATFORM_EMSCRIPTEN
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
         io.IniFilename = nullptr;
-#else 
+#else
         // This returns a platform-specific, writable directory for app preferences.
         // e.g., on Windows: C:/Users/YourUser/AppData/Roaming/YourOrg/YourApp
         // e.g., on Linux:   ~/.local/share/YourOrg/YourApp
         // e.g., on macOS:   ~/Library/Application Support/YourOrg/YourApp
-        char* pref_path = SDL_GetPrefPath("com.libsdl.app", "CGCourse");
+        char *pref_path = SDL_GetPrefPath("com.libsdl.app", "CGCourse");
         if (pref_path)
         {
             m_ImGuiIniPath = std::string(pref_path) + "imgui.ini";
-            SDL_free(pref_path); // Important: free the memory returned by SDL
-            
+            SDL_free(pref_path);
+
             io.IniFilename = m_ImGuiIniPath.c_str();
             LOG_INFO("ImGui .ini path set to: {}", io.IniFilename);
         }
@@ -389,10 +461,12 @@ namespace Base
         style.ScaleAllSizes(m_StyleScale);
 
         ImGui_ImplSDL3_InitForOpenGL(appContext.window, appContext.glcontext);
-#if defined(IMGUI_IMPL_OPENGL_ES2) || defined(IMGUI_IMPL_OPENGL_ES3)
-    const char* glsl_version =  "#version 300 es";
-#else
-    const char* glsl_version = "#version 100";
+#if defined(IMGUI_IMPL_OPENGL_ES3)
+        const char *glsl_version = "#version 300 es";
+#elif defined(IMGUI_IMPL_OPENGL_ES2)
+        const char *glsl_version = "#version 100";
+#else // non-es
+        const char *glsl_version = "#version 410";
 #endif
         ImGui_ImplOpenGL3_Init(glsl_version);
     }
@@ -403,9 +477,7 @@ namespace Base
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        // Update the main viewport's work area to match our calculated work area.
-        // This tells ImGui how to constrain windows, popups, etc.
-        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGuiViewport *viewport = ImGui::GetMainViewport();
         viewport->WorkPos = ImVec2((float)m_WorkArea.x, (float)m_WorkArea.y);
         viewport->WorkSize = ImVec2((float)m_WorkArea.w, (float)m_WorkArea.h);
     }
@@ -426,13 +498,12 @@ namespace Base
         }
     }
 
-    // *** UPDATED to use the ImGui viewport, which is now correct ***
     void Application::renderUI()
     {
         static bool dockspaceOpen = true;
         static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
         ImGuiViewport *main_viewport = ImGui::GetMainViewport();
 
         // Set the main dockspace to fill the work area defined in the viewport
@@ -440,8 +511,8 @@ namespace Base
         ImGui::SetNextWindowSize(ImVec2((float)m_RenderArea.w, (float)m_RenderArea.h));
         ImGui::SetNextWindowViewport(main_viewport->ID);
 
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
         window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
         window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
@@ -461,12 +532,10 @@ namespace Base
                 ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
             }
 
-    
-            // --- Debug Visualization ---
-            static bool show_borders = true;
+            static bool show_borders = false;
             if (show_borders)
             {
-                ImDrawList* draw_list = ImGui::GetForegroundDrawList();
+                ImDrawList *draw_list = ImGui::GetForegroundDrawList();
                 // Green for safe UI Work Area
                 ImVec2 work_min = ImVec2((float)m_WorkArea.x, (float)m_WorkArea.y);
                 ImVec2 work_max = ImVec2(work_min.x + m_WorkArea.w, work_min.y + m_WorkArea.h);
@@ -477,7 +546,6 @@ namespace Base
                 draw_list->AddRect(render_min, render_max, IM_COL32(0, 0, 255, 255), 0.0f, 0, 2.0f);
             }
 
-            // Render Viewport
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0, 0});
             ImGui::Begin("Viewport");
             {
@@ -491,14 +559,16 @@ namespace Base
             ImGui::End();
             ImGui::PopStyleVar();
 
-            // Debug Info
             ImGui::Begin("Debug Info");
             {
                 ImGui::Text("Window Size: %d x %d", m_Width, m_Height);
                 ImGui::Text("Work Area: x:%d y:%d w:%d h:%d", m_WorkArea.x, m_WorkArea.y, m_WorkArea.w, m_WorkArea.h);
                 ImGui::Text("Viewport Size: %d x %d", m_ViewportWidth, m_ViewportHeight);
                 ImGui::Separator();
-                if (ImGui::Checkbox("V-Sync", &m_VSync)) { SDL_GL_SetSwapInterval(m_VSync ? 1 : 0); }
+                if (ImGui::Checkbox("V-Sync", &m_VSync))
+                {
+                    SDL_GL_SetSwapInterval(m_VSync ? 1 : 0);
+                }
                 ImGui::BeginDisabled(m_VSync);
                 ImGui::SliderInt("FPS Limit", &m_FpsLimit, 30, 300);
                 ImGui::EndDisabled();
@@ -508,7 +578,7 @@ namespace Base
                 ImGui::Text("CPU Time: %.3f ms", m_CpuTime_ms);
                 ImGui::Text("GPU Time: %.3f ms", m_GpuTime_ms);
                 ImGui::Separator();
-                
+
                 ImGui::Text("UI Scale");
                 if (ImGui::SliderFloat("##StyleScale", &m_StyleScale, 1.0f, 5.0f, "%.2f"))
                 {
@@ -525,12 +595,11 @@ namespace Base
                     lastFontScale = m_FontScale;
                 }
 
-                ImGui::SameLine(ImGui::GetWindowWidth() - 60.0f); // Align button to the right
+                ImGui::SameLine();
                 if (ImGui::Button("Reset"))
                 {
                     // Get the monitor's native scale
-                    float xscale = 1.0f;
-                    xscale = SDL_GetWindowDisplayScale(appContext.window);
+                    float xscale = SDL_GetWindowDisplayScale(appContext.window);
 
                     // Reset Style
                     m_StyleScale = xscale;
@@ -540,7 +609,7 @@ namespace Base
                     // Reset Font
                     m_FontScale = xscale;
                     lastFontScale = xscale;
-                    io.FontGlobalScale = 1.0f; // Reset to 1.0 because the font was loaded pre-scaled
+                    io.FontGlobalScale = 1.0f;
                 }
                 ImGui::Separator();
                 ImGui::Checkbox("Show Work Area Border", &show_borders);
@@ -562,15 +631,15 @@ namespace Base
 
         glGenTextures(1, &m_ColorAttachmentID);
         glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_ViewportWidth, m_ViewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_ViewportWidth, m_ViewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorAttachmentID, 0);
 
         glGenRenderbuffers(1, &m_DepthAttachmentID);
         glBindRenderbuffer(GL_RENDERBUFFER, m_DepthAttachmentID);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_DepthAttachmentID);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, m_ViewportWidth, m_ViewportHeight);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthAttachmentID);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {

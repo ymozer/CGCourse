@@ -1,17 +1,14 @@
 #pragma once
 
-#include "Application.hpp" // Use relative path if your includes are set up for it
-
-// Forward declare ImGui, if needed, or include the header
+#include "Application.hpp"
 #include <imgui.h>
 
 class Chapter01_Application : public Base::Application
 {
 public:
-    Chapter01_Application(); // Constructor declaration
+    Chapter01_Application();
 
 protected:
-    // Override declarations for all required virtual functions
     void setup() override;
     void shutdown() override;
     void update(float deltaTime) override;

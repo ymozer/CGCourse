@@ -17,11 +17,9 @@ namespace Base
 
     bool Shader::loadFromFile(const std::string &vertexPath, const std::string &fragmentPath)
     {
-        // --- 1. Retrieve the vertex/fragment source code using SDL_IOStream ---
         std::vector<char> vertexBuffer;
         std::vector<char> fragmentBuffer;
 
-        // Helper function to read a file into a buffer using SDL_IOStream
         auto readFileSdl = [](const std::string &path, std::vector<char> &buffer) -> bool
         {
             LOG_DEBUG("Loading asset with SDL_IOStream: '{}'", path);
@@ -78,10 +76,8 @@ namespace Base
         LOG_DEBUG("--- Compiling Vertex Shader Source ---\n{}", vShaderCode);
         LOG_DEBUG("--- Compiling Fragment Shader Source ---\n{}", fShaderCode);
 
-        // --- 2. Compile shaders ---
         GLuint vertex, fragment;
 
-        // Vertex Shader
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &vShaderCode, NULL);
         glCompileShader(vertex);
@@ -91,7 +87,6 @@ namespace Base
             return false;
         }
 
-        // Fragment Shader
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment, 1, &fShaderCode, NULL);
         glCompileShader(fragment);
@@ -102,7 +97,6 @@ namespace Base
             return false;
         }
 
-        // Shader Program
         m_ID = glCreateProgram();
         glAttachShader(m_ID, vertex);
         glAttachShader(m_ID, fragment);
@@ -115,7 +109,6 @@ namespace Base
             return false;
         }
 
-        // Delete the shaders as they're linked into our program now and no longer necessary
         glDeleteShader(vertex);
         glDeleteShader(fragment);
 
@@ -133,7 +126,6 @@ namespace Base
 
         GLuint vertex, fragment;
 
-        // Vertex Shader
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &vShaderCode, NULL);
         glCompileShader(vertex);
@@ -143,7 +135,6 @@ namespace Base
             return false;
         }
 
-        // Fragment Shader
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment, 1, &fShaderCode, NULL);
         glCompileShader(fragment);
@@ -154,7 +145,6 @@ namespace Base
             return false;
         }
 
-        // Shader Program
         m_ID = glCreateProgram();
         glAttachShader(m_ID, vertex);
         glAttachShader(m_ID, fragment);
@@ -180,7 +170,6 @@ namespace Base
         glUseProgram(m_ID);
     }
 
-    // Utility uniform functions
     void Shader::setBool(const std::string &name, bool value) const
     {
         glUniform1i(glGetUniformLocation(m_ID, name.c_str()), (int)value);
@@ -226,7 +215,7 @@ namespace Base
             if (!success)
             {
                 glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-                LOG_ERROR("SHADER_COMPILATION_ERROR of type: {}\n{}\n -- --------------------------------------------------- -- ", type, infoLog);
+                LOG_ERROR("SHADER_COMPILATION_ERROR of type: {}\n{}\n", type, infoLog);
                 return false;
             }
         }
@@ -236,7 +225,7 @@ namespace Base
             if (!success)
             {
                 glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-                LOG_ERROR("PROGRAM_LINKING_ERROR of type: {}\n{}\n -- --------------------------------------------------- -- ", type, infoLog);
+                LOG_ERROR("PROGRAM_LINKING_ERROR of type: {}\n{}\n", type, infoLog);
                 return false;
             }
         }

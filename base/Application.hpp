@@ -7,9 +7,11 @@
 #elif PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
 #include <glad/gles2.h>
 #endif
-
 #include <imgui.h>
 #include <SDL3/SDL.h>
+
+#include "Camera.hpp"
+#include "EventBus.hpp"
 
 namespace Base
 {
@@ -17,25 +19,21 @@ namespace Base
     class Application
     {
     public:
-
         struct AppContext
         {
             SDL_Window *window;
             SDL_GLContext glcontext;
-            bool app_quit = false;
         };
 
-        Application(std::string title, int width = 1280, int height = 720);
+        Application(std::string title, int width = 1280, int height = 720, int numOfThreads = 4);
         virtual ~Application();
 
         void run();
 
-        // Non-copyable
         Application(const Application &) = delete;
         Application &operator=(const Application &) = delete;
 
     protected:
-        // Methods for derived classes (chapters) to implement
         virtual void setup() = 0;
         virtual void shutdown() = 0;
         virtual void update(float deltaTime) = 0;
@@ -45,6 +43,26 @@ namespace Base
         SDL_Window *getWindow() const { return appContext.window; }
         int getWidth() const { return m_Width; }
         int getHeight() const { return m_Height; }
+
+        ParallelEventBus &getEventBus() { return m_EventBus; }
+        const ParallelEventBus &getEventBus() const { return m_EventBus; }
+
+        template <typename EventType>
+        void subscribeToEvent(SubscriptionHandle &handle, std::function<void(EventType &)> handler)
+        {
+            getEventBus().unsubscribe(handle);
+            handle = getEventBus().subscribe(std::move(handler));
+        }
+
+        void subscribeToKeys(std::function<void(Base::KeyPressedEvent &)> handler)
+        {
+            subscribeToEvent(m_KeySub, std::move(handler));
+        }
+
+        void subscribeToMouse(std::function<void(Base::MouseMovedEvent &)> handler)
+        {
+            subscribeToEvent(m_MouseSub, std::move(handler));
+        }
 
     private:
         void init();
@@ -64,21 +82,27 @@ namespace Base
         void resizeFramebuffer(int width, int height);
         void cleanupFramebuffer();
 
-        std::string m_ImGuiIniPath; 
         AppContext appContext;
-        
+        ParallelEventBus m_EventBus;
+
+        SubscriptionHandle m_KeySub;
+        SubscriptionHandle m_MouseSub;
+        SubscriptionHandle m_AppQuitSubscription;
+        SubscriptionHandle m_WindowCloseSubscription;
+
         std::string m_Title;
         bool m_Running = true;
+        bool m_imGuiEnabled = false;
         bool m_isMinimized = false;
-        int m_Width;
-        int m_Height;
-        SDL_Rect m_WorkArea;
-        SDL_Rect m_RenderArea;
-
+        int m_Width = 0;
+        int m_Height = 0;
+        SDL_Rect m_WorkArea{};
+        SDL_Rect m_RenderArea{};
 
         float m_StyleScale = 1.0f;
         float m_FontScale = 1.0f;
         ImGuiStyle m_BaseStyle;
+        std::string m_ImGuiIniPath = "imgui.ini";
 
         bool m_VSync = true;
         int m_FpsLimit = 60;
@@ -95,7 +119,6 @@ namespace Base
         int m_ViewportWidth = 0;
         int m_ViewportHeight = 0;
 
-        // For the Emscripten main loop
         static Application *s_Instance;
 #if PLATFORM_EMSCRIPTEN
         static void emscriptenMainLoop(void *arg);

@@ -1,8 +1,7 @@
-#version 310 es
-#ifdef GL_ES
+#version 300 es
+
 precision mediump float;
 precision mediump int;
-#endif
 
 out vec4 FragColor;
 uniform vec4 u_TriangleColor;

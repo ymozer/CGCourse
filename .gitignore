@@ -2,6 +2,7 @@
 /.vscode
 **/build
 /linux-build
+/web-build
 **/.gradle
 **/.idea
 **/.cxx

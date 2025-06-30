@@ -147,7 +147,12 @@ elseif(PLATFORM_IS_DESKTOP)
     set_target_properties(glad PROPERTIES FOLDER "External Libraries/glad")
 elseif(PLATFORM_IS_EMSCRIPTEN)
     # For Emscripten / WebGL 2.0
-    glad_add_library(glad REPRODUCIBLE API gles2:version=3.0)
+    glad_add_library(   glad 
+        REPRODUCIBLE 
+        DEBUG
+        API             gles2:version=3.0
+        EXTENSIONS      GL_KHR_debug
+    )
     set_target_properties(glad PROPERTIES FOLDER "External Libraries/glad")
 elseif(PLATFORM_IS_IOS)
     # For iOS
@@ -164,6 +169,14 @@ CPMAddPackage(
 
 # spdlog (Logging)
 set(BUILD_TESTING OFF CACHE BOOL "A regular cached option")
+if(EMSCRIPTEN)
+    # Pretend Threads are found to avoid CMake error in spdlog and others
+    set(CMAKE_THREAD_LIBS_INIT "-lpthread")
+    set(CMAKE_HAVE_THREADS_LIBRARY 1)
+    set(CMAKE_USE_WIN32_THREADS_INIT 0)
+    set(CMAKE_USE_PTHREADS_INIT 1)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+endif()
 
 CPMAddPackage(
     NAME spdlog
@@ -210,6 +223,8 @@ set(ASSIMP_BUILD_FBX_IMPORTER ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_STL_IMPORTER ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_COLLADA_IMPORTER ON CACHE BOOL "" FORCE)
 set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+
 
 CPMAddPackage(
     NAME assimp

@@ -1,16 +1,28 @@
-#include "Chapter01.hpp" // Include the chapter's class definition
+#include "Chapter01.hpp"
 #include "Log.hpp"
 #include <memory>
 #include <stdexcept>
 #include <SDL3/SDL_main.h>
 
+
 int main(int argc, char *argv[])
 {
-    try {
+    Logger::getInstance().initialize({});
+
+   try
+    {
         auto app = std::make_unique<Chapter01_Application>();
-        app->run(); // run() now only exists for non-Android builds
-    } catch (const std::exception& e) {
-        LOG_ERROR("Caught exception: {}", e.what());
+        app->run();
+    }
+    catch (const std::exception &e)
+    {
+        LOG_ERROR("A fatal error occurred: {}", e.what());
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_ERROR,
+            "Application Error",
+            e.what(),
+            NULL
+        );
         return -1;
     }
     return 0;

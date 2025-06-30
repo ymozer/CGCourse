@@ -1,67 +1,112 @@
 #pragma once
 
-// Include the SDL header to get access to SDL_Scancode and SDL_Event
 #include <SDL3/SDL.h>
+#include <vector>
+#include <unordered_map>
+#include <string>
+#include <memory>
+#include <glm/glm.hpp>
 
-// Forward declare SDL_Window (though not strictly needed by this class anymore,
-// it's good practice if other parts of your engine expect it).
-struct SDL_Window;
+namespace Base
+{
+    class ParallelEventBus;
+    struct GamepadState;
+    struct JoystickState;
+    struct ButtonState;
+    struct AxisState;
+    struct FingerState;
+    struct TouchDeviceState;
+    class Input
+    {
+    public:
+        static Input &Get();
 
-namespace Base {
+        Input() = default;
+        ~Input() = default;
 
-class Input {
-public:
-    // This class is static, so it cannot be instantiated.
-    Input() = delete;
+        bool Initialize(ParallelEventBus &bus, bool imguiEnabled);
+        void Shutdown();
+        void PrepareForFrame();
+        void ProcessEvent(const SDL_Event &event);
+        void Update();
 
-    // --- Public API for Chapters ---
-    // The public-facing API remains consistent.
+        bool IsKeyDown(SDL_Scancode scancode) const;
+        bool IsKeyPressed(SDL_Scancode scancode) const;
+        bool IsKeyReleased(SDL_Scancode scancode) const;
 
-    // Keyboard state checks (now using SDL_Scancode for clarity and robustness)
-    static bool isKeyPressed(SDL_Scancode key);
-    static bool isKeyTriggered(SDL_Scancode key);
-    static bool isKeyReleased(SDL_Scancode key);
+        bool IsMouseButtonDown(int button) const;
+        bool IsMouseButtonPressed(int button) const;
+        bool IsMouseButtonReleased(int button) const;
 
-    // Mouse button state checks (SDL button constants are simple integers)
-    static bool isMouseButtonPressed(int button);
-    static bool isMouseButtonTriggered(int button);
-    static bool isMouseButtonReleased(int button);
+        glm::vec2 GetMousePosition() const;
+        glm::vec2 GetMouseDelta() const;
+        glm::vec2 GetMouseWheel() const;
 
-    // Mouse position and delta
-    static float getMouseX();
-    static float getMouseY();
-    static void getMousePosition(float& x, float& y);
-    static float getMouseDeltaX();
-    static float getMouseDeltaY();
+        bool IsGamepadConnected(SDL_JoystickID instanceId) const;
+        bool IsGamepadButtonDown(SDL_JoystickID instanceId, SDL_GamepadButton button) const;
+        bool IsGamepadButtonPressed(SDL_JoystickID instanceId, SDL_GamepadButton button) const;
+        bool IsGamepadButtonReleased(SDL_JoystickID instanceId, SDL_GamepadButton button) const;
+        float GetGamepadAxis(SDL_JoystickID instanceId, SDL_GamepadAxis axis) const;
+        SDL_Gamepad *GetGamepadHandle(SDL_JoystickID instanceId) const;
+        std::vector<SDL_JoystickID> GetConnectedGamepadIDs() const;
 
-    // --- Internal methods called by Application ---
+        bool IsJoystickConnected(SDL_JoystickID instanceId) const;
+        bool IsJoystickButtonDown(SDL_JoystickID instanceId, int buttonIndex) const;
+        bool IsJoystickButtonPressed(SDL_JoystickID instanceId, int buttonIndex) const;
+        bool IsJoystickButtonReleased(SDL_JoystickID instanceId, int buttonIndex) const;
+        float GetJoystickAxis(SDL_JoystickID instanceId, int axisIndex) const;
+        Uint8 GetJoystickHat(SDL_JoystickID instanceId, int hatIndex) const;
+        SDL_Joystick *GetJoystickHandle(SDL_JoystickID instanceId) const;
+        std::vector<SDL_JoystickID> GetConnectedJoystickIDs() const;
 
-    // Initializes the input system's internal state.
-    static void init();
+        std::vector<SDL_TouchID> GetConnectedTouchDeviceIDs() const;
+        SDL_TouchDeviceType GetTouchDeviceType(SDL_TouchID touchId) const;
+        const char *GetTouchDeviceName(SDL_TouchID touchId) const;
+        int GetNumActiveFingers(SDL_TouchID touchId) const;
+        std::vector<SDL_FingerID> GetActiveFingerIDs(SDL_TouchID touchId) const;
 
-    // Updates the internal state for the next frame.
-    // This MUST be called once at the start or end of each frame.
-    static void update();
+        bool GetFingerState(SDL_TouchID touchId, SDL_FingerID fingerId,
+                            glm::vec2 &outPos, float &outPressure) const;
+        glm::vec2 GetFingerPosition(SDL_TouchID touchId, SDL_FingerID fingerId) const;
+        float GetFingerPressure(SDL_TouchID touchId, SDL_FingerID fingerId) const;
+        glm::vec2 GetFingerDelta(SDL_TouchID touchId, SDL_FingerID fingerId) const;
 
-    // Processes a single SDL event from the event queue.
-    // This MUST be called for each event polled in the main loop.
-    static void processEvent(const SDL_Event* event);
+        bool IsFingerDown(SDL_TouchID touchId, SDL_FingerID fingerId) const;
+        bool IsFingerPressed(SDL_TouchID touchId, SDL_FingerID fingerId) const;
+        bool IsFingerReleased(SDL_TouchID touchId, SDL_FingerID fingerId) const;
 
-private:
-    // Maximum number of mouse buttons supported.
-    // SDL supports up to 32.
-    static constexpr int MAX_BUTTONS = 32;
+        void SetGamepadAxisDeadzone(float deadzone) { m_GamepadAxisDeadzone = deadzone; }
+        void SetJoystickAxisDeadzone(float deadzone) { m_JoystickAxisDeadzone = deadzone; }
 
-    // State storage
-    // Using SDL_SCANCODE_COUNT is the correct way to size the key array.
-    static bool s_Keys[SDL_SCANCODE_COUNT];
-    static bool s_KeysLastFrame[SDL_SCANCODE_COUNT];
+    private:
+        ParallelEventBus *m_EventBus = nullptr;
+        static std::unique_ptr<Input> s_InputInstance;
 
-    static bool s_MouseButtons[MAX_BUTTONS];
-    static bool s_MouseButtonsLastFrame[MAX_BUTTONS];
+        Input(const Input &) = delete;
+        Input &operator=(const Input &) = delete;
+        Input(Input &&) = delete;
+        Input &operator=(Input &&) = delete;
 
-    static float s_MouseX, s_MouseY;
-    static float s_MouseDeltaX, s_MouseDeltaY;
-};
+        void AddDevice(SDL_JoystickID which);
+        void RemoveDevice(SDL_JoystickID which);
+        float ApplyDeadzone(Sint16 value, float deadzoneThreshold) const;
 
-} // namespace Base
+        bool m_imguiEnabled = false;
+        float m_GamepadAxisDeadzone = 0.15f;
+        float m_JoystickAxisDeadzone = 0.15f;
+        int m_NumKeys = 0;
+        const bool *m_CurrentKeyState = nullptr;
+        std::vector<Uint8> m_PreviousKeyState;
+
+        Uint32 m_CurrentMouseButtonState = 0;
+        Uint32 m_PreviousMouseButtonState = 0;
+        glm::vec2 m_CurrentMousePos = {0, 0};
+        glm::vec2 m_PreviousMousePos = {0, 0};
+        glm::vec2 m_MouseDelta = {0, 0};
+        glm::vec2 m_MouseWheelDelta = {0.0f, 0.0f};
+        std::unordered_map<SDL_JoystickID, std::unique_ptr<GamepadState>> m_GamepadStates;
+        std::unordered_map<SDL_JoystickID, std::unique_ptr<JoystickState>> m_JoystickStates;
+        std::unordered_map<SDL_TouchID, std::unique_ptr<TouchDeviceState>> m_TouchStates;
+    };
+
+}

@@ -16,11 +16,24 @@ function(add_chapter CHAPTER_NAME)
     else()
         add_executable(${CHAPTER_NAME} ${CHAPTER_SOURCES})
         target_link_libraries(${CHAPTER_NAME} PRIVATE base)
-
         set_target_properties(${CHAPTER_NAME} PROPERTIES
             FOLDER "Course Projects/Chapters"
             VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
         )
+        if (PLATFORM_IS_EMSCRIPTEN)
+            set_target_properties(${CHAPTER_NAME} PROPERTIES SUFFIX ".html")            
+            set(ASSETS_SOURCE_PATH "${CMAKE_SOURCE_DIR}/assets")
+            message(STATUS "For target ${CHAPTER_NAME}: Adding linker flag --embed-file ${ASSETS_SOURCE_PATH}")
+            target_link_options(${CHAPTER_NAME} PRIVATE 
+                "SHELL:-s FORCE_FILESYSTEM=1"
+                "SHELL:-s FULL_ES3"
+                "SHELL:-s MIN_WEBGL_VERSION=2"
+                "SHELL:-s ALLOW_MEMORY_GROWTH=1"
+                "SHELL:-s MAX_WEBGL_VERSION=2"
+                "SHELL:-s USE_SDL=3"
+                "SHELL:--use-preload-plugins"
+                "SHELL:--preload-file ${ASSETS_SOURCE_PATH}@/assets")        
+        endif()
 
         add_custom_command(
             TARGET ${CHAPTER_NAME} POST_BUILD

@@ -48,7 +48,6 @@ public:
 
     std::shared_ptr<spdlog::logger> getSpdlogLogger();
 
-    // The logging methods now need to acquire a lock
     template <typename... Args>
     void trace(fmt::format_string<Args...> fmt, Args &&...args) {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -95,7 +94,6 @@ private:
     Logger();
     ~Logger();
 
-    // Replaced std::atomic with a regular shared_ptr and a mutex
     std::shared_ptr<spdlog::logger> m_logger;
     std::mutex m_mutex;
     std::once_flag m_init_flag;
