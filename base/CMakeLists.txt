@@ -64,3 +64,16 @@ if (NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     target_compile_definitions(base PRIVATE TRACY_ENABLE)
     target_link_libraries(base PRIVATE Tracy::TracyClient)
 endif()
+
+
+install(TARGETS base
+    ARCHIVE DESTINATION lib  # Installs the static library to the 'lib' directory
+    COMPONENT "Development"
+)
+
+# Install the public headers
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+    DESTINATION include/base  # Installs headers to 'include/base'
+    COMPONENT "Development"
+    FILES_MATCHING PATTERN "*.hpp"
+)

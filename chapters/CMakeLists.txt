@@ -20,6 +20,12 @@ function(add_chapter CHAPTER_NAME)
             FOLDER "Course Projects/Chapters"
             VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
         )
+
+        install(TARGETS ${CHAPTER_NAME}
+            RUNTIME DESTINATION bin  # Installs the executable to the 'bin' directory
+            COMPONENT "Applications"
+        )
+
         if (PLATFORM_IS_EMSCRIPTEN)
             set_target_properties(${CHAPTER_NAME} PROPERTIES SUFFIX ".html")            
             set(ASSETS_SOURCE_PATH "${CMAKE_SOURCE_DIR}/assets")
@@ -41,6 +47,11 @@ function(add_chapter CHAPTER_NAME)
                     ${CMAKE_SOURCE_DIR}/assets
                     $<TARGET_FILE_DIR:${CHAPTER_NAME}>/assets
             COMMENT "Copying assets to build directory for ${CHAPTER_NAME}"
+        )
+
+        install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets/
+            DESTINATION bin/assets   # Installs the assets to 'bin/assets'
+            COMPONENT "Applications"
         )
     endif()
 endfunction()

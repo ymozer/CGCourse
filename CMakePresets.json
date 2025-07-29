@@ -1,0 +1,652 @@
+{
+  "version": 10,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    // ----------------------------------------------------------------
+    // HIDDEN BASE PRESETS (for inheritance)
+    // ----------------------------------------------------------------
+    {
+      "name": "base-preset",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true
+      }
+    },
+    {
+      "name": "base-debug",
+      "hidden": true,
+      "inherits": "base-preset",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "TRACY_ENABLE": "ON"
+      }
+    },
+    {
+      "name": "base-release",
+      "hidden": true,
+      "inherits": "base-preset",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "TRACY_ENABLE": "OFF"
+      }
+    },
+    {
+      "name": "base-windows",
+      "hidden": true,
+      "generator": "Visual Studio 17 2022",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "base-linux",
+      "hidden": true,
+      "generator": "Ninja",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "base-darwin",
+      "hidden": true,
+      "generator": "Ninja",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    // ----------------------------------------------------------------
+    // WINDOWS (MSVC)
+    // ----------------------------------------------------------------
+    {
+      "name": "windows-x64-debug",
+      "displayName": "Windows (x64) Debug",
+      "description": "Build for Windows x64 with MSVC (Debug)",
+      "inherits": [
+        "base-debug",
+        "base-windows"
+      ],
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      }
+    },
+    {
+      "name": "windows-x64-release",
+      "displayName": "Windows (x64) Release",
+      "description": "Build for Windows x64 with MSVC (Release)",
+      "inherits": [
+        "base-release",
+        "base-windows"
+      ],
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      }
+    },
+    // ----------------------------------------------------------------
+    // LINUX (GCC/Clang)
+    // ----------------------------------------------------------------
+    {
+      "name": "linux-x64-debug",
+      "displayName": "Linux (x64) Debug",
+      "description": "Build for Linux x64 with Ninja (Debug)",
+      "inherits": [
+        "base-debug",
+        "base-linux"
+      ],
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-x64-release",
+      "displayName": "Linux (x64) Release",
+      "description": "Build for Linux x64 with Ninja (Release)",
+      "inherits": [
+        "base-release",
+        "base-linux"
+      ],
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    // ----------------------------------------------------------------
+    // MACOS (Clang)
+    // ----------------------------------------------------------------
+    {
+      "name": "macos-arm64-debug",
+      "displayName": "macOS (Apple Silicon) Debug",
+      "description": "Build for macOS arm64 with Ninja (Debug)",
+      "inherits": [
+        "base-debug",
+        "base-darwin"
+      ],
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "arm64"
+      }
+    },
+    {
+      "name": "macos-arm64-release",
+      "displayName": "macOS (Apple Silicon) Release",
+      "description": "Build for macOS arm64 with Ninja (Release)",
+      "inherits": [
+        "base-release",
+        "base-darwin"
+      ],
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "arm64"
+      }
+    },
+    {
+      "name": "macos-x86_64-debug",
+      "displayName": "macOS (Intel) Debug",
+      "description": "Build for macOS x86_64 with Ninja (Debug)",
+      "inherits": [
+        "base-debug",
+        "base-darwin"
+      ],
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "x86_64"
+      }
+    },
+    {
+      "name": "macos-x86_64-release",
+      "displayName": "macOS (Intel) Release",
+      "description": "Build for macOS x86_64 with Ninja (Release)",
+      "inherits": [
+        "base-release",
+        "base-darwin"
+      ],
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "x86_64"
+      }
+    },
+    // ----------------------------------------------------------------
+    // ANDROID (Requires ANDROID_NDK_HOME environment variable)
+    // ----------------------------------------------------------------
+    {
+      "$comment": "Base preset for Android builds",
+      "name": "base-android",
+      "hidden": true,
+      "displayName": "Android Base Preset",
+      "description": "Base preset for Android builds",
+      "inherits": "base-preset",
+      "binaryDir": "${sourceDir}/android-build",
+      "condition": {
+        "type": "allOf",
+        "conditions": [
+          {
+            "type": "inList",
+            "string": "$env{ANDROID_NDK_HOME}",
+            "list": []
+          },
+          {
+            "type": "equals",
+            "lhs": "${hostSystemName}",
+            "rhs": "Android"
+          }
+        ]
+      },
+      "cacheVariables": {
+        //"CMAKE_ANDROID_STANDALONE_TOOLCHAIN": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake",
+        "CHAPTER_TO_BUILD_FOR_ANDROID": "Chapter01", // Default chapter to build, You can change this as needed
+        "CMAKE_SYSTEM_NAME": "Android",
+        "CMAKE_SYSTEM_VERSION": "26", // Android API level
+        "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a", // Default ABI, can be overridden in specific presets
+        "CMAKE_ANDROID_STL_TYPE": "c++_shared",
+        "CMAKE_ANDROID_NDK": "$env{ANDROID_NDK_HOME}",
+        "CMAKE_ANDROID_NDK_PLATFORM": "android-26",
+        "CMAKE_ANDROID_NDK_TOOLCHAIN_VERSION": "clang",
+        "CMAKE_ANDROID_NDK_HOST": "${hostSystemName}"
+      }
+    },
+    {
+      "name": "android-arm64-v8a-debug",
+      "displayName": "Android (arm64-v8a) Debug",
+      "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
+      "inherits": [
+        "base-debug",
+        "base-android"
+      ],
+      "cacheVariables": {
+        "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a"
+      }
+    },
+    {
+      "name": "android-arm64-v8a-release",
+      "displayName": "Android (arm64-v8a) Release",
+      "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
+      "inherits": [
+        "base-release",
+        "base-android"
+      ],
+      "cacheVariables": {
+        "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a"
+      }
+    },
+    {
+      "name": "android-armeabi-v7a-debug",
+      "displayName": "Android (armeabi-v7a) Debug",
+      "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
+      "inherits": [
+        "base-debug",
+        "base-android"
+      ],
+      "cacheVariables": {
+        "CMAKE_ANDROID_ARCH_ABI": "armeabi-v7a"
+      }
+    },
+    {
+      "name": "android-armeabi-v7a-release",
+      "displayName": "Android (armeabi-v7a) Release",
+      "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
+      "inherits": [
+        "base-release",
+        "base-android"
+      ],
+      "cacheVariables": {
+        "CMAKE_ANDROID_ARCH_ABI": "armeabi-v7a"
+      }
+    },
+    {
+      "name": "android-x86_64-debug",
+      "displayName": "Android (x86_64) Debug",
+      "description": "Build for Android x86_64. Requires ANDROID_NDK_HOME to be set.",
+      "inherits": [
+        "base-debug",
+        "base-android"
+      ],
+      "cacheVariables": {
+        "CMAKE_ANDROID_ARCH_ABI": "x86_64"
+      }
+    },
+    {
+      "name": "android-x86_64-release",
+      "displayName": "Android (x86_64) Release",
+      "description": "Build for Android x86_64. Requires ANDROID_NDK_HOME to be set.",
+      "inherits": [
+        "base-release",
+        "base-android"
+      ],
+      "cacheVariables": {
+        "CMAKE_ANDROID_ARCH_ABI": "x86_64"
+      }
+    },
+    // ----------------------------------------------------------------
+    // WEB / EMSCRIPTEN (Requires EMSDK environment variable)
+    // ----------------------------------------------------------------
+    {
+      "name": "web-base",
+      "hidden": true,
+      "displayName": "Web Base Preset",
+      "description": "Base preset for Web builds",
+      "inherits": "base-preset",
+      "binaryDir": "${sourceDir}/web-build", // Aligned with your command
+      "condition": {
+        "type": "inList",
+        "string": "$env{EMSDK}",
+        "list": []
+      },
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+      }
+    },
+    {
+      "name": "web-debug",
+      "displayName": "Web (Emscripten) Debug",
+      "description": "Build for WebAssembly. Requires EMSDK to be set and configured.",
+      "inherits": [
+        "base-debug",
+        "web-base"
+      ]
+    },
+    {
+      "name": "web-release",
+      "displayName": "Web (Emscripten) Release",
+      "description": "Build for WebAssembly. Requires EMSDK to be set and configured.",
+      "inherits": [
+        "base-release",
+        "web-base"
+      ]
+    },
+    // ----------------------------------------------------------------
+    // iOS (Requires Xcode)
+    // ----------------------------------------------------------------
+    {
+      "name": "ios-universal",
+      "displayName": "iOS Universal (Xcode)",
+      "description": "Builds a universal binary for all iOS devices and simulators.",
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/_builds/ios-universal",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "iOS"
+      },
+      "cacheVariables": {
+        "CMAKE_SYSTEM_NAME": "iOS",
+        "CMAKE_OSX_ARCHITECTURES": "armv7;armv7s;arm64;i386;x86_64",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "9.3",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/_install/ios",
+        "CMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH": "NO",
+        "CMAKE_IOS_INSTALL_COMBINED": "YES"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "base-build",
+      "hidden": true,
+      "jobs": 16,
+      "verbose": false
+    },
+    // Build presets corresponding to each configure preset
+    {
+      "name": "windows-x64-debug",
+      "configurePreset": "windows-x64-debug",
+      "inherits": "base-build"
+    },
+    {
+      "name": "windows-x64-release",
+      "configurePreset": "windows-x64-release",
+      "inherits": "base-build"
+    },
+    {
+      "name": "linux-x64-debug",
+      "configurePreset": "linux-x64-debug",
+      "inherits": "base-build"
+    },
+    {
+      "name": "linux-x64-release",
+      "configurePreset": "linux-x64-release",
+      "inherits": "base-build"
+    },
+    {
+      "name": "macos-arm64-debug",
+      "configurePreset": "macos-arm64-debug",
+      "inherits": "base-build"
+    },
+    {
+      "name": "macos-arm64-release",
+      "configurePreset": "macos-arm64-release",
+      "inherits": "base-build"
+    },
+    {
+      "name": "macos-x86_64-debug",
+      "configurePreset": "macos-x86_64-debug",
+      "inherits": "base-build"
+    },
+    {
+      "name": "macos-x86_64-release",
+      "configurePreset": "macos-x86_64-release",
+      "inherits": "base-build"
+    },
+    {
+      "name": "web-debug",
+      "configurePreset": "web-debug",
+      "inherits": "base-build"
+    },
+    {
+      "name": "web-release",
+      "configurePreset": "web-release",
+      "inherits": "base-build"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "base-test",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    // Test presets corresponding to each configure preset
+    {
+      "name": "windows-x64-debug",
+      "configurePreset": "windows-x64-debug",
+      "inherits": "base-test"
+    },
+    {
+      "name": "windows-x64-release",
+      "configurePreset": "windows-x64-release",
+      "inherits": "base-test"
+    },
+    {
+      "name": "linux-x64-debug",
+      "configurePreset": "linux-x64-debug",
+      "inherits": "base-test"
+    },
+    {
+      "name": "linux-x64-release",
+      "configurePreset": "linux-x64-release",
+      "inherits": "base-test"
+    },
+    {
+      "name": "macos-arm64-debug",
+      "configurePreset": "macos-arm64-debug",
+      "inherits": "base-test"
+    },
+    {
+      "name": "macos-arm64-release",
+      "configurePreset": "macos-arm64-release",
+      "inherits": "base-test"
+    },
+    {
+      "name": "macos-x86_64-debug",
+      "configurePreset": "macos-x86_64-debug",
+      "inherits": "base-test"
+    },
+    {
+      "name": "macos-x86_64-release",
+      "configurePreset": "macos-x86_64-release",
+      "inherits": "base-test"
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "windows-x64-release",
+      "configurePreset": "windows-x64-release",
+      "description": "Create Windows installer and .zip package",
+      "condition": 
+        {
+          "type": "equals",
+          "lhs": "${hostSystemName}",
+          "rhs": "Windows"
+        },
+      "generators": [
+        //https://cmake.org/cmake/help/latest/cpack_gen/nsis.html
+        //You HAVE TO install NSIS from http://nsis.sourceforge.net/
+        //https://cmake.org/cmake/help/latest/cpack_gen/innosetup.html
+        "ZIP",
+        "NSIS"
+      ],
+      "variables": {
+        "CPACK_PACKAGE_NAME": "MyAwesomeApp",
+        "CPACK_PACKAGE_VENDOR": "ADÜ",
+        "CPACK_PACKAGE_DESCRIPTION_SUMMARY": "An awesome application that does awesome things.",
+        "CPACK_PACKAGE_VERSION": "1.0.0",
+        "CPACK_RESOURCE_FILE_LICENSE": "${sourceDir}/LICENSE.txt",
+        "CPACK_RESOURCE_FILE_README": "${sourceDir}/README.md",
+        "CPACK_NSIS_PACKAGE_NAME": "MyAwesomeApp 1.0.0",
+        "CPACK_NSIS_INSTALLER_ICON_CODE": "${sourceDir}/packaging/windows/installer_icon.ico",
+        "CPACK_NSIS_MUI_FINISHPAGE_RUN": "$INSTDIR\\\\bin\\\\MyAwesomeApp.exe",
+        "CPACK_NSIS_CREATE_ICONS_EXTRA": "CreateShortCut '$DESKTOP\\\\MyAwesomeApp.lnk' '$INSTDIR\\\\bin\\\\MyAwesomeApp.exe'"
+      }
+    },
+    {
+      "name": "linux-x64-release",
+      "configurePreset": "linux-x64-release",
+      "description": "Create Linux .deb and .tar.gz package",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "generators": [
+        //https://cmake.org/cmake/help/latest/cpack_gen/deb.html
+        //https://cmake.org/cmake/help/latest/cpack_gen/rpm.html
+        "DEB",
+        "RPM",
+        "TGZ"
+      ],
+      "variables": {
+        "CPACK_PACKAGE_NAME": "myawesomeapp",
+        "CPACK_PACKAGE_VENDOR": "ADÜ",
+        "CPACK_PACKAGE_DESCRIPTION_SUMMARY": "An awesome application that does awesome things.",
+        "CPACK_PACKAGE_VERSION": "1.0.0",
+        "CPACK_RESOURCE_FILE_LICENSE": "${sourceDir}/LICENSE.txt",
+        "CPACK_RESOURCE_FILE_README": "${sourceDir}/README.md",
+        "CPACK_DEBIAN_PACKAGE_SECTION": "devel",
+        "CPACK_DEBIAN_PACKAGE_PRIORITY": "optional",
+        "CPACK_RPM_PACKAGE_GROUP": "Development/Tools",
+        "CPACK_RPM_PACKAGE_LICENSE": "MIT"
+      }
+    },
+    {
+      "name": "macos-arm64-release",
+      "configurePreset": "macos-arm64-release",
+      "description": "Create macOS App Bundle and .tar.gz package",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "generators": [
+        //https://cmake.org/cmake/help/latest/cpack_gen/bundle.html
+        //https://cmake.org/cmake/help/latest/cpack_gen/dmg.html
+        //https://cmake.org/cmake/help/latest/cpack_gen/productbuild.html
+        "Bundle",
+        "DragNDrop",
+        "TGZ"
+      ],
+      "variables": {
+        "CPACK_PACKAGE_NAME": "MyAwesomeApp",
+        "CPACK_PACKAGE_VENDOR": "My Company Inc.",
+        "CPACK_PACKAGE_DESCRIPTION_SUMMARY": "An awesome application that does awesome things.",
+        "CPACK_PACKAGE_VERSION": "1.0.0",
+        "CPACK_RESOURCE_FILE_LICENSE": "${sourceDir}/LICENSE.txt",
+        "CPACK_RESOURCE_FILE_README": "${sourceDir}/README.md",
+        "CPACK_BUNDLE_NAME": "MyAwesomeApp",
+        "CPACK_BUNDLE_ICON": "${sourceDir}/packaging/macos/icon.icns",
+        "CPACK_BUNDLE_PLIST": "${sourceDir}/packaging/macos/Info.plist",
+        "CPACK_DMG_BACKGROUND_IMAGE": "${sourceDir}/packaging/macos/dmg_background.png"
+      }
+    },
+    {
+      "name": "macos-x86_64-release",
+      "configurePreset": "macos-x86_64-release",
+      "description": "Create macOS App Bundle and .tar.gz package",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "generators": [
+        "Bundle",
+        "DragNDrop",
+        "TGZ"
+      ],
+      "variables": {
+        "CPACK_PACKAGE_NAME": "MyAwesomeApp",
+        "CPACK_PACKAGE_VENDOR": "My Company Inc.",
+        "CPACK_PACKAGE_DESCRIPTION_SUMMARY": "An awesome application that does awesome things.",
+        "CPACK_PACKAGE_VERSION": "1.0.0",
+        "CPACK_RESOURCE_FILE_LICENSE": "${sourceDir}/LICENSE.txt",
+        "CPACK_RESOURCE_FILE_README": "${sourceDir}/README.md",
+        "CPACK_BUNDLE_NAME": "MyAwesomeApp",
+        "CPACK_BUNDLE_ICON": "${sourceDir}/packaging/macos/icon.icns",
+        "CPACK_BUNDLE_PLIST": "${sourceDir}/packaging/macos/Info.plist",
+        "CPACK_DMG_BACKGROUND_IMAGE": "${sourceDir}/packaging/macos/dmg_background.png"
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "windows-ci-release",
+      "displayName": "CI Workflow (Windows)",
+      "description": "Full configure, build, test, and package steps for the Windows x64 Release target.",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "windows-x64-release"
+        },
+        {
+          "type": "test",
+          "name": "windows-x64-release"
+        },
+        {
+          "type": "package",
+          "name": "windows-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "linux-ci-release",
+      "displayName": "CI Workflow (Linux)",
+      "description": "Full configure, build, test, and package steps for the Linux x64 Release target.",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "linux-x64-release"
+        },
+        {
+          "type": "test",
+          "name": "linux-x64-release"
+        },
+        {
+          "type": "package",
+          "name": "linux-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "macos-ci-release",
+      "displayName": "CI Workflow (macOS)",
+      "description": "Full configure, build, test, and package steps for the macOS arm64 Release target.",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "macos-arm64-release"
+        },
+        {
+          "type": "build",
+          "name": "macos-arm64-release"
+        },
+        {
+          "type": "test",
+          "name": "macos-arm64-release"
+        },
+        {
+          "type": "package",
+          "name": "macos-arm64-release"
+        }
+      ]
+    }
+  ]
+}
