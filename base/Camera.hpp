@@ -1,11 +1,5 @@
 #pragma once
 #include <glm/glm.hpp>
-
-// An intermediate data structure to hold the results of input processing.
-// This struct is designed to be written to from multiple threads (e.g., event handlers)
-// and read by the main thread once per frame.
-// For true thread safety, the floats should either be std::atomic<float> or
-// the whole struct should be protected by a mutex when read/written.
 struct CameraInput
 {
     float moveForward = 0.0f; // -1.0 for S, 1.0 for W
@@ -29,49 +23,47 @@ enum class Camera_Movement
 class Camera
 {
 public:
-    // --- Constructor ---
     Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f),
            glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
            float yaw = -90.0f,
            float pitch = 0.0f);
 
-    // --- Getters ---
     glm::mat4 getViewMatrix() const;
     glm::mat4 getProjectionMatrix() const;
     glm::vec3 getPosition() const { return m_Position; }
     glm::vec3 getFront() const { return m_Front; }
+    float getYaw() const { return m_Yaw; }
+    float getPitch() const { return m_Pitch; }
+    float getMovementSpeed() const { return m_MovementSpeed; }
+    float getMouseSensitivity() const { return m_MouseSensitivity; }
+    float getFov() const { return m_Fov; }
+    float getNearPlane() const { return m_NearPlane; }
+    float getFarPlane() const { return m_FarPlane; }
 
-    // --- Setters / Modifiers ---
     void setProjection(float fovDegrees, float aspectRatio, float nearPlane, float farPlane);
+    void setMovementSpeed(float speed) { m_MovementSpeed = speed; }
+    void setMouseSensitivity(float sensitivity) { m_MouseSensitivity = sensitivity; }
+    void setFov(float fov);
+    void setNearPlane(float nearPlane);
+    void setFarPlane(float farPlane);
 
-    // This is the main-thread update function.
-    // It consumes the processed input and updates the camera's internal state.
     void update(const CameraInput &input, float deltaTime);
 
 private:
-    // --- Camera Attributes ---
     glm::vec3 m_Position;
     glm::vec3 m_Front;
     glm::vec3 m_Up;
     glm::vec3 m_Right;
     glm::vec3 m_WorldUp;
-
-    // --- Euler Angles ---
+    glm::mat4 m_ProjectionMatrix;
     float m_Yaw;
     float m_Pitch;
-
-    // --- Camera Options ---
     float m_MovementSpeed;
     float m_MouseSensitivity;
     float m_Fov;
-
-    // --- Projection Matrix ---
-    glm::mat4 m_ProjectionMatrix;
     float m_AspectRatio;
     float m_NearPlane;
     float m_FarPlane;
 
-    // --- Private Methods ---
-    // Recalculates the Front, Right and Up vectors from the updated Euler angles.
     void updateCameraVectors();
 };

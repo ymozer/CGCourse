@@ -61,7 +61,6 @@ void Logger::initialize(const LoggerConfig &config)
             }
             if (config.enableFileLogging) {
                 std::filesystem::path logFilePath = std::filesystem::path(config.logDirectory) / config.logFilename;
-                 // Ensure the directory exists
                 std::filesystem::create_directories(logFilePath.parent_path());
                 if (config.useRotatingFiles) {
                     auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(

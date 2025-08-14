@@ -38,7 +38,24 @@ function(add_chapter CHAPTER_NAME)
                 "SHELL:-s MAX_WEBGL_VERSION=2"
                 "SHELL:-s USE_SDL=3"
                 "SHELL:--use-preload-plugins"
-                "SHELL:--preload-file ${ASSETS_SOURCE_PATH}@/assets")        
+                "SHELL:--preload-file ${ASSETS_SOURCE_PATH}@/assets"
+            )      
+            if(Python3_FOUND)
+                # Get the output directory for the executable
+                get_target_property(WEB_OUTPUT_DIR ${CHAPTER_NAME} RUNTIME_OUTPUT_DIRECTORY)
+                set(LAUNCH_SCRIPT "${CMAKE_SOURCE_DIR}/platform/emscripten/launch.py")
+                add_custom_target(launch_server_${CHAPTER_NAME}
+                    # This command runs the python server
+                    COMMAND ${Python3_EXECUTABLE} ${LAUNCH_SCRIPT} ${WEB_OUTPUT_DIR} ${CHAPTER_NAME}.html
+                    WORKING_DIRECTORY ${WEB_OUTPUT_DIR}
+                    USES_TERMINAL
+                    # Make it depend on the executable, so it builds first
+                    DEPENDS  ${CHAPTER_NAME}
+                    # A helpful message in the console
+                    COMMENT "Starting local server for ${CHAPTER_NAME}"
+                    FOLDER "Course Projects/Launch Targets"
+                )
+            endif()  
         endif()
 
         add_custom_command(

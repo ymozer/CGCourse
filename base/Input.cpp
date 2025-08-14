@@ -128,8 +128,14 @@ namespace Base
         return *s_InputInstance;
     }
 
-    bool Input::Initialize(ParallelEventBus &bus, bool imguiEnabled)
+    bool Input::Initialize(SDL_Window* window, ParallelEventBus &bus, bool imguiEnabled)
     {
+        if (!window) {
+            LOG_CRITICAL("Input System initialized with a null window!");
+            return false;
+        }
+        m_Window = window; // Store the window pointer
+
         m_imguiEnabled = imguiEnabled;
         LOG_INFO("Input System initialized. ImGui event processing: {}", m_imguiEnabled ? "Enabled" : "Disabled");
         m_EventBus = &bus;
@@ -180,6 +186,7 @@ namespace Base
             LOG_DEBUG("Found {} touch devices detected at init.", numTouchDevices);
             SDL_free(touchDevices);
         }
+        m_RelativeMouseMode = SDL_GetWindowRelativeMouseMode(m_Window);
 
         LOG_INFO("Input System Initialized successfully.");
         return true;
@@ -1029,5 +1036,33 @@ namespace Base
         }
         return false;
     }
+
+    bool Input::SetRelativeMouseMode(bool enabled)
+    {
+        if (!m_Window) {
+            LOG_ERROR("Cannot set relative mouse mode, window handle is null.");
+            return false;
+        }
+
+        // Use the new window-specific function
+        if (!SDL_SetWindowRelativeMouseMode(m_Window, enabled ? true : false))
+        {
+            LOG_ERROR("Failed to set relative mouse mode: {}", SDL_GetError());
+            return false;
+        }
+
+        m_RelativeMouseMode = enabled;
+        return true;
+    }
+
+    bool Input::IsRelativeMouseMode() const
+    {
+        if (!m_Window) {
+            return false;
+        }
+        // Query using the new window-specific function
+        return SDL_GetWindowRelativeMouseMode(m_Window);
+    }
+
 
 }

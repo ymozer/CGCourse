@@ -14,22 +14,38 @@ Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) :
     m_WorldUp(up),
     m_Yaw(yaw),
     m_Pitch(pitch),
-    m_Front(glm::vec3(0.0f, 0.0f, -1.0f)), // Initialized but will be overwritten
-    m_MovementSpeed(DEFAULT_SPEED),
-    m_MouseSensitivity(DEFAULT_SENSITIVITY),
-    m_Fov(DEFAULT_FOV),
-    m_AspectRatio(16.0f / 9.0f), // Default aspect ratio
+    m_Front(glm::vec3(0.0f, 0.0f, -1.0f)),
+    m_MovementSpeed(5.0f),
+    m_MouseSensitivity(0.1f),
+    m_Fov(45.0f),
+    m_AspectRatio(16.0f / 9.0f),
     m_NearPlane(0.1f),
     m_FarPlane(100.0f)
 {
     updateCameraVectors();
-    setProjection(m_Fov, m_AspectRatio, m_NearPlane, m_FarPlane); // Initialize projection matrix
+    setProjection(m_Fov, m_AspectRatio, m_NearPlane, m_FarPlane);
+}
+
+void Camera::setFov(float fov)
+{
+    m_Fov = fov;
+    setProjection(m_Fov, m_AspectRatio, m_NearPlane, m_FarPlane);
+}
+
+void Camera::setNearPlane(float nearPlane)
+{
+    m_NearPlane = nearPlane;
+    setProjection(m_Fov, m_AspectRatio, m_NearPlane, m_FarPlane);
+}
+
+void Camera::setFarPlane(float farPlane)
+{
+    m_FarPlane = farPlane;
+    setProjection(m_Fov, m_AspectRatio, m_NearPlane, m_FarPlane);
 }
 
 glm::mat4 Camera::getViewMatrix() const
 {
-    // The view matrix is created using the camera's position, the point it's looking at, and its up vector.
-    // The target point is simply the camera's position plus its front vector.
     return glm::lookAt(m_Position, m_Position + m_Front, m_Up);
 }
 
@@ -57,6 +73,7 @@ void Camera::update(const CameraInput& input, float deltaTime)
     m_Pitch += yoffset;
 
     // Constrain the pitch to avoid flipping the camera
+    // TODO: make it configurable
     if (m_Pitch > 89.0f)
         m_Pitch = 89.0f;
     if (m_Pitch < -89.0f)
@@ -64,7 +81,6 @@ void Camera::update(const CameraInput& input, float deltaTime)
 
     // After updating yaw and pitch, we must recalculate the direction vectors
     updateCameraVectors();
-
 
     // --- 2. Process Movement (Keyboard) ---
     float velocity = m_MovementSpeed * deltaTime;
@@ -84,19 +100,13 @@ void Camera::update(const CameraInput& input, float deltaTime)
 
 void Camera::updateCameraVectors()
 {
-    // Calculate the new Front vector from the Yaw and Pitch angles
     glm::vec3 front;
+
     front.x = cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
     front.y = sin(glm::radians(m_Pitch));
     front.z = sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
-    m_Front = glm::normalize(front);
-
-    // Also re-calculate the Right and Up vector
-    // The Right vector is the cross product of the Front vector and the World's Up vector.
-    // This gives a vector that is perpendicular to both, pointing to the right.
-    m_Right = glm::normalize(glm::cross(m_Front, m_WorldUp));  
     
-    // The camera's local Up vector is the cross product of the Right and Front vectors.
-    // This ensures that all three vectors (Front, Right, Up) are orthogonal to each other.
-    m_Up = glm::normalize(glm::cross(m_Right, m_Front));
+    m_Front = glm::normalize(front);
+    m_Right = glm::normalize(glm::cross(m_Front, m_WorldUp));  
+    m_Up    = glm::normalize(glm::cross(m_Right, m_Front));
 }

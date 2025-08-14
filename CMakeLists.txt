@@ -12,11 +12,35 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
+# For Windows
+if(WIN32)
+    set(GRADLEW_COMMAND "${CMAKE_SOURCE_DIR}/platform/android/gradlew.bat")
+# For Linux/macOS
+else()
+    set(GRADLEW_COMMAND "${CMAKE_SOURCE_DIR}/platform/android/gradlew")
+endif()
+
+
 if(ANDROID)
+    option(CHAPTER_TO_BUILD_FOR_ANDROID "Chapter01")
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static linking for all dependencies" FORCE)
     set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "No postfix for debug builds" FORCE)
-    option(CHAPTER_TO_BUILD_FOR_ANDROID "Chapter01")
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     message(STATUS "Android target chapter: ${CHAPTER_TO_BUILD_FOR_ANDROID}")
+
+    add_custom_target(runGradleBuildDebug
+        COMMAND ${GRADLEW_COMMAND} -PchapterToBuild=${CHAPTER_TO_BUILD_FOR_ANDROID} installDebug
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/platform/android
+        COMMENT "Running Gradle build for ${CHAPTER_TO_BUILD_FOR_ANDROID} in Debug mode..."
+        VERBATIM
+    )
+    add_custom_target(runGradleBuildRelease
+        COMMAND ${GRADLEW_COMMAND} -PchapterToBuild=${CHAPTER_TO_BUILD_FOR_ANDROID} installRelease
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/platform/android
+        COMMENT "Running Gradle build for ${CHAPTER_TO_BUILD_FOR_ANDROID} in Release mode..."
+        VERBATIM
+    )
+
 else()
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static linking for all dependencies" FORCE)
 endif()
@@ -176,6 +200,7 @@ if(EMSCRIPTEN)
     set(CMAKE_USE_WIN32_THREADS_INIT 0)
     set(CMAKE_USE_PTHREADS_INIT 1)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Python3 COMPONENTS Interpreter QUIET)
 endif()
 
 CPMAddPackage(

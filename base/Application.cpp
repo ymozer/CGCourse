@@ -141,10 +141,11 @@ namespace Base
         this->m_Running = false;
         event.handled = true; });
 
-        if (!Input::Get().Initialize(m_EventBus, m_imGuiEnabled))
+        if (!Input::Get().Initialize(appContext.window, m_EventBus, m_imGuiEnabled))
         {
             LOG_CRITICAL("Failed to initialize Input system!");
         }
+
 
 #if PLATFORM_ANDROID
         EGLDisplay display = SDL_EGL_GetCurrentDisplay();
@@ -312,7 +313,9 @@ namespace Base
         uint64_t frameStartTimeCounter = SDL_GetPerformanceCounter();
         uint64_t cpuWorkStartTimeCounter = 0;
 
+        Base::Input::Get().PrepareForFrame();
         handleEvents();
+        Base::Input::Get().Update();
         if (!m_Running)
             return;
 
@@ -549,6 +552,8 @@ namespace Base
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0, 0});
             ImGui::Begin("Viewport");
             {
+                m_ViewportHovered = ImGui::IsWindowHovered();
+
                 ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
                 if (m_ViewportWidth != (int)viewportPanelSize.x || m_ViewportHeight != (int)viewportPanelSize.y)
                 {

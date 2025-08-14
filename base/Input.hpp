@@ -24,7 +24,7 @@ namespace Base
         Input() = default;
         ~Input() = default;
 
-        bool Initialize(ParallelEventBus &bus, bool imguiEnabled);
+        bool Initialize(SDL_Window* window, ParallelEventBus &bus, bool imguiEnabled);
         void Shutdown();
         void PrepareForFrame();
         void ProcessEvent(const SDL_Event &event);
@@ -41,6 +41,8 @@ namespace Base
         glm::vec2 GetMousePosition() const;
         glm::vec2 GetMouseDelta() const;
         glm::vec2 GetMouseWheel() const;
+        bool IsRelativeMouseMode() const;
+        bool SetRelativeMouseMode(bool enabled);
 
         bool IsGamepadConnected(SDL_JoystickID instanceId) const;
         bool IsGamepadButtonDown(SDL_JoystickID instanceId, SDL_GamepadButton button) const;
@@ -78,7 +80,9 @@ namespace Base
         void SetGamepadAxisDeadzone(float deadzone) { m_GamepadAxisDeadzone = deadzone; }
         void SetJoystickAxisDeadzone(float deadzone) { m_JoystickAxisDeadzone = deadzone; }
 
+
     private:
+        SDL_Window *m_Window = nullptr;
         ParallelEventBus *m_EventBus = nullptr;
         static std::unique_ptr<Input> s_InputInstance;
 
@@ -92,6 +96,7 @@ namespace Base
         float ApplyDeadzone(Sint16 value, float deadzoneThreshold) const;
 
         bool m_imguiEnabled = false;
+        bool m_RelativeMouseMode = false;
         float m_GamepadAxisDeadzone = 0.15f;
         float m_JoystickAxisDeadzone = 0.15f;
         int m_NumKeys = 0;

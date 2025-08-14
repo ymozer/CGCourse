@@ -91,69 +91,17 @@ protected:
 
     void update(float deltaTime) override
     {
-        // === PHASE 1: INPUT PROCESSING (PARALLEL) ===
-        // Your event bus handles this automatically! When handleEvents() dispatches
-        // async input events, subscribers (like an InputManager or PlayerController)
-        // process them on worker threads. They might update a "desired_velocity"
-        // or "is_jumping" flag on a game object. This is a "fire and forget" parallel phase.
+        // --- Update Step ---  
+        // 1. Clear the screen.
+        glClearColor(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // === PHASE 2: AI & LOGIC (PARALLEL FORK) ===
-        // Dispatch tasks for independent agents.
-        // std::vector<std::future<void>> aiFutures;
-        // for (auto &agent : m_GameAgents)
-        //{
-        //    aiFutures.push_back(
-        //        m_ThreadPool.Enqueue([&agent, deltaTime]()
-        //                             {
-        //                                 agent.think(deltaTime); // e.g., update pathfinding, state machine
-        //                             }));
-        //}
-        // Note: We DON'T join yet! We can run physics while AI is thinking.
+        // 2. Update the camera's view and projection matrices.
+        m_Shader->use();
+        m_Shader->setMat4("u_View", m_Camera.getViewMatrix());
+        
 
-        // === PHASE 3: PHYSICS SIMULATION (PARALLEL FORK) ===
-        // You could have a dedicated physics system.
-        // auto physicsFuture = m_ThreadPool.Enqueue([this, deltaTime]()
-        //                                          {
-        //                                              m_PhysicsSystem.step(deltaTime); // Physics system can use its own internal parallelism
-        //                                          });
-
-        // === PHASE 4: SYNCHRONIZATION (JOIN) ===
-        // NOW we wait. We can't proceed until AI and Physics are done.
-        // for (auto &f : aiFutures)
-        //{
-        //    f.get();
-        //}
-        // physicsFuture.get();
-
-        // At this point, all object positions, states, etc., are final for this frame.
-
-        // === PHASE 5: POSE/TRANSFORM UPDATE (PARALLEL FORK) ===
-        // Update animation skeletons, calculate final world matrices.
-        // This often depends on the results of the physics/AI phase.
-        // std::vector<std::future<void>> transformFutures;
-        // for (auto &object : m_RenderableObjects)
-        //{
-        //    transformFutures.push_back(
-        //        m_ThreadPool.Enqueue([&object, deltaTime]()
-        //                             {
-        //                                 object.updateAnimation(deltaTime);
-        //                                 object.calculateWorldMatrix(); // From its position, rotation, scale
-        //                             }));
-        //}
-        // Join again.
-        // for (auto &f : transformFutures)
-        //{
-        //    f.get();
-        //}
-
-        // === PHASE 6: CAMERA & CULLING (MAIN THREAD) ===
-        // The camera update often depends on the final position of a target object (e.g., the player).
-        // This is a dependency, so it must run after the target is updated.
-        // m_Camera.update(deltaTime); // Follows player, etc.
-
-        // Frustum culling: Determine which objects are visible.
-        // This can be parallelized, but let's keep it simple for now.
-        // m_VisibleSet = m_CullingSystem.cull(m_RenderableObjects, m_Camera.getFrustum());
+        // TODO: Frustum culling
 
         // --- Camera Update Step ---
         // 1. Atomically get the current input state and reset the shared state for the next frame.
@@ -169,6 +117,8 @@ protected:
 
         // 2. Update the camera on the main thread with the captured input.
         m_Camera.update(currentFrameInput, deltaTime);
+
+
     }
 
     void render() override

@@ -46,6 +46,7 @@ namespace Base
 
         ParallelEventBus &getEventBus() { return m_EventBus; }
         const ParallelEventBus &getEventBus() const { return m_EventBus; }
+        bool isViewportHovered() const { return m_ViewportHovered; }
 
         template <typename EventType>
         void subscribeToEvent(SubscriptionHandle &handle, std::function<void(EventType &)> handler)
@@ -94,6 +95,8 @@ namespace Base
         bool m_Running = true;
         bool m_imGuiEnabled = false;
         bool m_isMinimized = false;
+        bool m_ViewportHovered = false;
+
         int m_Width = 0;
         int m_Height = 0;
         SDL_Rect m_WorkArea{};

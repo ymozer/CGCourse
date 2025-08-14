@@ -122,20 +122,23 @@ namespace Base
 
     struct KeyPressedEvent : public Event
     {
-        int keyCode;
-        int scancode;
-        uint16_t mod;
-        bool isRepeat;
+        SDL_Scancode scancode;
+        SDL_Keycode sym;
+        Uint16 mod;
+        Uint32 windowID;
 
-        KeyPressedEvent(int id, int key, uint16_t modifiers, bool repeat)
-            : keyCode(key), scancode(id), mod(modifiers), isRepeat(repeat)
-        {
-            LOG_TRACE("KeyPressedEvent created: {{keyCode={}, scancode={}, modifiers={}}}", keyCode, scancode, mod);
-        }
+        KeyPressedEvent(SDL_Scancode sc, SDL_Keycode k, Uint16 m, Uint32 wID)
+            : scancode(sc), sym(k), mod(m), windowID(wID) {}
+
         EVENT_CLASS_TYPE(KeyPressedEvent)
+
         std::string ToString() const override
         {
-            return std::string("KeyPressedEvent: {keyCode=") + std::to_string(keyCode) + ", scancode=" + std::to_string(scancode) + "}";
+            const char* keyName = SDL_GetKeyName(sym);
+            return fmt::format("KeyPressedEvent: {{ keyName='{}', keyCode={}, scancode={} }}",
+                               keyName, 
+                               static_cast<int>(sym), 
+                               static_cast<int>(scancode));
         }
     };
 

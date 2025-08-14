@@ -186,22 +186,8 @@
       "displayName": "Android Base Preset",
       "description": "Base preset for Android builds",
       "inherits": "base-preset",
-      "binaryDir": "${sourceDir}/android-build",
-      "condition": {
-        "type": "allOf",
-        "conditions": [
-          {
-            "type": "inList",
-            "string": "$env{ANDROID_NDK_HOME}",
-            "list": []
-          },
-          {
-            "type": "equals",
-            "lhs": "${hostSystemName}",
-            "rhs": "Android"
-          }
-        ]
-      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/android",
       "cacheVariables": {
         //"CMAKE_ANDROID_STANDALONE_TOOLCHAIN": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake",
         "CHAPTER_TO_BUILD_FOR_ANDROID": "Chapter01", // Default chapter to build, You can change this as needed
@@ -287,6 +273,24 @@
         "CMAKE_ANDROID_ARCH_ABI": "x86_64"
       }
     },
+    {
+      "name": "android-debug-chapter01",
+      "displayName": "Android Debug (Chapter01)",
+      "inherits": "android-arm64-v8a-debug",
+      "binaryDir": "${sourceDir}/build/android",
+      "cacheVariables": {
+        "CHAPTER_TO_BUILD_FOR_ANDROID": "Chapter01"
+      }
+    },
+    {
+      "name": "android-debug-chapter02",
+      "displayName": "Android Debug (Chapter02)",
+      "inherits": "android-arm64-v8a-debug",
+      "binaryDir": "${sourceDir}/build/android",
+      "cacheVariables": {
+        "CHAPTER_TO_BUILD_FOR_ANDROID": "Chapter02"
+      }
+    },
     // ----------------------------------------------------------------
     // WEB / EMSCRIPTEN (Requires EMSDK environment variable)
     // ----------------------------------------------------------------
@@ -296,12 +300,8 @@
       "displayName": "Web Base Preset",
       "description": "Base preset for Web builds",
       "inherits": "base-preset",
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/web-build", // Aligned with your command
-      "condition": {
-        "type": "inList",
-        "string": "$env{EMSDK}",
-        "list": []
-      },
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
       }
@@ -405,6 +405,34 @@
       "name": "web-release",
       "configurePreset": "web-release",
       "inherits": "base-build"
+    },
+    {
+      "name": "android-gradle-debug",
+      "displayName": "Build with Gradle (Debug)",
+      "description": "Runs './gradlew installDebug' for the specified chapter.",
+      "jobs": 1,
+      "targets": [ "runGradleBuildDebug" ]
+    },
+    {
+      "name": "android-gradle-release",
+      "displayName": "Build with Gradle (Release)",
+      "description": "Runs './gradlew installRelease' for the specified chapter.",
+      "jobs": 1,
+      "targets": [ "runGradleBuildRelease" ]
+    },
+    {
+      "name": "launch-web-chapter1",
+      "displayName": "Launch Chapter 1 (Web)",
+      "description": "Builds and launches the 'chapter1' Emscripten target",
+      "configurePreset": "web-debug",
+      "targets": [ "launch_server_Chapter01" ]
+    },
+    {
+      "name": "launch-web-chapter2",
+      "displayName": "Launch Chapter 2 (Web)",
+      "description": "Builds and launches the 'chapter2' Emscripten target",
+      "configurePreset": "web-debug",
+      "targets": [ "launch_server_Chapter02" ]
     }
   ],
   "testPresets": [
@@ -645,6 +673,52 @@
         {
           "type": "package",
           "name": "macos-arm64-release"
+        }
+      ]
+    },
+    {
+      "name": "android-build-run-chapter02",
+      "displayName": "Configure, Build & Run Android (Chapter02)",
+      "description": "Full configure and Gradle build for a specific Android chapter.",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "android-debug-chapter02"
+        },
+        {
+          "type": "build",
+          "name": "runGradleBuildDebug"
+        }
+      ]
+    },    
+    // todo: doesnt work
+    {
+      "name": "launch-chapter1-web",
+      "displayName": "Configure, Build & Launch Chapter 1 (Web)",
+      "description": "Runs the full configure, build, and launch process for Chapter 1.",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "web-debug"
+        },
+        {
+          "type": "build",
+          "name": "launch-web-chapter1"
+        }
+      ]
+    },
+    {
+      "name": "launch-chapter2-web",
+      "displayName": "Configure, Build & Launch Chapter 2 (Web)",
+      "description": "Runs the full configure, build, and launch process for Chapter 2.",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "web-debug"
+        },
+        {
+          "type": "build",
+          "name": "launch-web-chapter2"
         }
       ]
     }
