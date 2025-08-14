@@ -57,6 +57,10 @@ CPMAddPackage(
     GITHUB_REPOSITORY libsdl-org/SDL
     GIT_TAG release-3.2.16
 )
+set_target_properties(SDL3_test PROPERTIES FOLDER "External Libraries/SDL3")
+set_target_properties(SDL_uclibc PROPERTIES FOLDER "External Libraries/SDL3")
+set_target_properties(SDL3-static PROPERTIES FOLDER "External Libraries/SDL3")
+
 
 # GLM (Mathematics)
 CPMAddPackage("gh:g-truc/glm#1.0.1")
@@ -216,6 +220,8 @@ endif()
 if(TARGET spdlog-utests)
     set_target_properties(spdlog-utests PROPERTIES FOLDER "External Libraries/spdlog")
 endif()
+set_target_properties(spdlog PROPERTIES FOLDER "External Libraries/spdlog")
+
 
 # Tracy (Profiling frames)
 CPMAddPackage(
