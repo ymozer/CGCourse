@@ -1,112 +1,162 @@
 #include "Camera.hpp"
-#include <cmath>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/ext/matrix_clip_space.hpp>
 
-const float DEFAULT_YAW         = -90.0f;
-const float DEFAULT_PITCH       = 0.0f;
-const float DEFAULT_SPEED       = 5.0f;
-const float DEFAULT_SENSITIVITY = 0.1f;
-const float DEFAULT_FOV         = 45.0f;
+#include <glm/gtc/matrix_transform.hpp>
+#include <algorithm> // std::clamp
 
-Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) :
-    m_Position(position),
-    m_WorldUp(up),
-    m_Yaw(yaw),
-    m_Pitch(pitch),
-    m_Front(glm::vec3(0.0f, 0.0f, -1.0f)),
-    m_MovementSpeed(5.0f),
-    m_MouseSensitivity(0.1f),
-    m_Fov(45.0f),
-    m_AspectRatio(16.0f / 9.0f),
-    m_NearPlane(0.1f),
-    m_FarPlane(100.0f)
+Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
+    : m_Position(position),
+      m_WorldUp(up),
+      m_Yaw(yaw),
+      m_Pitch(pitch),
+      m_Front(glm::vec3(0.0f, 0.0f, -1.0f)),
+      m_Mode(CameraMode::FLY),
+      m_MovementSpeed(SPEED),
+      m_MouseSensitivity(SENSITIVITY),
+      m_Fov(FOV)
 {
     updateCameraVectors();
-    setProjection(m_Fov, m_AspectRatio, m_NearPlane, m_FarPlane);
+    updateViewMatrix();
+}
+
+const glm::mat4 &Camera::getViewMatrix() const
+{
+    return m_ViewMatrix;
+}
+
+const glm::mat4 &Camera::getProjectionMatrix() const
+{
+    return m_ProjectionMatrix;
+}
+
+glm::vec3 Camera::getPosition() const
+{
+    return m_Position;
+}
+
+CameraMode Camera::getMode() const
+{
+    return m_Mode;
+}
+
+float Camera::getMovementSpeed() const
+{
+    return m_MovementSpeed;
+}
+
+float Camera::getMouseSensitivity() const
+{
+    return m_MouseSensitivity;
+}
+
+float Camera::getFov() const
+{
+    return m_Fov;
+}
+
+void Camera::setPosition(const glm::vec3 &position)
+{
+    m_Position = position;
+    updateViewMatrix();
+}
+
+void Camera::lookAt(const glm::vec3 &target)
+{
+    m_Front = glm::normalize(target - m_Position);
+    m_Pitch = glm::degrees(asinf(m_Front.y));
+    m_Yaw = glm::degrees(atan2f(m_Front.z, m_Front.x));
+    updateCameraVectors();
+    updateViewMatrix();
+}
+
+void Camera::setProjection(float fov, float aspectRatio, float nearPlane, float farPlane)
+{
+    m_Fov = fov;
+    m_AspectRatio = aspectRatio;
+    m_NearPlane = nearPlane;
+    m_FarPlane = farPlane;
+    updateProjectionMatrix();
+}
+
+void Camera::setMode(CameraMode mode)
+{
+    m_Mode = mode;
+}
+
+void Camera::setMovementSpeed(float speed)
+{
+    m_MovementSpeed = speed;
+}
+
+void Camera::setMouseSensitivity(float sensitivity)
+{
+    m_MouseSensitivity = sensitivity;
 }
 
 void Camera::setFov(float fov)
 {
     m_Fov = fov;
-    setProjection(m_Fov, m_AspectRatio, m_NearPlane, m_FarPlane);
+    updateProjectionMatrix();
 }
 
-void Camera::setNearPlane(float nearPlane)
+void Camera::update(const CameraInput &input, float deltaTime)
 {
-    m_NearPlane = nearPlane;
-    setProjection(m_Fov, m_AspectRatio, m_NearPlane, m_FarPlane);
-}
+    m_Yaw += input.mouseDeltaX * m_MouseSensitivity;
+    m_Pitch += input.mouseDeltaY * m_MouseSensitivity;
 
-void Camera::setFarPlane(float farPlane)
-{
-    m_FarPlane = farPlane;
-    setProjection(m_Fov, m_AspectRatio, m_NearPlane, m_FarPlane);
-}
+    // Clamp pitch
+    m_Pitch = std::clamp(m_Pitch, -89.0f, 89.0f);
 
-glm::mat4 Camera::getViewMatrix() const
-{
-    return glm::lookAt(m_Position, m_Position + m_Front, m_Up);
-}
-
-glm::mat4 Camera::getProjectionMatrix() const
-{
-    return m_ProjectionMatrix;
-}
-
-void Camera::setProjection(float fovDegrees, float aspectRatio, float nearPlane, float farPlane)
-{
-    m_Fov = fovDegrees;
-    m_AspectRatio = aspectRatio;
-    m_NearPlane = nearPlane;
-    m_FarPlane = farPlane;
-    m_ProjectionMatrix = glm::perspective(glm::radians(m_Fov), m_AspectRatio, m_NearPlane, m_FarPlane);
-}
-
-void Camera::update(const CameraInput& input, float deltaTime)
-{
-    // --- 1. Process Rotation (Mouse Look) ---
-    float xoffset = input.mouseDeltaX * m_MouseSensitivity;
-    float yoffset = input.mouseDeltaY * m_MouseSensitivity;
-
-    m_Yaw   += xoffset;
-    m_Pitch += yoffset;
-
-    // Constrain the pitch to avoid flipping the camera
-    // TODO: make it configurable
-    if (m_Pitch > 89.0f)
-        m_Pitch = 89.0f;
-    if (m_Pitch < -89.0f)
-        m_Pitch = -89.0f;
-
-    // After updating yaw and pitch, we must recalculate the direction vectors
     updateCameraVectors();
 
-    // --- 2. Process Movement (Keyboard) ---
-    float velocity = m_MovementSpeed * deltaTime;
-    
-    // Normalize the input vectors to ensure consistent speed regardless of direction
-    glm::vec3 moveDir(input.moveRight, input.moveUp, -input.moveForward); // Z is negative because forward is -Z
-    if (glm::length(moveDir) > 0.0f)
-    {
-        moveDir = glm::normalize(moveDir);
-    }
-    
-    m_Position += m_Front * moveDir.z * velocity;
-    m_Position += m_Right * moveDir.x * velocity;
-    m_Position += m_Up    * moveDir.y * velocity;
-}
+    glm::vec3 moveDirection(0.0f);
 
+    if (m_Mode == CameraMode::FPS)
+    {
+        // In FPS mode, movement is constrained to the XZ plane
+        glm::vec3 forward = glm::normalize(glm::vec3(m_Front.x, 0.0f, m_Front.z));
+        glm::vec3 right = glm::normalize(glm::vec3(m_Right.x, 0.0f, m_Right.z));
+        moveDirection += forward * input.moveForward;
+        moveDirection += right * input.moveRight;
+        moveDirection += m_WorldUp * input.moveUp;
+    }
+    else // Fly Mode
+    {
+        moveDirection += m_Front * input.moveForward;
+        moveDirection += m_Right * input.moveRight;
+        moveDirection += m_WorldUp * input.moveUp;
+    }
+
+    // Normalize the movement vector to ensure consistent speed
+    if (glm::length(moveDirection) > 0.0f)
+    {
+        moveDirection = glm::normalize(moveDirection);
+    }
+
+    m_Position += moveDirection * m_MovementSpeed * deltaTime;
+
+    updateViewMatrix();
+}
 
 void Camera::updateCameraVectors()
 {
+    // Calculate the new Front vector
     glm::vec3 front;
-
     front.x = cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
     front.y = sin(glm::radians(m_Pitch));
     front.z = sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
-    
     m_Front = glm::normalize(front);
-    m_Right = glm::normalize(glm::cross(m_Front, m_WorldUp));  
-    m_Up    = glm::normalize(glm::cross(m_Right, m_Front));
+
+    // Also re-calculate the Right and Up vector
+    m_Right = glm::normalize(glm::cross(m_Front, m_WorldUp));
+    m_Up = glm::normalize(glm::cross(m_Right, m_Front));
+}
+
+void Camera::updateViewMatrix()
+{
+    m_ViewMatrix = glm::lookAt(m_Position, m_Position + m_Front, m_Up);
+}
+
+void Camera::updateProjectionMatrix()
+{
+    m_ProjectionMatrix = glm::perspective(glm::radians(m_Fov), m_AspectRatio, m_NearPlane, m_FarPlane);
 }

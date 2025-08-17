@@ -15,7 +15,6 @@
 
 namespace Base
 {
-
     class Application
     {
     public:
@@ -37,13 +36,18 @@ namespace Base
         virtual void setup() = 0;
         virtual void shutdown() = 0;
         virtual void update(float deltaTime) = 0;
+        virtual void handleInput(float deltaTime) = 0;
         virtual void render() = 0;
         virtual void renderChapterUI() {}
 
         SDL_Window *getWindow() const { return appContext.window; }
         int getWidth() const { return m_Width; }
         int getHeight() const { return m_Height; }
+        int getViewportWidth() const { return m_ViewportWidth; }
+        int getViewportHeight() const { return m_ViewportHeight; }
+        float getViewportAspectRatio() const;
 
+        virtual Camera* getActiveCamera() { return nullptr; }
         ParallelEventBus &getEventBus() { return m_EventBus; }
         const ParallelEventBus &getEventBus() const { return m_EventBus; }
         bool isViewportHovered() const { return m_ViewportHovered; }
@@ -65,12 +69,23 @@ namespace Base
             subscribeToEvent(m_MouseSub, std::move(handler));
         }
 
+        void subscribeToKeyReleases(std::function<void(Base::KeyReleasedEvent &)> handler)
+        {
+            subscribeToEvent(m_KeyReleaseSub, std::move(handler));
+        }
+
+        void subscribeToMouseButtons(std::function<void(Base::MouseButtonPressedEvent &)> handler)
+        {
+            subscribeToEvent(m_MouseButtonSub, std::move(handler));
+        }
+
     private:
         void init();
         void cleanup();
 
         void handleEvents();
         void updateRenderingAndWorkAreas();
+        void updateStyleAndFonts(float scale);
 
         void initImGui();
         void beginImGuiFrame();
@@ -90,6 +105,8 @@ namespace Base
         SubscriptionHandle m_MouseSub;
         SubscriptionHandle m_AppQuitSubscription;
         SubscriptionHandle m_WindowCloseSubscription;
+        SubscriptionHandle m_KeyReleaseSub;
+        SubscriptionHandle m_MouseButtonSub;
 
         std::string m_Title;
         bool m_Running = true;
@@ -102,8 +119,9 @@ namespace Base
         SDL_Rect m_WorkArea{};
         SDL_Rect m_RenderArea{};
 
+        float m_RenderScale = 1.0f;
         float m_StyleScale = 1.0f;
-        float m_FontScale = 1.0f;
+                
         ImGuiStyle m_BaseStyle;
         std::string m_ImGuiIniPath = "imgui.ini";
 
@@ -119,8 +137,17 @@ namespace Base
         GLuint m_FboID = 0;
         GLuint m_ColorAttachmentID = 0;
         GLuint m_DepthAttachmentID = 0;
+
+        GLuint m_MsFboID = 0;            
+        GLuint m_MsColorAttachmentID = 0;
+        GLuint m_MsDepthAttachmentID = 0;
+
         int m_ViewportWidth = 0;
         int m_ViewportHeight = 0;
+        int m_MsaaSamples = 4;
+        int m_SelectedMsaaIndex = 0;
+        std::vector<int> m_MsaaSampleOptions;
+        std::vector<const char*> m_MsaaSampleLabels;
 
         static Application *s_Instance;
 #if PLATFORM_EMSCRIPTEN

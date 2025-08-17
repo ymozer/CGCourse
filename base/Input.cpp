@@ -128,9 +128,10 @@ namespace Base
         return *s_InputInstance;
     }
 
-    bool Input::Initialize(SDL_Window* window, ParallelEventBus &bus, bool imguiEnabled)
+    bool Input::Initialize(SDL_Window *window, ParallelEventBus &bus, bool imguiEnabled)
     {
-        if (!window) {
+        if (!window)
+        {
             LOG_CRITICAL("Input System initialized with a null window!");
             return false;
         }
@@ -296,12 +297,13 @@ namespace Base
         {
         case SDL_EVENT_KEY_DOWN:
         {
+            bool is_a_repeat = (event.key.repeat != 0);
+
             KeyPressedEvent customEvent(
-                event.key.scancode,
-                event.key.key,
-                event.key.mod,
-                event.key.repeat != 0);
+                event.key.scancode, event.key.key,
+                event.key.mod, event.key.windowID, is_a_repeat);
             m_EventBus->dispatch(customEvent);
+
             break;
         }
         case SDL_EVENT_KEY_UP:
@@ -560,8 +562,22 @@ namespace Base
     void Input::Update()
     {
         m_CurrentKeyState = SDL_GetKeyboardState(nullptr);
-        m_CurrentMouseButtonState = SDL_GetMouseState(&m_CurrentMousePos.x, &m_CurrentMousePos.y);
-        m_MouseDelta = m_CurrentMousePos - m_PreviousMousePos;
+        if (m_RelativeMouseMode)
+        {
+            float deltaX = 0.0f;
+            float deltaY = 0.0f;
+
+            m_CurrentMouseButtonState = SDL_GetRelativeMouseState(&deltaX, &deltaY);
+
+            m_MouseDelta = {deltaX, deltaY};
+
+            SDL_GetMouseState(&m_CurrentMousePos.x, &m_CurrentMousePos.y);
+        }
+        else
+        {
+            m_CurrentMouseButtonState = SDL_GetMouseState(&m_CurrentMousePos.x, &m_CurrentMousePos.y);
+            m_MouseDelta = m_CurrentMousePos - m_PreviousMousePos;
+        }
 
         for (auto &[id, state] : m_GamepadStates)
         {
@@ -1039,7 +1055,8 @@ namespace Base
 
     bool Input::SetRelativeMouseMode(bool enabled)
     {
-        if (!m_Window) {
+        if (!m_Window)
+        {
             LOG_ERROR("Cannot set relative mouse mode, window handle is null.");
             return false;
         }
@@ -1057,12 +1074,12 @@ namespace Base
 
     bool Input::IsRelativeMouseMode() const
     {
-        if (!m_Window) {
+        if (!m_Window)
+        {
             return false;
         }
         // Query using the new window-specific function
         return SDL_GetWindowRelativeMouseMode(m_Window);
     }
-
 
 }

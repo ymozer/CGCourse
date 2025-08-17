@@ -168,13 +168,33 @@ protected:
         glBindVertexArray(0);
 
         m_Camera.setProjection(45.0f, (float)getWidth() / (float)getHeight(), 0.1f, 100.0f);
+        
+        subscribeToMouseButtons([this](Base::MouseButtonPressedEvent &e)
+                                {
+            if (isViewportHovered() && e.button == SDL_BUTTON_LEFT)
+            {
+                LOG_INFO("Mouse button pressed: {}, capturing mouse.", e.button);
+                ImGui::SetWindowFocus("Viewport");
+                Base::Input::Get().SetRelativeMouseMode(true);
+                e.handled = true;
+            } });
 
-        LOG_INFO("Chapter 02 setup complete.");
+        subscribeToKeys([this](Base::KeyPressedEvent &e)
+                        {   
+            LOG_INFO("Key pressed: {}", SDL_GetScancodeName(e.scancode));
+            if (e.key == SDLK_ESCAPE)
+            {
+                LOG_INFO("Escape pressed, releasing mouse.");
+                Base::Input::Get().SetRelativeMouseMode(false);
+                e.handled = true;
+            } });
+
+        LOG_INFO("Chapter 03 setup complete.");
     }
 
     void shutdown() override
     {
-        LOG_INFO("Chapter 02 shutdown.");
+        LOG_INFO("Chapter 03 shutdown.");
         glDeleteVertexArrays(1, &m_VaoID);
         glDeleteBuffers(1, &m_VboID);
         m_Shader.reset();
@@ -197,17 +217,6 @@ protected:
             currentFrameInput.moveUp = 1.0f;
         if (input.IsKeyDown(SDL_SCANCODE_LCTRL))
             currentFrameInput.moveUp = -1.0f;
-
-        if (isViewportHovered() && input.IsMouseButtonPressed(SDL_BUTTON_LEFT))
-        {
-            input.SetRelativeMouseMode(true); // Capture mouse for relative movement
-        }
-
-        // If Escape is pressed, release the mouse.
-        if (input.IsKeyPressed(SDL_SCANCODE_ESCAPE))
-        {
-            input.SetRelativeMouseMode(false);
-        }
 
         // Only process mouse look if relative mode is enabled (i.e., mouse is captured)
         if (input.IsRelativeMouseMode())
@@ -244,7 +253,7 @@ protected:
         ImGui::ColorEdit4("Triangle Color", m_TriangleColor);
         ImGui::Separator();
         ImGui::Text("Camera Controls");
-        
+
         // Movement Speed
         float speed = m_Camera.getMovementSpeed();
         if (ImGui::DragFloat("Speed", &speed, 0.1f, 0.1f, 100.0f))

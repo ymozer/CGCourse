@@ -84,6 +84,10 @@ namespace Base
             throw std::runtime_error("Failed to initialize SDL: " + std::string(SDL_GetError()));
         }
 
+        // MSAA setup
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, m_MsaaSamples);
+
 #if PLATFORM_DESKTOP
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -146,7 +150,6 @@ namespace Base
             LOG_CRITICAL("Failed to initialize Input system!");
         }
 
-
 #if PLATFORM_ANDROID
         EGLDisplay display = SDL_EGL_GetCurrentDisplay();
         if (display == EGL_NO_DISPLAY)
@@ -179,9 +182,38 @@ namespace Base
         m_PerfCounterFreq = SDL_GetPerformanceFrequency();
         m_LastFrameTimeCounter = SDL_GetPerformanceCounter();
 
-        updateRenderingAndWorkAreas();
+        { // MSAA setup
+            GLint maxSamples;
+            glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
+            LOG_INFO("Max MSAA samples supported by GPU: {}", maxSamples);
 
+            m_MsaaSampleOptions.push_back(1);
+            m_MsaaSampleLabels.push_back("Off (1x)");
+            glEnable(GL_MULTISAMPLE);
+
+            for (int samples = 2; samples <= maxSamples; samples *= 2)
+            {
+                if (samples <= GL_MAX_SAMPLES)
+                {
+                    m_MsaaSampleOptions.push_back(samples);
+                    m_MsaaSampleLabels.push_back(new char[8]);
+                    snprintf((char *)m_MsaaSampleLabels.back(), 8, "%dx MSAA", samples);
+                }
+            }
+
+            for (int i = 0; i < m_MsaaSampleOptions.size(); ++i)
+            {
+                if (m_MsaaSampleOptions[i] == m_MsaaSamples)
+                {
+                    m_SelectedMsaaIndex = i;
+                    break;
+                }
+            }
+        }
+
+        updateRenderingAndWorkAreas();
         createFramebuffer();
+
 #if PLATFORM_DESKTOP
         glGenQueries(2, m_GpuTimeQueries);
 #endif
@@ -189,14 +221,25 @@ namespace Base
         setup();
     }
 
+    void Application::updateStyleAndFonts(float scale)
+    {
+        ImGuiStyle& style = ImGui::GetStyle();
+        style = m_BaseStyle; // Reset to base style
+        style.ScaleAllSizes(scale);
+
+        ImGuiIO& io = ImGui::GetIO();
+        io.FontGlobalScale = 1.0f / ImGui::GetIO().DisplayFramebufferScale.x * scale;
+    }
+
     void Application::handleEvents()
     {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
+        SDL_Event e;
+        while (SDL_PollEvent(&e))
         {
-            ImGui_ImplSDL3_ProcessEvent(&event);
+            ImGui_ImplSDL3_ProcessEvent(&e);
+            Input::Get().ProcessEvent(e);
 
-            switch (event.type)
+            switch (e.type)
             {
             case SDL_EVENT_QUIT:
             {
@@ -206,7 +249,7 @@ namespace Base
             }
             case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
             {
-                WindowCloseEvent closeEvent(event.window.windowID);
+                WindowCloseEvent closeEvent(e.window.windowID);
                 m_EventBus.dispatch(closeEvent);
                 break;
             }
@@ -218,8 +261,16 @@ namespace Base
                 m_isMinimized = false;
                 updateRenderingAndWorkAreas();
                 LOG_INFO("Window resized to {}x{}", m_Width, m_Height);
-                m_EventBus.dispatchAsync(WindowResizeEvent(event.window.windowID, m_Width, m_Height));
+                m_EventBus.dispatchAsync(WindowResizeEvent(e.window.windowID, m_Width, m_Height));
 
+                break;
+            }
+            case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
+            {
+                LOG_INFO("Window display scale changed event detected.");
+                float newScale = SDL_GetWindowDisplayScale(appContext.window);
+                updateStyleAndFonts(newScale);
+                updateRenderingAndWorkAreas();
                 break;
             }
             case SDL_EVENT_WINDOW_SAFE_AREA_CHANGED:
@@ -230,33 +281,13 @@ namespace Base
             case SDL_EVENT_WINDOW_MINIMIZED:
             {
                 m_isMinimized = true;
-                m_EventBus.dispatchAsync(WindowMinimizeEvent(event.window.windowID));
+                m_EventBus.dispatchAsync(WindowMinimizeEvent(e.window.windowID));
                 break;
             }
             case SDL_EVENT_WINDOW_RESTORED:
             {
                 m_isMinimized = false;
-                m_EventBus.dispatchAsync(WindowRestoreEvent(event.window.windowID));
-                break;
-            }
-            case SDL_EVENT_KEY_DOWN:
-            {
-                if (!ImGui::GetIO().WantCaptureKeyboard) // Only dispatch if ImGui doesn't want it
-                {
-                    m_EventBus.dispatchAsync(KeyPressedEvent(
-                        event.key.scancode, event.key.key,
-                        event.key.mod, event.key.repeat != 0));
-                }
-                break;
-            }
-            case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            {
-                if (!ImGui::GetIO().WantCaptureMouse)
-                {
-                    m_EventBus.dispatchAsync(MouseButtonPressedEvent(
-                        event.button.button, event.button.clicks,
-                        event.button.x, event.button.y, event.button.windowID));
-                }
+                m_EventBus.dispatchAsync(WindowRestoreEvent(e.window.windowID));
                 break;
             }
             }
@@ -355,19 +386,22 @@ namespace Base
         beginImGuiFrame();
         renderUI();
 
-        // Render scene to FBO
-        glBindFramebuffer(GL_FRAMEBUFFER, m_FboID);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID);
         glViewport(0, 0, m_ViewportWidth, m_ViewportHeight);
         glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         render();
 
-        // Prepare to render to main window
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_MsFboID);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FboID);
+        glBlitFramebuffer(0, 0, m_ViewportWidth, m_ViewportHeight,
+                          0, 0, m_ViewportWidth, m_ViewportHeight,
+                          GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, m_Width, m_Height);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
         endImGuiFrame();
 
 #if PLATFORM_DESKTOP
@@ -406,6 +440,11 @@ namespace Base
 #if PLATFORM_DESKTOP
         glDeleteQueries(2, m_GpuTimeQueries);
 #endif
+        for (size_t i = 1; i < m_MsaaSampleLabels.size(); ++i)
+        {
+            delete[] m_MsaaSampleLabels[i];
+        }
+
         cleanupFramebuffer();
 
         ImGui_ImplOpenGL3_Shutdown();
@@ -450,18 +489,19 @@ namespace Base
         ImGui::StyleColorsDark();
         m_BaseStyle = ImGui::GetStyle();
 
-        float xscale = SDL_GetWindowDisplayScale(appContext.window);
-        m_StyleScale = xscale;
-        m_FontScale = xscale;
+        float initialScale = SDL_GetWindowDisplayScale(appContext.window);
+        m_StyleScale = initialScale;
 
         io.Fonts->AddFontDefault();
+        
+        updateStyleAndFonts(initialScale);
+
         ImGuiStyle &style = ImGui::GetStyle();
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
             style.WindowRounding = 0.0f;
             style.Colors[ImGuiCol_WindowBg].w = 1.0f;
         }
-        style.ScaleAllSizes(m_StyleScale);
 
         ImGui_ImplSDL3_InitForOpenGL(appContext.window, appContext.glcontext);
 #if defined(IMGUI_IMPL_OPENGL_ES3)
@@ -478,6 +518,11 @@ namespace Base
     {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
+        if (Base::Input::Get().IsRelativeMouseMode())
+        {
+            ImGuiIO &io = ImGui::GetIO();
+            io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
+        }
         ImGui::NewFrame();
 
         ImGuiViewport *viewport = ImGui::GetMainViewport();
@@ -555,9 +600,23 @@ namespace Base
                 m_ViewportHovered = ImGui::IsWindowHovered();
 
                 ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-                if (m_ViewportWidth != (int)viewportPanelSize.x || m_ViewportHeight != (int)viewportPanelSize.y)
+
+                int targetWidth = static_cast<int>(viewportPanelSize.x * m_RenderScale);
+                int targetHeight = static_cast<int>(viewportPanelSize.y * m_RenderScale);
+
+                if (m_ViewportWidth != targetWidth || m_ViewportHeight != targetHeight)
                 {
-                    resizeFramebuffer((int)viewportPanelSize.x, (int)viewportPanelSize.y);
+                    resizeFramebuffer(targetWidth, targetHeight);
+                }
+                
+                Camera *activeCamera = getActiveCamera();
+                if (activeCamera && viewportPanelSize.x > 0 && viewportPanelSize.y > 0)
+                {
+                    activeCamera->setProjection(
+                        activeCamera->getFov(),
+                        viewportPanelSize.x / viewportPanelSize.y,
+                        0.1f, // You might want to get near/far from the camera too
+                        100.0f);
                 }
                 ImGui::Image((ImTextureID)(intptr_t)m_ColorAttachmentID, viewportPanelSize, ImVec2(0, 1), ImVec2(1, 0));
             }
@@ -587,38 +646,45 @@ namespace Base
                 ImGui::Text("UI Scale");
                 if (ImGui::SliderFloat("##StyleScale", &m_StyleScale, 1.0f, 5.0f, "%.2f"))
                 {
-                    ImGui::GetStyle() = m_BaseStyle;
-                    ImGui::GetStyle().ScaleAllSizes(m_StyleScale);
+                    updateStyleAndFonts(m_StyleScale);
                 }
-
-                ImGui::Text("Font Scale");
-                static float lastFontScale = m_FontScale;
-                if (ImGui::SliderFloat("##FontScale", &m_FontScale, 1.0f, 5.0f, "%.2f"))
-                {
-                    float relativeScale = m_FontScale / lastFontScale;
-                    io.FontGlobalScale *= relativeScale;
-                    lastFontScale = m_FontScale;
-                }
-
                 ImGui::SameLine();
                 if (ImGui::Button("Reset"))
                 {
-                    // Get the monitor's native scale
-                    float xscale = SDL_GetWindowDisplayScale(appContext.window);
-
-                    // Reset Style
-                    m_StyleScale = xscale;
-                    ImGui::GetStyle() = m_BaseStyle;
-                    ImGui::GetStyle().ScaleAllSizes(m_StyleScale);
-
-                    // Reset Font
-                    m_FontScale = xscale;
-                    lastFontScale = xscale;
-                    io.FontGlobalScale = 1.0f;
+                    float nativeScale = SDL_GetWindowDisplayScale(appContext.window);
+                    m_StyleScale = nativeScale;
+                    updateStyleAndFonts(m_StyleScale);
                 }
                 ImGui::Separator();
                 ImGui::Checkbox("Show Work Area Border", &show_borders);
                 ImGui::Separator();
+
+                ImGui::Text("Graphics Settings");
+
+                if (ImGui::Combo("MSAA", &m_SelectedMsaaIndex, m_MsaaSampleLabels.data(), m_MsaaSampleLabels.size()))
+                {
+                    int newSampleCount = m_MsaaSampleOptions[m_SelectedMsaaIndex];
+
+                    if (newSampleCount != m_MsaaSamples)
+                    {
+                        m_MsaaSamples = newSampleCount;
+                        LOG_INFO("Changing MSAA sample count to {}x", m_MsaaSamples);
+
+                        cleanupFramebuffer();
+                        createFramebuffer();
+                    }
+                }
+
+                ImGui::SliderFloat("Render Scale", &m_RenderScale, 0.5f, 2.0f, "%.2f");
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::SetTooltip("Changes the internal rendering resolution as a multiplier of the viewport size.\n"
+                                      "< 1.0 = Upscaling (faster, blurrier)\n"
+                                      "> 1.0 = Supersampling (slower, sharper)");
+                }
+
+                // Add a read-only text field to show the resulting framebuffer size.
+                ImGui::Text("Framebuffer Size: %d x %d", m_ViewportWidth, m_ViewportHeight);
             }
             ImGui::End();
             renderChapterUI();
@@ -631,6 +697,24 @@ namespace Base
         m_ViewportWidth = m_RenderArea.w > 0 ? m_RenderArea.w : 1;
         m_ViewportHeight = m_RenderArea.h > 0 ? m_RenderArea.h : 1;
 
+        glGenFramebuffers(1, &m_MsFboID);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID);
+
+        glGenTextures(1, &m_MsColorAttachmentID);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID);
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_MsaaSamples, GL_RGBA, m_ViewportWidth, m_ViewportHeight, GL_TRUE);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID, 0);
+
+        glGenRenderbuffers(1, &m_MsDepthAttachmentID);
+        glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_MsaaSamples, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_MsDepthAttachmentID);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            LOG_ERROR("MSAA Framebuffer is not complete!");
+
         glGenFramebuffers(1, &m_FboID);
         glBindFramebuffer(GL_FRAMEBUFFER, m_FboID);
 
@@ -641,15 +725,8 @@ namespace Base
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorAttachmentID, 0);
 
-        glGenRenderbuffers(1, &m_DepthAttachmentID);
-        glBindRenderbuffer(GL_RENDERBUFFER, m_DepthAttachmentID);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, m_ViewportWidth, m_ViewportHeight);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthAttachmentID);
-
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        {
-            LOG_ERROR("Framebuffer is not complete!");
-        }
+            LOG_ERROR("Resolve Framebuffer is not complete!");
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -662,11 +739,14 @@ namespace Base
         m_ViewportWidth = width;
         m_ViewportHeight = height;
 
-        glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID);
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_MsaaSamples, GL_RGBA, width, height, GL_TRUE);
 
-        glBindRenderbuffer(GL_RENDERBUFFER, m_DepthAttachmentID);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+        glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_MsaaSamples, GL_DEPTH24_STENCIL8, width, height);
+
+        glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
         LOG_INFO("Framebuffer resized to {}x{}", width, height);
     }
@@ -676,5 +756,17 @@ namespace Base
         glDeleteFramebuffers(1, &m_FboID);
         glDeleteTextures(1, &m_ColorAttachmentID);
         glDeleteRenderbuffers(1, &m_DepthAttachmentID);
+        glDeleteFramebuffers(1, &m_MsFboID);
+        glDeleteTextures(1, &m_MsColorAttachmentID);
+        glDeleteRenderbuffers(1, &m_MsDepthAttachmentID);
+    }
+
+    float Application::getViewportAspectRatio() const
+    {
+        if (m_ViewportHeight <= 0)
+        {
+            return 1.0f;
+        }
+        return static_cast<float>(m_ViewportWidth) / static_cast<float>(m_ViewportHeight);
     }
 } // namespace Base

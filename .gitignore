@@ -8,3 +8,4 @@
 **/.cxx
 **/build.log
 **/local.properties
+/logs

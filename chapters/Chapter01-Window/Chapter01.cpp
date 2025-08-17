@@ -14,6 +14,9 @@ void Chapter01_Application::shutdown() {
 void Chapter01_Application::update(float deltaTime) {
 }
 
+void Chapter01_Application::handleInput(float deltaTime) {
+}
+
 void Chapter01_Application::render() {
     glClearColor(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
