@@ -1082,4 +1082,36 @@ namespace Base
         return SDL_GetWindowRelativeMouseMode(m_Window);
     }
 
+    Uint32 Input::GetRelativeMouseState(float *x, float *y)
+    {
+        if (!Input::Get().IsRelativeMouseMode())
+        {
+            if (x)
+            {
+                *x = 0.0f;
+            }
+            if (y)
+            {
+                *y = 0.0f;
+            }
+            return 0;
+        }
+
+        float deltaX = 0.0f;
+        float deltaY = 0.0f; 
+
+        Uint32 buttonState = SDL_GetRelativeMouseState(&deltaX, &deltaY);
+
+        if (x)
+        {
+            *x = deltaX;
+        }
+        if (y)
+        {
+            *y = deltaY;
+        }
+
+        return buttonState;
+    }
+
 }

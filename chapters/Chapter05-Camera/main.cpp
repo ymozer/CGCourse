@@ -40,12 +40,8 @@ protected:
 
         subscribeToMouseButtons([this](Base::MouseButtonPressedEvent &e)
                                 {
-            if (isViewportHovered() && e.button == SDL_BUTTON_LEFT) {
-                ImGui::ClearActiveID();
-
-                ImGui::SetWindowFocus("Viewport");
-                Base::Input::Get().SetRelativeMouseMode(true);
-                SDL_GetRelativeMouseState(nullptr, nullptr);
+            if (isViewportHovered() && e.button == SDL_BUTTON_RIGHT)
+            {
                 e.handled = true;
             } });
 
@@ -53,6 +49,7 @@ protected:
                         {
             if (e.key == SDLK_ESCAPE && !e.isRepeat) {
                 Base::Input::Get().SetRelativeMouseMode(false);
+                // TODO fix require double clicks 
                 e.handled = true;
             } });
     }
@@ -251,7 +248,7 @@ private:
 
     // Scene Objects
     float m_ClearColor[4] = {0.1f, 0.1f, 0.1f, 1.0f};
-    
+
     void setupCube()
     {
         //clang-format off
@@ -342,11 +339,6 @@ private:
 
     void drawMouseCapturePopup()
     {
-        if (!Base::Input::Get().IsRelativeMouseMode())
-        {
-            return;
-        }
-
         const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration |       // No title bar, borders, or resize grips
                                        ImGuiWindowFlags_NoMove |             // Can't be dragged
                                        ImGuiWindowFlags_AlwaysAutoResize |   // Shrink-wrap to content
@@ -364,11 +356,24 @@ private:
 
         ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pivot);
         ImGui::SetNextWindowBgAlpha(0.35f);
-        if (ImGui::Begin("MouseCapturePopup", nullptr, flags))
+
+        if (!Base::Input::Get().IsRelativeMouseMode())
         {
-            ImGui::Text("Press ESC to release mouse");
+            if (ImGui::Begin("MouseCapturePopup", nullptr, flags))
+            {
+                ImGui::Text("Press Right-click to capture mouse");
+            }
+            ImGui::End();
+            return;
         }
-        ImGui::End();
+        else
+        {
+            if (ImGui::Begin("MouseCapturePopup", nullptr, flags))
+            {
+                ImGui::Text("Press ESC to release mouse");
+            }
+            ImGui::End();
+        }
     }
 };
 

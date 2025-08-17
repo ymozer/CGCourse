@@ -43,6 +43,7 @@ namespace Base
         glm::vec2 GetMouseWheel() const;
         bool IsRelativeMouseMode() const;
         bool SetRelativeMouseMode(bool enabled);
+        Uint32 GetRelativeMouseState(float *x, float *y);
 
         bool IsGamepadConnected(SDL_JoystickID instanceId) const;
         bool IsGamepadButtonDown(SDL_JoystickID instanceId, SDL_GamepadButton button) const;

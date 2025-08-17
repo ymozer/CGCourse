@@ -40,7 +40,7 @@
 #include "Input.hpp"
 #include "Debug.hpp"
 #include "Log.hpp"
-#include "File.hpp"
+#include "PathUtils.hpp"
 // clang-format on
 
 namespace Base
@@ -452,6 +452,7 @@ namespace Base
         ImGui_ImplSDL3_Shutdown();
         ImGui::DestroyContext();
 
+
         SDL_GL_DestroyContext(appContext.glcontext);
         SDL_DestroyWindow(appContext.window);
         SDL_Quit();
@@ -469,17 +470,17 @@ namespace Base
         io.IniFilename = nullptr;
 #else
 
-        std::string pref_path = getPrefPath("imgui.ini");
-        if (pref_path.empty())
+        m_ImGuiIniPath  = getPrefPath("imgui.ini");
+        if (m_ImGuiIniPath.empty())
         {
             io.IniFilename = "imgui.ini";
         }
         else
         {
-            io.IniFilename = pref_path.c_str();
+            io.IniFilename = m_ImGuiIniPath.c_str();
         }
         LOG_INFO("ImGui .ini path set to: {}", io.IniFilename);
-        
+
 #endif
         ImGui::StyleColorsDark();
         m_BaseStyle = ImGui::GetStyle();
@@ -590,9 +591,18 @@ namespace Base
             }
 
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0, 0});
+            bool is_viewport_hovered = false;
             ImGui::Begin("Viewport");
             {
-                m_ViewportHovered = ImGui::IsWindowHovered();
+                bool is_viewport_focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_None);
+                is_viewport_hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_None);
+                if (is_viewport_hovered && io.MouseDown[ImGuiMouseButton_Right] && !Base::Input::Get().IsRelativeMouseMode())
+                {
+                    ImGui::SetWindowFocus("Viewport");
+                    Base::Input::Get().SetRelativeMouseMode(true);
+                    Base::Input::Get().GetRelativeMouseState(nullptr, nullptr);
+
+                }
 
                 ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
@@ -620,6 +630,11 @@ namespace Base
 
             ImGui::Begin("Debug Info");
             {
+                // want to capture keyboard & mosue 
+                ImGui::Text("ImGui Wants Capture: %s", ImGui::GetIO().WantCaptureKeyboard ? "Yes" : "No");
+                ImGui::Text("ImGui Wants Mouse Capture: %s", ImGui::GetIO().WantCaptureMouse ? "Yes" : "No");
+                ImGui::Text("Viewport Hovered: %s", is_viewport_hovered ? "Yes" : "No");
+
                 ImGui::Text("Window Size: %d x %d", m_Width, m_Height);
                 ImGui::Text("Work Area: x:%d y:%d w:%d h:%d", m_WorkArea.x, m_WorkArea.y, m_WorkArea.w, m_WorkArea.h);
                 ImGui::Text("Viewport Size: %d x %d", m_ViewportWidth, m_ViewportHeight);
