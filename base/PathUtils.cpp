@@ -1,9 +1,7 @@
-#pragma once
-
 #include <string>
 #include <SDL3/SDL.h>
 #include "Log.hpp"
-
+#include "PathUtils.hpp"
 
 std::string getPrefPath()
 {

@@ -200,6 +200,18 @@ namespace Base
         }
         glUniform4fv(location, 1, glm::value_ptr(value));
     }
+
+    void Shader::setMat3(const std::string &name, const glm::mat3 &mat) const
+    {
+        GLint location = glGetUniformLocation(m_ID, name.c_str());
+        if (location == -1)
+        {
+            LOG_WARN("Uniform '{}' not found or inactive in shader.", name);
+            return;
+        }
+        glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(mat));
+    }
+
     void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const
     {
         glUniformMatrix4fv(glGetUniformLocation(m_ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);

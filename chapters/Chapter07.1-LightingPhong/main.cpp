@@ -13,21 +13,23 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <SDL3/SDL.h>
 
-class Chapter06_Application : public Base::Application
+class Chapter071_Application : public Base::Application
 {
 public:
-    Chapter06_Application() : Application("Chapter 05: Camera") {}
+    Chapter071_Application() : Application("Chapter 07.1: Lighting Phong") {}
 
 protected:
     void setup() override
     {
         m_Shader = std::make_unique<Base::Shader>();
         m_Shader->loadFromFile(
-            "shaders/chapter05.vert",
-            "shaders/chapter05.frag");
+            "shaders/chapter071.vert",
+            "shaders/chapter071.frag");
 
         m_GuideShader = std::make_unique<Base::Shader>();
-        m_GuideShader->loadFromFile("shaders/guide.vert", "shaders/guide.frag");
+        m_GuideShader->loadFromFile(
+            "shaders/guide.vert",
+            "shaders/guide.frag");
 
         setupCube();
         setupCoordinateGuide();
@@ -36,12 +38,12 @@ protected:
         m_Texture->loadFromFile("assets/images/uv.png");
 
         m_Camera.setPosition({0.0f, 0.0f, 3.0f});
+        m_Camera.lookAt({0.0f, 0.0f, 0.0f});
         m_Camera.setProjection(45.0f, getViewportAspectRatio(), 0.1f, 100.0f);
 
         subscribeToMouseButtons([this](Base::MouseButtonPressedEvent &e)
                                 {
-            if (isViewportHovered() && e.button == SDL_BUTTON_RIGHT)
-            {
+            if (isViewportHovered() && e.button == SDL_BUTTON_LEFT) {
                 e.handled = true;
             } });
 
@@ -49,7 +51,6 @@ protected:
                         {
             if (e.key == SDLK_ESCAPE && !e.isRepeat) {
                 Base::Input::Get().SetRelativeMouseMode(false);
-                // TODO fix require double clicks 
                 e.handled = true;
             } });
     }
@@ -95,7 +96,7 @@ protected:
         {
             glm::vec2 mouseDelta = input.GetMouseDelta();
             frameInput.mouseDeltaX = mouseDelta.x;
-            frameInput.mouseDeltaY = -mouseDelta.y;
+            frameInput.mouseDeltaY = -mouseDelta.y; // TODO: Add imGui support for this
         }
         return frameInput;
     }
@@ -116,11 +117,22 @@ protected:
 
     void render() override
     {
+        if (m_FaceCullingEnabled)
+        {
+            glEnable(GL_CULL_FACE);
+            glCullFace(m_CullFaceMode == 0 ? GL_BACK : GL_FRONT);
+            glFrontFace(m_WindingOrderMode == 0 ? GL_CCW : GL_CW);
+        }
+        else
+        {
+            glDisable(GL_CULL_FACE);
+        }
+
         glEnable(GL_DEPTH_TEST);
 
         glClearColor(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
+
         glm::mat4 view = m_Camera.getViewMatrix();
         glm::mat4 projection = m_Camera.getProjectionMatrix();
 
@@ -128,12 +140,16 @@ protected:
         m_Shader->setMat4("model", m_ModelMatrix);
         m_Shader->setMat4("view", view);
         m_Shader->setMat4("projection", projection);
+        m_Shader->setMat3("u_NormalMatrix", glm::transpose(glm::inverse(glm::mat3(m_ModelMatrix))));
+        m_Shader->setVec3("u_LightPos", m_LightPos);
+        m_Shader->setVec3("u_ViewPos", m_Camera.getPosition());
+        m_Shader->setVec4("u_LightColor", glm::make_vec4(m_LightColor));
         m_Shader->setInt("u_Texture", 0);
         m_Shader->setVec4("u_TintColor", glm::make_vec4(m_TintColor));
         m_Texture->bind(0);
         glBindVertexArray(m_VaoID);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
+        
         if (m_ShowCoordinateGuide)
         {
             m_GuideShader->use();
@@ -159,6 +175,12 @@ protected:
             ImGui::Checkbox("Show Coordinate Guide", &m_ShowCoordinateGuide);
         }
 
+        if (ImGui::CollapsingHeader("Light Settings"))
+        {
+            ImGui::DragFloat3("Light Position", &m_LightPos.x, 0.01f);
+            ImGui::ColorEdit4("Light Color", m_LightColor);
+        }
+
         if (ImGui::CollapsingHeader("Cube Transformation", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::DragFloat3("Position", &m_Position.x, 0.01f);
@@ -178,7 +200,6 @@ protected:
             ImGui::TextWrapped("Use WASD + Space/LCTRL to move the camera.\n"
                                "Mouse movement is relative when in 'Relative Mouse Mode'.\n"
                                "Press ESC to exit Relative Mouse Mode.");
-
             ImGui::SeparatorText("Camera Mode");
 
             int currentMode = static_cast<int>(m_Camera.getMode());
@@ -216,6 +237,28 @@ protected:
             ImGui::InputFloat3("Position (Read-Only)", &camPos.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
         }
 
+        if (ImGui::CollapsingHeader("Culling Settings", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            ImGui::Checkbox("Enable Face Culling", &m_FaceCullingEnabled);
+
+            ImGui::BeginDisabled(!m_FaceCullingEnabled);
+            {
+                ImGui::SeparatorText("Face to Cull");
+                ImGui::RadioButton("Back", &m_CullFaceMode, 0);
+                ImGui::SameLine();
+                ImGui::RadioButton("Front", &m_CullFaceMode, 1);
+
+                ImGui::SeparatorText("Front Face Winding Order");
+                ImGui::RadioButton("Counter-Clockwise (CCW)", &m_WindingOrderMode, 0);
+                ImGui::SameLine();
+                ImGui::RadioButton("Clockwise (CW)", &m_WindingOrderMode, 1);
+
+                ImGui::TextWrapped("NOTE: The cube's vertices are defined in CCW order. "
+                                   "Culling BACK faces with CCW winding is the standard setting.");
+            }
+            ImGui::EndDisabled();
+        }
+
         ImGui::End();
 
         drawMouseCapturePopup();
@@ -243,76 +286,93 @@ private:
 
     // Scene Objects
     float m_ClearColor[4] = {0.1f, 0.1f, 0.1f, 1.0f};
+    glm::vec3 m_LightPos = glm::vec3(1.2f, 1.0f, 2.0f);
+    float m_LightColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+    // Face Culling Settings
+    bool m_FaceCullingEnabled = true;
+    int m_CullFaceMode = 0;     // 0 for GL_BACK, 1 for GL_FRONT
+    int m_WindingOrderMode = 0; // 0 for GL_CCW, 1 for GL_CW
 
     void setupCube()
     {
         //clang-format off
         float vertices[] = {
-            // positions          // texture Coords
-            // Front Face (+Z)
-            -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, // 0
-            0.5f, -0.5f, 0.5f, 1.0f, 0.0f,  // 1
-            0.5f, 0.5f, 0.5f, 1.0f, 1.0f,   // 2
-            -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,  // 3
+            // positions          // normals           // texture Coords
+            // Front Face (+Z) - Normal (0, 0, 1)
+            -0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,    0.0f, 0.0f, // 0
+             0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,    1.0f, 0.0f, // 1
+             0.5f,  0.5f, 0.5f,   0.0f, 0.0f, 1.0f,    1.0f, 1.0f, // 2
+            -0.5f,  0.5f, 0.5f,   0.0f, 0.0f, 1.0f,    0.0f, 1.0f, // 3
 
-            // Back Face (-Z)
-            -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, // 4
-            0.5f, -0.5f, -0.5f, 0.0f, 0.0f,  // 5
-            0.5f, 0.5f, -0.5f, 0.0f, 1.0f,   // 6
-            -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,  // 7
+            // Back Face (-Z) - Normal (0, 0, -1)
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,   1.0f, 0.0f, // 4
+             0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,   0.0f, 0.0f, // 5
+             0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,   0.0f, 1.0f, // 6
+            -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,   1.0f, 1.0f, // 7
 
-            // Left Face (-X)
-            -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // 8
-            -0.5f, -0.5f, 0.5f, 1.0f, 0.0f,  // 9
-            -0.5f, 0.5f, 0.5f, 1.0f, 1.0f,   // 10
-            -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,  // 11
+            // Left Face (-X) - Normal (-1, 0, 0)
+            -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,   0.0f, 0.0f, // 8
+            -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // 9
+            -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // 10
+            -0.5f,  0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,   0.0f, 1.0f, // 11
 
-            // Right Face (+X)
-            0.5f, -0.5f, 0.5f, 0.0f, 0.0f,  // 12
-            0.5f, -0.5f, -0.5f, 1.0f, 0.0f, // 13
-            0.5f, 0.5f, -0.5f, 1.0f, 1.0f,  // 14
-            0.5f, 0.5f, 0.5f, 0.0f, 1.0f,   // 15
+            // Right Face (+X) - Normal (1, 0, 0)
+             0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 0.0f, // 12
+             0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // 13
+             0.5f,  0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // 14
+             0.5f,  0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f, // 15
 
-            // Top Face (+Y)
-            -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,  // 16
-            0.5f, 0.5f, 0.5f, 1.0f, 0.0f,   // 17
-            0.5f, 0.5f, -0.5f, 1.0f, 1.0f,  // 18
-            -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, // 19
+            // Top Face (+Y) - Normal (0, 1, 0)
+            -0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f,   0.0f, 0.0f, // 16
+             0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // 17
+             0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, // 18
+            -0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f,   0.0f, 1.0f, // 19
 
-            // Bottom Face (-Y)
-            -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // 20
-            0.5f, -0.5f, -0.5f, 1.0f, 0.0f,  // 21
-            0.5f, -0.5f, 0.5f, 1.0f, 1.0f,   // 22
-            -0.5f, -0.5f, 0.5f, 0.0f, 1.0f   // 23
+            // Bottom Face (-Y) - Normal (0, -1, 0)
+            -0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f,  0.0f, 0.0f, // 20
+             0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f,  1.0f, 0.0f, // 21
+             0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f,  1.0f, 1.0f, // 22
+            -0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f,  0.0f, 1.0f  // 23
         };
 
-        // Index pattern 0, 1, 2 and 2, 3, 0 is CCW for the vertex order above.
         unsigned int indices[] = {
-            0, 1, 2, 2, 3, 0,       // Front
-            5, 4, 7, 7, 6, 5,       // Back  (Note: Flipped order 5,4,7 to be CCW from outside)
-            8, 9, 10, 10, 11, 8,    // Left
+            0, 1, 2,   2, 3, 0,       // Front
+            5, 4, 7,   7, 6, 5,       // Back
+            8, 9, 10,  10, 11, 8,    // Left
             12, 13, 14, 14, 15, 12, // Right
             16, 17, 18, 18, 19, 16, // Top
-            20, 21, 22, 22, 23, 20  // Bottom (Note: Flipped order to be CCW from outside)
+            20, 21, 22, 22, 23, 20  // Bottom
         };
-        //
         //clang-format on
 
         glGenVertexArrays(1, &m_VaoID);
         glGenBuffers(1, &m_VboID);
         glGenBuffers(1, &m_EboID);
+
         glBindVertexArray(m_VaoID);
+
         glBindBuffer(GL_ARRAY_BUFFER, m_VboID);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EboID);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+
+        // Position attribute
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+        // Normal attribute
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
+        // Texture coordinate attribute
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+        
+        // Unbind VBO and VAO
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
     }
+
 
     void setupCoordinateGuide()
     {
@@ -334,6 +394,11 @@ private:
 
     void drawMouseCapturePopup()
     {
+        if (!Base::Input::Get().IsRelativeMouseMode())
+        {
+            return;
+        }
+
         const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration |       // No title bar, borders, or resize grips
                                        ImGuiWindowFlags_NoMove |             // Can't be dragged
                                        ImGuiWindowFlags_AlwaysAutoResize |   // Shrink-wrap to content
@@ -378,7 +443,7 @@ int main(int argc, char *argv[])
 
     try
     {
-        auto app = std::make_unique<Chapter06_Application>();
+        auto app = std::make_unique<Chapter071_Application>();
         app->run();
     }
     catch (const std::exception &e)
