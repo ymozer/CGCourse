@@ -1,4 +1,5 @@
 #include "Log.hpp"
+#include "File.hpp"
 #include <vector>
 
 Logger &Logger::getInstance()
@@ -60,7 +61,8 @@ void Logger::initialize(const LoggerConfig &config)
                 sinks.push_back(console_sink);
             }
             if (config.enableFileLogging) {
-                std::filesystem::path logFilePath = std::filesystem::path(config.logDirectory) / config.logFilename;
+                std::string logFileString = getPrefPath(config.logFilename.c_str());
+                std::filesystem::path logFilePath = logFileString;
                 std::filesystem::create_directories(logFilePath.parent_path());
                 if (config.useRotatingFiles) {
                     auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(

@@ -40,6 +40,7 @@
 #include "Input.hpp"
 #include "Debug.hpp"
 #include "Log.hpp"
+#include "File.hpp"
 // clang-format on
 
 namespace Base
@@ -223,11 +224,11 @@ namespace Base
 
     void Application::updateStyleAndFonts(float scale)
     {
-        ImGuiStyle& style = ImGui::GetStyle();
+        ImGuiStyle &style = ImGui::GetStyle();
         style = m_BaseStyle; // Reset to base style
         style.ScaleAllSizes(scale);
 
-        ImGuiIO& io = ImGui::GetIO();
+        ImGuiIO &io = ImGui::GetIO();
         io.FontGlobalScale = 1.0f / ImGui::GetIO().DisplayFramebufferScale.x * scale;
     }
 
@@ -467,24 +468,18 @@ namespace Base
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
         io.IniFilename = nullptr;
 #else
-        // This returns a platform-specific, writable directory for app preferences.
-        // e.g., on Windows: C:/Users/YourUser/AppData/Roaming/YourOrg/YourApp
-        // e.g., on Linux:   ~/.local/share/YourOrg/YourApp
-        // e.g., on macOS:   ~/Library/Application Support/YourOrg/YourApp
-        char *pref_path = SDL_GetPrefPath("com.libsdl.app", "CGCourse");
-        if (pref_path)
-        {
-            m_ImGuiIniPath = std::string(pref_path) + "imgui.ini";
-            SDL_free(pref_path);
 
-            io.IniFilename = m_ImGuiIniPath.c_str();
-            LOG_INFO("ImGui .ini path set to: {}", io.IniFilename);
+        std::string pref_path = getPrefPath("imgui.ini");
+        if (pref_path.empty())
+        {
+            io.IniFilename = "imgui.ini";
         }
         else
         {
-            io.IniFilename = "imgui.ini";
-            LOG_WARN("Could not get preference path from SDL. Defaulting to local 'imgui.ini'");
+            io.IniFilename = pref_path.c_str();
         }
+        LOG_INFO("ImGui .ini path set to: {}", io.IniFilename);
+        
 #endif
         ImGui::StyleColorsDark();
         m_BaseStyle = ImGui::GetStyle();
@@ -493,7 +488,7 @@ namespace Base
         m_StyleScale = initialScale;
 
         io.Fonts->AddFontDefault();
-        
+
         updateStyleAndFonts(initialScale);
 
         ImGuiStyle &style = ImGui::GetStyle();
@@ -608,7 +603,7 @@ namespace Base
                 {
                     resizeFramebuffer(targetWidth, targetHeight);
                 }
-                
+
                 Camera *activeCamera = getActiveCamera();
                 if (activeCamera && viewportPanelSize.x > 0 && viewportPanelSize.y > 0)
                 {

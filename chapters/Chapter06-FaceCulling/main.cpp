@@ -341,7 +341,6 @@ private:
 
         //clang-format on
 
-        // --- OpenGL Object Setup (This part of your code was correct) ---
         glGenVertexArrays(1, &m_VaoID);
         glGenBuffers(1, &m_VboID);
         glGenBuffers(1, &m_EboID);
@@ -354,7 +353,6 @@ private:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EboID);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-        // The attribute pointers correctly describe the vertex layout (5 floats: XYZ UV)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
