@@ -9,3 +9,4 @@
 **/build.log
 **/local.properties
 /logs
+**/.DS_Store
