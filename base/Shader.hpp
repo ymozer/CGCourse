@@ -34,6 +34,7 @@ public:
         #endif
     }
 
+    GLint getUniformLocation(const std::string &name) const;
     bool loadFromFile(const std::string& vertexPath, const std::string& fragmentPath);
     bool compileFromSource(const char* vShaderCode, const char* fShaderCode);
     
@@ -55,6 +56,7 @@ public:
 private:
     GLuint m_ID = 0;
     bool checkCompileErrors(GLuint shader, const std::string& type);
+    mutable std::unordered_map<std::string, GLint> m_UniformLocationCache;
 };
 
 } // namespace Base

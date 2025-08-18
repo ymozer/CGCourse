@@ -85,9 +85,12 @@ namespace Base
             throw std::runtime_error("Failed to initialize SDL: " + std::string(SDL_GetError()));
         }
 
-        // MSAA setup
+// FIX: Emscripten/WebGL does not support multisampled back buffers in the same way.
+// We will handle MSAA with a custom framebuffer, so disable this for all platforms to be consistent.
+#if !PLATFORM_EMSCRIPTEN
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, m_MsaaSamples);
+#endif
 
 #if PLATFORM_DESKTOP
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -183,6 +186,7 @@ namespace Base
         m_PerfCounterFreq = SDL_GetPerformanceFrequency();
         m_LastFrameTimeCounter = SDL_GetPerformanceCounter();
 
+#if !PLATFORM_EMSCRIPTEN
         { // MSAA setup
             GLint maxSamples;
             glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
@@ -211,6 +215,13 @@ namespace Base
                 }
             }
         }
+#else
+        // FIX: Emscripten doesn't support MSAA, so we force it to 1x and provide a default label.
+        m_MsaaSamples = 1;
+        m_SelectedMsaaIndex = 0;
+        m_MsaaSampleOptions.push_back(1);
+        m_MsaaSampleLabels.push_back("Off (1x)");
+#endif
 
         updateRenderingAndWorkAreas();
         createFramebuffer();
@@ -324,7 +335,7 @@ namespace Base
         m_RenderArea.h = std::max(0, overlap_y2 - overlap_y1);
         LOG_INFO("Render Area updated to: x={}, y={}, w={}, h={}", m_RenderArea.x, m_RenderArea.y, m_RenderArea.w, m_RenderArea.h);
 
-#if PLATFORM_IOS || PLATFORM_ANDROID
+#if PLATFORM_IOS || PLATFORM_ANDROID || PLATFORM_EMSCRIPTEN
         // On mobile, the UI is constrained to the safe area.
         if (!SDL_GetWindowSafeArea(appContext.window, &m_WorkArea))
         {
@@ -387,18 +398,29 @@ namespace Base
         beginImGuiFrame();
         renderUI();
 
-        glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID);
+// FIX: Change render path for Emscripten to avoid using multisampling
+#if !PLATFORM_EMSCRIPTEN
+        // --- MSAA Render Path ---
+        glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID); // Render to the multisampled FBO
+#else
+        // --- Non-MSAA Render Path (Emscripten) ---
+        glBindFramebuffer(GL_FRAMEBUFFER, m_FboID); // Render directly to the final FBO
+#endif
         glViewport(0, 0, m_ViewportWidth, m_ViewportHeight);
         glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         render();
 
+#if !PLATFORM_EMSCRIPTEN
+        // --- Blit from multisampled FBO to the final FBO for display ---
         glBindFramebuffer(GL_READ_FRAMEBUFFER, m_MsFboID);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FboID);
         glBlitFramebuffer(0, 0, m_ViewportWidth, m_ViewportHeight,
                           0, 0, m_ViewportWidth, m_ViewportHeight,
                           GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
+#endif
+        // --- End of Render Path Change ---
+        
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, m_Width, m_Height);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -671,6 +693,7 @@ namespace Base
 
                 ImGui::Text("Graphics Settings");
 
+#if !PLATFORM_EMSCRIPTEN
                 if (ImGui::Combo("MSAA", &m_SelectedMsaaIndex, m_MsaaSampleLabels.data(), m_MsaaSampleLabels.size()))
                 {
                     int newSampleCount = m_MsaaSampleOptions[m_SelectedMsaaIndex];
@@ -684,6 +707,10 @@ namespace Base
                         createFramebuffer();
                     }
                 }
+#else
+                // FIX: Disable the MSAA combo box on Emscripten as it's not supported.
+                ImGui::Text("MSAA: Off (Not supported on Web)");
+#endif
 
                 ImGui::SliderFloat("Render Scale", &m_RenderScale, 0.5f, 2.0f, "%.2f");
                 if (ImGui::IsItemHovered())
@@ -707,6 +734,8 @@ namespace Base
         m_ViewportWidth = m_RenderArea.w > 0 ? m_RenderArea.w : 1;
         m_ViewportHeight = m_RenderArea.h > 0 ? m_RenderArea.h : 1;
 
+#if !PLATFORM_EMSCRIPTEN
+        // --- Standard MSAA Path ---
         glGenFramebuffers(1, &m_MsFboID);
         glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID);
 
@@ -724,7 +753,8 @@ namespace Base
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             LOG_ERROR("MSAA Framebuffer is not complete!");
-
+#endif
+        // --- Final (Resolve) Framebuffer, used by all platforms ---
         glGenFramebuffers(1, &m_FboID);
         glBindFramebuffer(GL_FRAMEBUFFER, m_FboID);
 
@@ -735,6 +765,14 @@ namespace Base
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorAttachmentID, 0);
 
+#if PLATFORM_EMSCRIPTEN
+        // FIX: Emscripten needs its own depth buffer attached to the main FBO
+        glGenRenderbuffers(1, &m_MsDepthAttachmentID); // Re-use this ID
+        glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_MsDepthAttachmentID);
+#endif
+        
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             LOG_ERROR("Resolve Framebuffer is not complete!");
 
@@ -749,12 +787,20 @@ namespace Base
         m_ViewportWidth = width;
         m_ViewportHeight = height;
 
+#if !PLATFORM_EMSCRIPTEN
+        // --- Resize MSAA attachments ---
         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID);
         glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_MsaaSamples, GL_RGBA, width, height, GL_TRUE);
 
         glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
         glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_MsaaSamples, GL_DEPTH24_STENCIL8, width, height);
-
+#else
+        // FIX: Resize Emscripten's single depth buffer
+        glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+#endif
+        
+        // --- Resize final color attachment (used by all) ---
         glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
@@ -763,12 +809,20 @@ namespace Base
 
     void Application::cleanupFramebuffer()
     {
-        glDeleteFramebuffers(1, &m_FboID);
-        glDeleteTextures(1, &m_ColorAttachmentID);
-        glDeleteRenderbuffers(1, &m_DepthAttachmentID);
+        // FIX: Conditionally clean up MSAA-specific resources
+#if !PLATFORM_EMSCRIPTEN
         glDeleteFramebuffers(1, &m_MsFboID);
         glDeleteTextures(1, &m_MsColorAttachmentID);
+#endif
+        // m_MsDepthAttachmentID is used by both paths (MSAA depth / Emscripten depth), so it's always deleted.
         glDeleteRenderbuffers(1, &m_MsDepthAttachmentID);
+        
+        // --- Clean up common resources ---
+        glDeleteFramebuffers(1, &m_FboID);
+        glDeleteTextures(1, &m_ColorAttachmentID);
+
+        // This is a bug in the original code, as m_DepthAttachmentID is never created.
+        // glDeleteRenderbuffers(1, &m_DepthAttachmentID); 
     }
 
     float Application::getViewportAspectRatio() const

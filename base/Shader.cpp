@@ -15,6 +15,25 @@ namespace Base
         }
     }
 
+    GLint Shader::getUniformLocation(const std::string &name) const
+    {
+        if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end())
+        {
+            return m_UniformLocationCache[name];
+        }
+
+        GLint location = glGetUniformLocation(m_ID, name.c_str());
+        if (location == -1)
+        {
+            // Use your logger to warn that a specific uniform was not found.
+            // This is the key diagnostic message you need.
+            LOG_WARN("Uniform '{}' not found in shader program!", name);
+        }
+
+        m_UniformLocationCache[name] = location;
+        return location;
+    }
+
     bool Shader::loadFromFile(const std::string &vertexPath, const std::string &fragmentPath)
     {
         std::vector<char> vertexBuffer;
@@ -172,44 +191,32 @@ namespace Base
 
     void Shader::setBool(const std::string &name, bool value) const
     {
-        glUniform1i(glGetUniformLocation(m_ID, name.c_str()), (int)value);
+        glUniform1i(getUniformLocation(name), static_cast<int>(value));
     }
     void Shader::setInt(const std::string &name, int value) const
     {
-        glUniform1i(glGetUniformLocation(m_ID, name.c_str()), value);
+        glUniform1i(getUniformLocation(name), value);
     }
     void Shader::setFloat(const std::string &name, float value) const
     {
-        glUniform1f(glGetUniformLocation(m_ID, name.c_str()), value);
+        glUniform1f(getUniformLocation(name), value);
     }
     void Shader::setVec2(const std::string &name, const glm::vec2 &value) const
     {
-        glUniform2fv(glGetUniformLocation(m_ID, name.c_str()), 1, &value[0]);
+        glUniform2fv(getUniformLocation(name), 1, &value[0]);
     }
     void Shader::setVec3(const std::string &name, const glm::vec3 &value) const
     {
-        glUniform3fv(glGetUniformLocation(m_ID, name.c_str()), 1, &value[0]);
+        glUniform3fv(getUniformLocation(name), 1, &value[0]);
     }
     void Shader::setVec4(const std::string &name, const glm::vec4 &value) const
     {
-        GLint location = glGetUniformLocation(m_ID, name.c_str());
-        if (location == -1)
-        {
-            LOG_WARN("Uniform '{}' not found or inactive in shader.", name);
-            return;
-        }
-        glUniform4fv(location, 1, glm::value_ptr(value));
+        glUniform4fv(getUniformLocation(name), 1, glm::value_ptr(value));
     }
 
     void Shader::setMat3(const std::string &name, const glm::mat3 &mat) const
     {
-        GLint location = glGetUniformLocation(m_ID, name.c_str());
-        if (location == -1)
-        {
-            LOG_WARN("Uniform '{}' not found or inactive in shader.", name);
-            return;
-        }
-        glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(mat));
+        glUniformMatrix3fv(glGetUniformLocation(m_ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
     }
 
     void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const

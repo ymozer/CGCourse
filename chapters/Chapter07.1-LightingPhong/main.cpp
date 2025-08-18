@@ -26,11 +26,6 @@ protected:
             "shaders/chapter071.vert",
             "shaders/chapter071.frag");
 
-        m_GuideShader = std::make_unique<Base::Shader>();
-        m_GuideShader->loadFromFile(
-            "shaders/guide.vert",
-            "shaders/guide.frag");
-
         setupCube();
         setupCoordinateGuide();
 
