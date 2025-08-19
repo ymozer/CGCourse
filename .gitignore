@@ -1,12 +1,9 @@
 /.cache
 /.vscode
 **/build
-/linux-build
-/web-build
 **/.gradle
 **/.idea
 **/.cxx
-**/build.log
 **/local.properties
-/logs
+**/logs
 **/.DS_Store

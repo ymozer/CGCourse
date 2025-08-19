@@ -85,6 +85,16 @@ protected:
         ImGui::End();
     }
 
+    void update(float deltaTime) override
+    {
+        // Update logic for the application
+    }
+
+    void handleInput(float deltaTime) override
+    {
+        // Handle events specific to this chapter
+    }
+
 private:
     std::unique_ptr<Base::Shader> m_Shader;
     GLuint m_VaoID = 0;

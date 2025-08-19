@@ -1,3 +1,6 @@
+set(DEVELOPMENT_TEAM_ID "8MRFDR3542" CACHE STRING "Apple Developer Team ID for code signing")
+set(BUNDLE_IDENTIFIER_PREFIX "com.adu.muh" CACHE STRING "Base bundle identifier for Apple targets")
+
 function(add_chapter CHAPTER_NAME)
 
     file(GLOB CHAPTER_SOURCES CONFIGURE_DEPENDS 
@@ -16,14 +19,28 @@ function(add_chapter CHAPTER_NAME)
     else()
         add_executable(${CHAPTER_NAME} ${CHAPTER_SOURCES})
         target_link_libraries(${CHAPTER_NAME} PRIVATE base)
+        
+        if(APPLE)
+            set_target_properties(${CHAPTER_NAME} PROPERTIES
+                MACOSX_BUNDLE_GUI_IDENTIFIER "${BUNDLE_IDENTIFIER_PREFIX}.${CHAPTER_NAME}"
+                XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${DEVELOPMENT_TEAM_ID}
+                XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic"
+
+            )
+            target_compile_definitions(${CHAPTER_NAME} PRIVATE GLES_SILENCE_DEPRECATION=1)
+        endif()
+        
         set_target_properties(${CHAPTER_NAME} PROPERTIES
             FOLDER "Course Projects/Chapters"
             VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
         )
 
         install(TARGETS ${CHAPTER_NAME}
+            BUNDLE DESTINATION .
             RUNTIME DESTINATION bin  # Installs the executable to the 'bin' directory
             COMPONENT "Applications"
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
         )
 
         if (PLATFORM_IS_EMSCRIPTEN)

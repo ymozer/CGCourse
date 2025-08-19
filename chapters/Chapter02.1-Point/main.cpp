@@ -68,6 +68,7 @@ protected:
         m_Shader->use();
 
         // We need this to make points larger than 1 pixel.
+        // TODO IOS ERR:Use of undeclared identifier 'GL_PROGRAM_POINT_SIZE'
         glEnable(GL_PROGRAM_POINT_SIZE);
 
         // To draw, we just bind our "preset" (the VAO)...

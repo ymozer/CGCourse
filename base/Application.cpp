@@ -186,7 +186,7 @@ namespace Base
         m_PerfCounterFreq = SDL_GetPerformanceFrequency();
         m_LastFrameTimeCounter = SDL_GetPerformanceCounter();
 
-#if !PLATFORM_EMSCRIPTEN
+#if defined(PLATFORM_EMSCRIPTEN) || !defined(PLATFORM_IOS)
         { // MSAA setup
             GLint maxSamples;
             glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
@@ -734,7 +734,7 @@ namespace Base
         m_ViewportWidth = m_RenderArea.w > 0 ? m_RenderArea.w : 1;
         m_ViewportHeight = m_RenderArea.h > 0 ? m_RenderArea.h : 1;
 
-#if !PLATFORM_EMSCRIPTEN
+#if defined(PLATFORM_EMSCRIPTEN) || !defined(PLATFORM_IOS)
         // --- Standard MSAA Path ---
         glGenFramebuffers(1, &m_MsFboID);
         glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID);
@@ -787,7 +787,7 @@ namespace Base
         m_ViewportWidth = width;
         m_ViewportHeight = height;
 
-#if !PLATFORM_EMSCRIPTEN
+#if defined(PLATFORM_EMSCRIPTEN) || !defined(PLATFORM_IOS)
         // --- Resize MSAA attachments ---
         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID);
         glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_MsaaSamples, GL_RGBA, width, height, GL_TRUE);
