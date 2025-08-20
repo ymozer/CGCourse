@@ -83,70 +83,27 @@ namespace Base
         vertexBuffer.push_back('\0');
         fragmentBuffer.push_back('\0');
 
-        const GLubyte *version = glGetString(GL_SHADING_LANGUAGE_VERSION);
-        LOG_DEBUG("SHADING_LANGUAGE_VERSION: {}", reinterpret_cast<const char *>(version));
-
-        std::string vertexSource = vertexBuffer.data();
-        std::string fragmentSource = fragmentBuffer.data();
-
-        const char *vShaderCode = vertexSource.c_str();
-        const char *fShaderCode = fragmentSource.c_str();
-
-        LOG_DEBUG("--- Compiling Vertex Shader Source ---\n{}", vShaderCode);
-        LOG_DEBUG("--- Compiling Fragment Shader Source ---\n{}", fShaderCode);
-
-        GLuint vertex, fragment;
-
-        vertex = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex, 1, &vShaderCode, NULL);
-        glCompileShader(vertex);
-        if (!checkCompileErrors(vertex, "VERTEX"))
-        {
-            glDeleteShader(vertex);
-            return false;
-        }
-
-        fragment = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment, 1, &fShaderCode, NULL);
-        glCompileShader(fragment);
-        if (!checkCompileErrors(fragment, "FRAGMENT"))
-        {
-            glDeleteShader(vertex);
-            glDeleteShader(fragment);
-            return false;
-        }
-
-        m_ID = glCreateProgram();
-        glAttachShader(m_ID, vertex);
-        glAttachShader(m_ID, fragment);
-        glLinkProgram(m_ID);
-        if (!checkCompileErrors(m_ID, "PROGRAM"))
-        {
-            glDeleteShader(vertex);
-            glDeleteShader(fragment);
-            m_ID = 0;
-            return false;
-        }
-
-        glDeleteShader(vertex);
-        glDeleteShader(fragment);
-
-        LOG_INFO("Shader loaded successfully: {} & {}", vertexPath, fragmentPath);
-        return true;
+        return compileFromSource(vertexBuffer.data(), fragmentBuffer.data());
     }
 
     bool Shader::compileFromSource(const char *vShaderCode, const char *fShaderCode)
     {
-        LOG_DEBUG("--- Compiling Vertex Shader Source ---\n{}", vShaderCode);
-        LOG_DEBUG("--- Compiling Fragment Shader Source ---\n{}", fShaderCode);
+        const char *definitions[] =
+            {
+                GLSL_VERSION_STRING "\n",
+                GLSL_PRECISION_STRING "\n"};
+
+        LOG_DEBUG("--- Compiling Vertex Shader Source ---\n{}{}{}", definitions[0], definitions[1], vShaderCode);
+        LOG_DEBUG("--- Compiling Fragment Shader Source ---\n{}{}{}", definitions[0], definitions[1], fShaderCode);
 
         const GLubyte *version = glGetString(GL_SHADING_LANGUAGE_VERSION);
         LOG_DEBUG("SHADING_LANGUAGE_VERSION: {}", reinterpret_cast<const char *>(version));
 
         GLuint vertex, fragment;
 
+        const char *vertexSources[] = {definitions[0], vShaderCode}; // Vert shaders don't need precision
         vertex = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex, 1, &vShaderCode, NULL);
+        glShaderSource(vertex, 2, vertexSources, NULL);
         glCompileShader(vertex);
         if (!checkCompileErrors(vertex, "VERTEX"))
         {
@@ -154,8 +111,9 @@ namespace Base
             return false;
         }
 
+        const char *fragmentSources[] = {definitions[0], definitions[1], fShaderCode};
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment, 1, &fShaderCode, NULL);
+        glShaderSource(fragment, 3, fragmentSources, NULL);
         glCompileShader(fragment);
         if (!checkCompileErrors(fragment, "FRAGMENT"))
         {

@@ -1,6 +1,7 @@
 
 #pragma once
 #include <string>
+#include <unordered_map>
 #include <glm/glm.hpp>
 #if PLATFORM_DESKTOP
     #include <glad/gl.h>
@@ -12,11 +13,11 @@
 #endif
 
 #if PLATFORM_DESKTOP
-#define GLSL_VERSION_STRING "#version 410"
-#elif PLATFORM_EMSCRIPTEN || PLATFORM_IOS
+#define GLSL_VERSION_STRING "#version 410 core"
+#define GLSL_PRECISION_STRING ""
+#elif PLATFORM_EMSCRIPTEN || PLATFORM_IOS || PLATFORM_ANDROID
 #define GLSL_VERSION_STRING "#version 300 es"
-#elif PLATFORM_ANDROID
-#define GLSL_VERSION_STRING "#version 320 es"
+#define GLSL_PRECISION_STRING "precision mediump float;"
 #endif
 
 namespace Base {
