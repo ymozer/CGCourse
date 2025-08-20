@@ -17,6 +17,16 @@ public:
     Texture();
     ~Texture();
 
+    inline static std::string resolveAssetPath(const std::string& relativePath) {
+        #ifdef __ANDROID__
+            // On Android, paths are relative to the APK's assets root
+            return relativePath;
+        #else
+            // On desktop, prepend the "assets/" directory
+            return "assets/" + relativePath;
+        #endif
+    }
+
     bool loadFromFile(const std::string& path);
 
     void bind(GLuint textureUnit = 0) const;

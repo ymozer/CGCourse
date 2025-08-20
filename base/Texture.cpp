@@ -34,7 +34,23 @@ namespace Base
         // OpenGL expects textures to be flipped vertically
         stbi_set_flip_vertically_on_load(true);
 
-        unsigned char *data = stbi_load(path.c_str(), &m_Width, &m_Height, &m_NrChannels, 0);
+        std::string fullPath = resolveAssetPath(path);
+        size_t fileSize = 0;
+        void* fileData = SDL_LoadFile(fullPath.c_str(), &fileSize);
+
+         if (!fileData) {
+            LOG_ERROR("TEXTURE::LOAD_FAILED: SDL_LoadFile could not open '{}': {}", fullPath, SDL_GetError());
+            return false;
+        }
+
+        unsigned char *data = stbi_load_from_memory(
+            static_cast<const stbi_uc*>(fileData),
+            static_cast<int>(fileSize),
+            &m_Width, &m_Height, &m_NrChannels, 0
+        );
+
+        SDL_free(fileData);
+
         if (data)
         {
             GLenum format;
