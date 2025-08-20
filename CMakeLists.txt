@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 3.16)
 
 project(OpenGLCourseTemplate VERSION 1.0 LANGUAGES CXX C)
 
+# OFF (default) = Build a single Host Application with all chapters.
+# ON            = Build one specific chapter as a standalone executable.
+option(BUILD_STANDALONE_CHAPTER "Build each chapter as a separate executable" OFF)
+if(BUILD_STANDALONE_CHAPTER)
+    set(STANDALONE_CHAPTER_NAME "Chapter01" CACHE STRING "The name of the single chapter to build when BUILD_STANDALONE_CHAPTER is ON")
+endif()
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -22,7 +29,7 @@ endif()
 
 
 if(ANDROID)
-    option(CHAPTER_TO_BUILD_FOR_ANDROID "Chapter01")
+    option(CHAPTER_TO_BUILD_FOR_ANDROID "Chapter01-Window")
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static linking for all dependencies" FORCE)
     set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "No postfix for debug builds" FORCE)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -282,6 +289,34 @@ endif()
 
 add_subdirectory(base)
 add_subdirectory(chapters)
+
+if(NOT ANDROID AND NOT EMSCRIPTEN AND NOT IOS)
+    if(BUILD_STANDALONE_CHAPTER)
+        message(STATUS "Build Mode: Standalone Chapter (${STANDALONE_CHAPTER_NAME})")
+    else()
+        message(STATUS "Build Mode: Host Application (All Chapters)")
+        add_executable(OpenGLCourseApp
+            bundledApp/main.cpp
+            bundledApp/BundledApp.cpp
+            ${ALL_CHAPTER_SOURCES}
+        )
+        target_include_directories(OpenGLCourseApp PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/bundledApp"  # So it can find IChapter.hpp
+            "${CMAKE_CURRENT_SOURCE_DIR}/chapters"         # So it can find all the ChapterXX.hpp files
+            "${CMAKE_CURRENT_SOURCE_DIR}/base"             # Good practice to include this too
+        )
+        target_link_libraries(OpenGLCourseApp PRIVATE base)
+        set_target_properties(OpenGLCourseApp PROPERTIES FOLDER "Course Projects")
+
+        add_custom_command(
+            TARGET OpenGLCourseApp POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+                    "${CMAKE_SOURCE_DIR}/assets"
+                    "$<TARGET_FILE_DIR:OpenGLCourseApp>/assets"
+            COMMENT "Copying assets to build directory for Host Application"
+        )
+    endif()
+endif()
 
 set(CPACK_COMPONENTS_ALL Applications Development)
 include(CPack)
