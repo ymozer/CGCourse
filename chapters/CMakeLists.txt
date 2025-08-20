@@ -18,6 +18,8 @@ function(add_chapter CHAPTER_NAME)
         )
     else()
         add_executable(${CHAPTER_NAME} ${CHAPTER_SOURCES})
+        add_dependencies(${CHAPTER_NAME} CopyAssets)
+
         target_link_libraries(${CHAPTER_NAME} PRIVATE base)
         
         if(PLATFORM_IS_APPLE)

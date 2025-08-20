@@ -287,6 +287,19 @@ if(TARGET zlibstatic)
     set_target_properties(zlibstatic PROPERTIES FOLDER "External Libraries/assimp/utils")
 endif()
 
+file(GLOB_RECURSE ASSET_FILES
+    "${CMAKE_SOURCE_DIR}/assets/*"
+)
+add_custom_target(CopyAssets ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            "${CMAKE_SOURCE_DIR}/assets"
+            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets"
+    DEPENDS ${ASSET_FILES}
+    COMMENT "Copying modified assets to build directory..."
+)
+# We also want folders to work for this target
+set_target_properties(CopyAssets PROPERTIES FOLDER "Utility")
+
 add_subdirectory(base)
 add_subdirectory(chapters)
 
@@ -300,6 +313,7 @@ if(NOT ANDROID AND NOT EMSCRIPTEN AND NOT IOS)
             bundledApp/BundledApp.cpp
             ${ALL_CHAPTER_SOURCES}
         )
+        add_dependencies(OpenGLCourseApp CopyAssets)
         target_include_directories(OpenGLCourseApp PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/bundledApp"  # So it can find IChapter.hpp
             "${CMAKE_CURRENT_SOURCE_DIR}/chapters"         # So it can find all the ChapterXX.hpp files
@@ -307,14 +321,6 @@ if(NOT ANDROID AND NOT EMSCRIPTEN AND NOT IOS)
         )
         target_link_libraries(OpenGLCourseApp PRIVATE base)
         set_target_properties(OpenGLCourseApp PROPERTIES FOLDER "Course Projects")
-
-        add_custom_command(
-            TARGET OpenGLCourseApp POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-                    "${CMAKE_SOURCE_DIR}/assets"
-                    "$<TARGET_FILE_DIR:OpenGLCourseApp>/assets"
-            COMMENT "Copying assets to build directory for Host Application"
-        )
     endif()
 endif()
 

@@ -7,6 +7,8 @@
 #include "Chapter06-Uniforms/Chapter06.hpp"
 #include "Chapter07-IndexBuffer/Chapter07.hpp"
 #include "Chapter08-Textures/Chapter08.hpp"
+#include "Chapter09-Transformations/Chapter09.hpp"
+#include "Chapter10-TransformationsCube/Chapter10.hpp"
 
 
 void BundledApp::setup()
@@ -19,6 +21,8 @@ void BundledApp::setup()
     m_AvailableChapters.push_back({"Chapter 6: Uniforms", []() { return std::make_unique<Chapter06_Application>(); }});
     m_AvailableChapters.push_back({"Chapter 7: Index Buffer", []() { return std::make_unique<Chapter07_Application>(); }});
     m_AvailableChapters.push_back({"Chapter 8: Textures", []() { return std::make_unique<Chapter08_Application>(); }});
+    m_AvailableChapters.push_back({"Chapter 9: Transformations", []() { return std::make_unique<Chapter09_Application>(); }});
+    m_AvailableChapters.push_back({"Chapter 10: Transform Cube", []() { return std::make_unique<Chapter10_Application>(); }});
 
     // ... add all other chapters
 

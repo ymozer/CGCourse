@@ -1,3 +1,5 @@
+#pragma once
+
 #include "IChapter.hpp"
 #include "Shader.hpp"
 

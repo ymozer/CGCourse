@@ -25,12 +25,14 @@ namespace Base
         };
 
         Application(std::string title, int width = 1280, int height = 720, int numOfThreads = 4);
-        virtual ~Application();
-
-        void run();
-
         Application(const Application &) = delete;
         Application &operator=(const Application &) = delete;
+        virtual ~Application();
+
+        static Application& getInstance() { return *s_Instance; }
+
+        void run();
+        float getViewportAspectRatio() const;
 
     protected:
         virtual void setup() = 0;
@@ -45,7 +47,6 @@ namespace Base
         int getHeight() const { return m_Height; }
         int getViewportWidth() const { return m_ViewportWidth; }
         int getViewportHeight() const { return m_ViewportHeight; }
-        float getViewportAspectRatio() const;
 
         virtual Camera* getActiveCamera() { return nullptr; }
         ParallelEventBus &getEventBus() { return m_EventBus; }
