@@ -1,7 +1,12 @@
 #include "Chapter01.hpp"
 #include "Log.hpp"
+#include "Shader.hpp"
+#include <imgui.h>
 
-Chapter01_Application::Chapter01_Application() : Application("Chapter 01: The Basics") {}
+
+Chapter01_Application::Chapter01_Application() : IChapter() {
+
+}
 
 void Chapter01_Application::setup() {
     LOG_INFO("Chapter 01 setup complete.");
@@ -19,7 +24,7 @@ void Chapter01_Application::handleInput(float deltaTime) {
 
 void Chapter01_Application::render() {
     glClearColor(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void Chapter01_Application::renderChapterUI() {

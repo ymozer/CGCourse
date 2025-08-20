@@ -1,9 +1,7 @@
 #pragma once
+#include "IChapter.hpp"
 
-#include "Application.hpp"
-#include <imgui.h>
-
-class Chapter01_Application : public Base::Application
+class Chapter01_Application : public IChapter
 {
 public:
     Chapter01_Application();
@@ -15,7 +13,6 @@ protected:
     void handleInput(float deltaTime) override;
     void render() override;
     void renderChapterUI() override;
-
 
 private:
     float m_ClearColor[4] = { 0.1f, 0.1f, 0.2f, 1.0f };
