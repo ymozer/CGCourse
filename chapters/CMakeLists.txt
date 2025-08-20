@@ -20,7 +20,7 @@ function(add_chapter CHAPTER_NAME)
         add_executable(${CHAPTER_NAME} ${CHAPTER_SOURCES})
         target_link_libraries(${CHAPTER_NAME} PRIVATE base)
         
-        if(APPLE)
+        if(PLATFORM_IS_APPLE)
             set_target_properties(${CHAPTER_NAME} PROPERTIES
                 MACOSX_BUNDLE_GUI_IDENTIFIER "${BUNDLE_IDENTIFIER_PREFIX}.${CHAPTER_NAME}"
                 XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${DEVELOPMENT_TEAM_ID}
@@ -29,19 +29,6 @@ function(add_chapter CHAPTER_NAME)
             )
             target_compile_definitions(${CHAPTER_NAME} PRIVATE GLES_SILENCE_DEPRECATION=1)
         endif()
-        
-        set_target_properties(${CHAPTER_NAME} PROPERTIES
-            FOLDER "Course Projects/Chapters"
-            VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
-        )
-
-        install(TARGETS ${CHAPTER_NAME}
-            BUNDLE DESTINATION .
-            RUNTIME DESTINATION bin  # Installs the executable to the 'bin' directory
-            COMPONENT "Applications"
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
-        )
 
         if (PLATFORM_IS_EMSCRIPTEN)
             set_target_properties(${CHAPTER_NAME} PROPERTIES SUFFIX ".html")            
@@ -57,23 +44,12 @@ function(add_chapter CHAPTER_NAME)
                 "SHELL:--use-preload-plugins"
                 "SHELL:--preload-file ${ASSETS_SOURCE_PATH}@/assets"
             )      
-            if(Python3_FOUND)
-                # Get the output directory for the executable
-                get_target_property(WEB_OUTPUT_DIR ${CHAPTER_NAME} RUNTIME_OUTPUT_DIRECTORY)
-                set(LAUNCH_SCRIPT "${CMAKE_SOURCE_DIR}/platform/emscripten/launch.py")
-                add_custom_target(launch_server_${CHAPTER_NAME}
-                    # This command runs the python server
-                    COMMAND ${Python3_EXECUTABLE} ${LAUNCH_SCRIPT} ${WEB_OUTPUT_DIR} ${CHAPTER_NAME}.html
-                    WORKING_DIRECTORY ${WEB_OUTPUT_DIR}
-                    USES_TERMINAL
-                    # Make it depend on the executable, so it builds first
-                    DEPENDS  ${CHAPTER_NAME}
-                    # A helpful message in the console
-                    COMMENT "Starting local server for ${CHAPTER_NAME}"
-                    FOLDER "Course Projects/Launch Targets"
-                )
-            endif()  
         endif()
+
+        set_target_properties(${CHAPTER_NAME} PROPERTIES
+            FOLDER "Course Projects/Chapters"
+            VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+        )
 
         add_custom_command(
             TARGET ${CHAPTER_NAME} POST_BUILD
@@ -81,6 +57,14 @@ function(add_chapter CHAPTER_NAME)
                     ${CMAKE_SOURCE_DIR}/assets
                     $<TARGET_FILE_DIR:${CHAPTER_NAME}>/assets
             COMMENT "Copying assets to build directory for ${CHAPTER_NAME}"
+        )
+
+        install(TARGETS ${CHAPTER_NAME}
+            BUNDLE DESTINATION .
+            RUNTIME DESTINATION bin 
+            COMPONENT "Applications"
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
         )
 
         install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets/

@@ -12,6 +12,7 @@
 #include <imgui_internal.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
 
 class Chapter071_Application : public Base::Application
 {
@@ -30,7 +31,7 @@ protected:
         setupCoordinateGuide();
 
         m_Texture = std::make_unique<Base::Texture>();
-        m_Texture->loadFromFile("assets/images/uv.png");
+        m_Texture->loadFromFile("images/uv.png");
 
         m_Camera.setPosition({0.0f, 0.0f, 3.0f});
         m_Camera.lookAt({0.0f, 0.0f, 0.0f});
