@@ -4,9 +4,9 @@ project(OpenGLCourseTemplate VERSION 1.0 LANGUAGES CXX C)
 
 # OFF (default) = Build a single Host Application with all chapters.
 # ON            = Build one specific chapter as a standalone executable.
-option(BUILD_STANDALONE_CHAPTER "Build each chapter as a separate executable" OFF)
-if(BUILD_STANDALONE_CHAPTER)
-    set(STANDALONE_CHAPTER_NAME "Chapter01" CACHE STRING "The name of the single chapter to build when BUILD_STANDALONE_CHAPTER is ON")
+option(BUILD_STANDALONE "Build each chapter as a separate executable" OFF)
+if(BUILD_STANDALONE)
+    set(STANDALONE_CHAPTER_NAME "Chapter10-TransformationsCube" CACHE STRING "The name of the single chapter to build when BUILD_STANDALONE is ON")
 endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -237,6 +237,8 @@ CPMAddPackage(
     NAME tracy
     GITHUB_REPOSITORY wolfpld/tracy
     GIT_TAG v0.11.1
+    OPTIONS
+        "TRACY_ENABLE ON"
 )
 
 if(TARGET TracyClient)
@@ -304,7 +306,7 @@ add_subdirectory(base)
 add_subdirectory(chapters)
 
 if(NOT ANDROID AND NOT EMSCRIPTEN AND NOT IOS)
-    if(BUILD_STANDALONE_CHAPTER)
+    if(BUILD_STANDALONE)
         message(STATUS "Build Mode: Standalone Chapter (${STANDALONE_CHAPTER_NAME})")
     else()
         message(STATUS "Build Mode: Host Application (All Chapters)")

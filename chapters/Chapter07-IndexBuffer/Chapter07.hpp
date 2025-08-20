@@ -1,12 +1,16 @@
 #pragma once
 
-#include "IChapter.hpp"
+#include "ChapterPreamble.hpp"
 #include "Shader.hpp"
 
-class Chapter07_Application : public IChapter
+class Chapter07_Application : public ChapterBase
 {
 public:
+#ifdef BUILD_STANDALONE
+    Chapter07_Application(std::string title, int width, int height);
+#else
     Chapter07_Application();
+#endif
 
 protected:
     void setup() override;

@@ -50,7 +50,7 @@ source "${ZDOTDIR:-$HOME}/Libraries/emsdk/emsdk_env.sh"
 sdk.dir=/path/to/your/sdk
 ```
 
-**Note:** To work with Emscripten (Web Builds) you will need [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html).
+**Note:** To work with Emscripten (Web Builds) you will need [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html). And to run the built project (html file and other files like js) you will need a web server, I am using `python3 -m http.server`.
 
 * Also set Environment Variable `EMSDK` to the installation location of the SDK.
   

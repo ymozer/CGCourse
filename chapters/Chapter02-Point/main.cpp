@@ -13,7 +13,10 @@ int main(int argc, char *argv[])
 
     try
     {
-        auto app = std::make_unique<Chapter02_1_Application>();
+        auto app = std::make_unique<Chapter02_Application>(
+            "Chapter 02: Point",
+            1280, 720
+        );
         app->run();
     }
     catch (const std::exception &e)

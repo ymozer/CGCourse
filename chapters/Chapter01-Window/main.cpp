@@ -11,7 +11,10 @@ int main(int argc, char *argv[])
 
    try
     {
-        auto app = std::make_unique<Chapter01_Application>();
+        auto app = std::make_unique<Chapter01_Application>(
+            "Chapter 01: The Basics",
+            1280, 720
+        );
         app->run();
     }
     catch (const std::exception &e)

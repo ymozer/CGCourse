@@ -16,7 +16,7 @@
 class Chapter06_Application : public IChapter
 {
 public:
-    Chapter06_Application() : Application("Chapter 05: Camera") {}
+    Chapter06_Application() : Application("Chapter 011: Camera") {}
 
 protected:
     void setup() override

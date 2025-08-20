@@ -3,10 +3,19 @@
 #include "Shader.hpp"
 #include <imgui.h>
 
-
-Chapter01_Application::Chapter01_Application() : IChapter() {
-
+#ifdef BUILD_STANDALONE
+Chapter01_Application::Chapter01_Application(std::string title, int width, int height)
+    : ChapterBase(title, width, height) // Calls Base::Application constructor
+{
+    LOG_INFO("Chapter 01 constructed in STANDALONE mode.");
 }
+#else
+Chapter01_Application::Chapter01_Application() 
+    : ChapterBase() // Calls IChapter constructor
+{
+    LOG_INFO("Chapter 01 constructed in BUNDLED mode.");
+}
+#endif
 
 void Chapter01_Application::setup() {
     LOG_INFO("Chapter 01 setup complete.");

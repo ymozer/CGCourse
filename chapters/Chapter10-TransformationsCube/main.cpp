@@ -8,7 +8,10 @@ int main(int argc, char* argv[])
 {
     Logger::getInstance().initialize({});
     try {
-        auto app = std::make_unique<Chapter10_Application>();
+        auto app = std::make_unique<Chapter10_Application>(
+            "Chapter 10: Transformations Cube",
+            1280, 720
+        );
         app->run();
     } catch (const std::exception& e) {
         LOG_ERROR("Fatal error: {}", e.what());

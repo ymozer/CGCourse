@@ -19,7 +19,11 @@ int main(int argc, char *argv[])
 
     try
     {
-        auto app = std::make_unique<Chapter04_Application>();
+        auto app = std::make_unique<Chapter04_Application>(
+            "Chapter 04 - Colors",
+            1280,  // Width
+            720    // Height
+        );
         app->run();
     }
     catch (const std::exception &e)

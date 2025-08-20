@@ -3,7 +3,19 @@
 #include <imgui.h>
 #include <glm/gtc/type_ptr.hpp>
 
-Chapter08_Application::Chapter08_Application() : IChapter() {}
+#ifdef BUILD_STANDALONE
+Chapter08_Application::Chapter08_Application(std::string title, int width, int height)
+    : ChapterBase(title, width, height) // Calls Base::Application constructor
+{
+    LOG_INFO("Chapter 08 constructed in STANDALONE mode.");
+}
+#else
+Chapter08_Application::Chapter08_Application() 
+    : ChapterBase() // Calls IChapter constructor
+{
+    LOG_INFO("Chapter 08 constructed in BUNDLED mode.");
+}
+#endif
 
 void Chapter08_Application::setup()
 {

@@ -24,7 +24,7 @@ namespace Base
             SDL_GLContext glcontext;
         };
 
-        Application(std::string title, int width = 1280, int height = 720, int numOfThreads = 4);
+        Application(std::string title="", int width = 1280, int height = 720, int numOfThreads = 4);
         Application(const Application &) = delete;
         Application &operator=(const Application &) = delete;
         virtual ~Application();

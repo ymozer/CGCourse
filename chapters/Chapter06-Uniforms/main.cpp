@@ -1,3 +1,4 @@
+#include "Chapter06.hpp"
 #include "Application.hpp"
 #include "Log.hpp"
 #include "Shader.hpp"
@@ -12,7 +13,10 @@ int main(int argc, char *argv[])
     Logger::getInstance().initialize({});
     try
     {
-        auto app = std::make_unique<Chapter06_Application>();
+        auto app = std::make_unique<Chapter06_Application>(
+            "Chapter 06: Uniforms",
+            1280, 720
+        );
         app->run();
     }
     catch (const std::exception &e)

@@ -1,4 +1,4 @@
-// main.cpp
+#include "Chapter07.hpp"
 #include "Application.hpp"
 #include "Log.hpp"
 #include "Shader.hpp"
@@ -13,7 +13,10 @@ int main(int argc, char *argv[])
     Logger::getInstance().initialize({});
     try
     {
-        auto app = std::make_unique<Chapter07_Application>();
+        auto app = std::make_unique<Chapter07_Application>(
+            "Chapter 07: Index Buffer",
+            1280, 720
+        );
         app->run();
     }
     catch (const std::exception &e)

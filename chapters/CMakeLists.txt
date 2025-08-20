@@ -3,10 +3,17 @@ set(BUNDLE_IDENTIFIER_PREFIX "com.adu.muh" CACHE STRING "Base bundle identifier 
 
 function(add_chapter CHAPTER_NAME)
 
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${CHAPTER_NAME}/main.cpp")
+        message(WARNING "Skipping standalone build for ${CHAPTER_NAME}: missing main.cpp")
+        return()
+    endif()
+
     file(GLOB CHAPTER_SOURCES CONFIGURE_DEPENDS 
         "${CMAKE_CURRENT_SOURCE_DIR}/${CHAPTER_NAME}/*.cpp"
-    )
+        "${CHAPTER_NAME}/main.cpp"
 
+    )
+    
     if(PLATFORM_IS_ANDROID)
         # For Android, we must build a SHARED library named "main".
         # The SDL Java activity will load libmain.so.
@@ -87,19 +94,23 @@ if(PLATFORM_IS_ANDROID)
         message(FATAL_ERROR "Chapter directory not found for Android target: ${CHAPTER_TO_BUILD_FOR_ANDROID}")
     endif()
 
-elseif(BUILD_STANDALONE_CHAPTER)
-    # --- Standalone Desktop/Web Mode ---
-    # Build only the one chapter specified by STANDALONE_CHAPTER_NAME.
-    if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${STANDALONE_CHAPTER_NAME}")
-        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${STANDALONE_CHAPTER_NAME}/main.cpp")
-            add_chapter(${STANDALONE_CHAPTER_NAME})
-        else()
-            message(FATAL_ERROR "Standalone chapter '${STANDALONE_CHAPTER_NAME}' does not contain a main.cpp file.")
-        endif()
-    else()
-        message(FATAL_ERROR "Standalone chapter directory not found: ${STANDALONE_CHAPTER_NAME}")
-    endif()
+elseif(BUILD_STANDALONE)
+   # --- STANDALONE MODE ---
+    message(STATUS "Build mode: Standalone. Searching for all valid chapters...")
 
+    # Find all subdirectories inside the 'chapters' directory
+    file(GLOB CHAPTER_DIRS LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/*")
+
+    foreach(DIR ${CHAPTER_DIRS})
+        if(IS_DIRECTORY ${DIR})
+            # Extract the directory name (e.g., "Chapter01-Window")
+            get_filename_component(CHAPTER_NAME ${DIR} NAME)
+            if(EXISTS "${DIR}/main.cpp")
+                message(STATUS "Found standalone-ready chapter: ${CHAPTER_NAME}")
+                add_chapter(${CHAPTER_NAME})
+            endif()
+        endif()
+    endforeach()
 else()
     # --- Host Application Desktop/Web Mode (Default) ---
 
@@ -110,18 +121,5 @@ else()
     )
 
     set(ALL_CHAPTER_SOURCES ${CHAPTER_SOURCES} PARENT_SCOPE)
-
-    if(PLATFORM_IS_EMSCRIPTEN)
-        message(STATUS "Emscripten detected. Building all chapters as separate targets.")
-        file(GLOB CHAPTER_SUBDIRS LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/*")
-        foreach(CHAPTER_DIR ${CHAPTER_SUBDIRS})
-            if(IS_DIRECTORY ${CHAPTER_DIR})
-                get_filename_component(CHAPTER_NAME ${CHAPTER_DIR} NAME)
-                if(EXISTS "${CHAPTER_DIR}/main.cpp")
-                    add_chapter(${CHAPTER_NAME})
-                endif()
-            endif()
-        endforeach()
-    endif()
 
 endif()

@@ -14,6 +14,7 @@ set_target_properties(base PROPERTIES
 )
 
 target_include_directories(base PUBLIC
+    ${CMAKE_SOURCE_DIR}/bundledApp
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${stb_SOURCE_DIR}
     ${tracy_SOURCE_DIR}
@@ -62,9 +63,12 @@ endif()
 # Enable Tracy profiling if not on Emscripten
 if (NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     target_compile_definitions(base PRIVATE TRACY_ENABLE)
-    target_link_libraries(base PRIVATE Tracy::TracyClient)
+    target_link_libraries(base PUBLIC Tracy::TracyClient)
 endif()
 
+if(BUILD_STANDALONE)
+    target_compile_definitions(base PUBLIC BUILD_STANDALONE)
+endif()
 
 install(TARGETS base
     ARCHIVE DESTINATION lib  # Installs the static library to the 'lib' directory

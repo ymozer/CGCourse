@@ -14,7 +14,10 @@ int main(int argc, char *argv[])
 
     try
     {
-        auto app = std::make_unique<Chapter03_Application>();
+        auto app = std::make_unique<Chapter03_Application>(
+            "Chapter 03: Triangle",
+            1280, 720
+        );
         app->run();
     }
     catch (const std::exception &e)

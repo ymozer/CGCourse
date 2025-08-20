@@ -1,3 +1,4 @@
+#include "Chapter08.hpp"
 #include "Application.hpp"
 #include "Log.hpp"
 #include "Shader.hpp"
@@ -13,7 +14,10 @@ int main(int argc, char *argv[])
 
     try
     {
-        auto app = std::make_unique<Chapter08_Application>();
+        auto app = std::make_unique<Chapter08_Application>(
+            "Chapter 08: Textures",
+            1280, 720
+        );
         app->run();
     }
     catch (const std::exception &e)

@@ -64,7 +64,10 @@
       "name": "windows-x64-debug",
       "displayName": "Windows (x64) Debug",
       "description": "Build for Windows x64 with MSVC (Debug)",
-      "inherits": ["base-debug", "base-windows"],
+      "inherits": [
+        "base-debug",
+        "base-windows"
+      ],
       "architecture": {
         "value": "x64",
         "strategy": "set"
@@ -74,7 +77,10 @@
       "name": "windows-x64-release",
       "displayName": "Windows (x64) Release",
       "description": "Build for Windows x64 with MSVC (Release)",
-      "inherits": ["base-release", "base-windows"],
+      "inherits": [
+        "base-release",
+        "base-windows"
+      ],
       "architecture": {
         "value": "x64",
         "strategy": "set"
@@ -84,7 +90,10 @@
       "name": "linux-x64-debug",
       "displayName": "Linux (x64) Debug",
       "description": "Build for Linux x64 with Ninja (Debug)",
-      "inherits": ["base-debug", "base-linux"],
+      "inherits": [
+        "base-debug",
+        "base-linux"
+      ],
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -95,7 +104,10 @@
       "name": "linux-x64-release",
       "displayName": "Linux (x64) Release",
       "description": "Build for Linux x64 with Ninja (Release)",
-      "inherits": ["base-release", "base-linux"],
+      "inherits": [
+        "base-release",
+        "base-linux"
+      ],
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -103,43 +115,107 @@
       }
     },
     {
-      "name": "macos-arm64-debug",
-      "displayName": "macOS (Apple Silicon) Debug",
-      "description": "Build for macOS arm64 with Ninja (Debug)",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "inherits": ["base-debug", "base-darwin"],
+      "name": "macos-arm64-debug-bundled",
+      "displayName": "macOS Bundled App (Debug)",
+      "description": "Configures the single, bundled application for macOS arm64.",
+      "inherits": [
+        "base-debug",
+        "base-darwin"
+      ],
       "cacheVariables": {
-        "CMAKE_OSX_ARCHITECTURES": "arm64"
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "BUILD_STANDALONE": "OFF"
       }
     },
     {
-      "name": "macos-arm64-release",
-      "displayName": "macOS (Apple Silicon) Release",
-      "description": "Build for macOS arm64 with Ninja (Release)",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "inherits": ["base-release", "base-darwin"],
+      "name": "macos-arm64-release-bundled",
+      "displayName": "macOS Bundled App (Release)",
+      "description": "Configures the single, bundled application for macOS arm64.",
+      "inherits": [
+        "base-release",
+        "base-darwin"
+      ],
       "cacheVariables": {
-        "CMAKE_OSX_ARCHITECTURES": "arm64"
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "BUILD_STANDALONE": "OFF"
       }
     },
     {
-      "name": "macos-x86_64-debug",
-      "displayName": "macOS (Intel) Debug",
-      "description": "Build for macOS x86_64 with Ninja (Debug)",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "inherits": ["base-debug", "base-darwin"],
+      "name": "macos-arm64-debug-standalone",
+      "displayName": "macOS Standalone Chapters (Debug)",
+      "description": "Configures all standalone chapters for macOS arm64.",
+      "inherits": [
+        "base-debug",
+        "base-darwin"
+      ],
       "cacheVariables": {
-        "CMAKE_OSX_ARCHITECTURES": "x86_64"
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "BUILD_STANDALONE": "ON"
       }
     },
     {
-      "name": "macos-x86_64-release",
-      "displayName": "macOS (Intel) Release",
-      "description": "Build for macOS x86_64 with Ninja (Release)",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "inherits": ["base-release", "base-darwin"],
+      "name": "macos-arm64-release-standalone",
+      "displayName": "macOS Standalone Chapters (Release)",
+      "description": "Configures all standalone chapters for macOS arm64.",
+      "inherits": [
+        "base-release",
+        "base-darwin"
+      ],
       "cacheVariables": {
-        "CMAKE_OSX_ARCHITECTURES": "x86_64"
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "BUILD_STANDALONE": "ON"
+      }
+    },
+    {
+      "name": "macos-x86_64-debug-bundled",
+      "displayName": "macOS Bundled App (Debug, x86_64)",
+      "description": "Configures the single, bundled application for macOS x86_64.",
+      "inherits": [
+        "base-debug",
+        "base-darwin"
+      ],
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "x86_64",
+        "BUILD_STANDALONE": "OFF"
+      }
+    },
+    {
+      "name": "macos-x86_64-release-bundled",
+      "displayName": "macOS Bundled App (Release, x86_64)",
+      "description": "Configures the single, bundled application for macOS x86_64.",
+      "inherits": [
+        "base-release",
+        "base-darwin"
+      ],
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "x86_64",
+        "BUILD_STANDALONE": "OFF"
+      }
+    },
+    {
+      "name": "macos-x86_64-debug-standalone",
+      "displayName": "macOS Standalone Chapters (Debug, x86_64)",
+      "description": "Configures all standalone chapters for macOS x86_64.",
+      "inherits": [
+        "base-debug",
+        "base-darwin"
+      ],
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "x86_64",
+        "BUILD_STANDALONE": "ON"
+      }
+    },
+    {
+      "name": "macos-x86_64-release-standalone",
+      "displayName": "macOS Standalone Chapters (Release, x86_64)",
+      "description": "Configures all standalone chapters for macOS x86_64.",
+      "inherits": [
+        "base-release",
+        "base-darwin"
+      ],
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "x86_64",
+        "BUILD_STANDALONE": "ON"
       }
     },
     {
@@ -164,7 +240,10 @@
       "name": "android-arm64-v8a-debug",
       "displayName": "Android (arm64-v8a) Debug",
       "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": ["base-debug", "base-android"],
+      "inherits": [
+        "base-debug",
+        "base-android"
+      ],
       "cacheVariables": {
         "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a"
       }
@@ -173,7 +252,10 @@
       "name": "android-arm64-v8a-release",
       "displayName": "Android (arm64-v8a) Release",
       "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": ["base-release", "base-android"],
+      "inherits": [
+        "base-release",
+        "base-android"
+      ],
       "cacheVariables": {
         "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a"
       }
@@ -182,7 +264,10 @@
       "name": "android-armeabi-v7a-debug",
       "displayName": "Android (armeabi-v7a) Debug",
       "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": ["base-debug", "base-android"],
+      "inherits": [
+        "base-debug",
+        "base-android"
+      ],
       "cacheVariables": {
         "CMAKE_ANDROID_ARCH_ABI": "armeabi-v7a"
       }
@@ -191,7 +276,10 @@
       "name": "android-armeabi-v7a-release",
       "displayName": "Android (armeabi-v7a) Release",
       "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": ["base-release", "base-android"],
+      "inherits": [
+        "base-release",
+        "base-android"
+      ],
       "cacheVariables": {
         "CMAKE_ANDROID_ARCH_ABI": "armeabi-v7a"
       }
@@ -200,7 +288,10 @@
       "name": "android-x86_64-debug",
       "displayName": "Android (x86_64) Debug",
       "description": "Build for Android x86_64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": ["base-debug", "base-android"],
+      "inherits": [
+        "base-debug",
+        "base-android"
+      ],
       "cacheVariables": {
         "CMAKE_ANDROID_ARCH_ABI": "x86_64"
       }
@@ -209,7 +300,10 @@
       "name": "android-x86_64-release",
       "displayName": "Android (x86_64) Release",
       "description": "Build for Android x86_64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": ["base-release", "base-android"],
+      "inherits": [
+        "base-release",
+        "base-android"
+      ],
       "cacheVariables": {
         "CMAKE_ANDROID_ARCH_ABI": "x86_64"
       }
@@ -267,13 +361,19 @@
       "name": "web-debug",
       "displayName": "Web (Emscripten) Debug",
       "description": "Build for WebAssembly. Requires EMSDK to be set and configured.",
-      "inherits": ["base-debug", "web-base"]
+      "inherits": [
+        "base-debug",
+        "web-base"
+      ]
     },
     {
       "name": "web-release",
       "displayName": "Web (Emscripten) Release",
       "description": "Build for WebAssembly. Requires EMSDK to be set and configured.",
-      "inherits": ["base-release", "web-base"]
+      "inherits": [
+        "base-release",
+        "web-base"
+      ]
     },
     {
       "name": "ios-universal",
@@ -294,7 +394,10 @@
       "name": "ios-simulator-debug",
       "displayName": "iOS Simulator (Debug)",
       "description": "Build for the iOS Simulator (Debug)",
-      "inherits": ["base-debug", "base-darwin"],
+      "inherits": [
+        "base-debug",
+        "base-darwin"
+      ],
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/ios.toolchain.cmake",
@@ -330,23 +433,429 @@
       "inherits": "base-build"
     },
     {
-      "name": "macos-arm64-debug",
-      "configurePreset": "macos-arm64-debug",
+      "name": "build-bundled-app-macos-debug",
+      "displayName": "Build Bundled App (macOS Debug)",
+      "configurePreset": "macos-arm64-debug-bundled",
+      "inherits": "base-build",
+      "targets": [
+        "OpenGLCourseApp"
+      ]
+    },
+    {
+      "name": "build-bundled-app-macos-release",
+      "displayName": "Build Bundled App (macOS Release)",
+      "configurePreset": "macos-arm64-release-bundled",
+      "inherits": "base-build",
+      "targets": [
+        "OpenGLCourseApp"
+      ]
+    },
+    {
+      "name": "build-ch01-macos-debug",
+      "displayName": "Build Ch01 (Window)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter01-Window"
+      ]
+    },
+    {
+      "name": "build-ch02-macos-debug",
+      "displayName": "Build Ch02 (Point)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter02-Point"
+      ]
+    },
+    {
+      "name": "build-ch03-macos-debug",
+      "displayName": "Build Ch03 (Triangle)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter03-Triangle"
+      ]
+    },
+    {
+      "name": "build-ch04-macos-debug",
+      "displayName": "Build Ch04 (Colors)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter04-Colors"
+      ]
+    },
+    {
+      "name": "build-ch05-macos-debug",
+      "displayName": "Build Ch05 (Square)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter05-Square"
+      ]
+    },
+    {
+      "name": "build-ch06-macos-debug",
+      "displayName": "Build Ch06 (Uniforms)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter06-Uniforms"
+      ]
+    },
+    {
+      "name": "build-ch07-macos-debug",
+      "displayName": "Build Ch07 (IndexBuffer)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter07-IndexBuffer"
+      ]
+    },
+    {
+      "name": "build-ch08-macos-debug",
+      "displayName": "Build Ch08 (Textures)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter08-Textures"
+      ]
+    },
+    {
+      "name": "build-ch09-macos-debug",
+      "displayName": "Build Ch09 (Transformations)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter09-Transformations"
+      ]
+    },
+    {
+      "name": "build-ch10-macos-debug",
+      "displayName": "Build Ch10 (TransformationsCube)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter10-TransformationsCube"
+      ]
+    },
+    {
+      "name": "build-ch11-macos-debug",
+      "displayName": "Build Ch11 (Camera)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter11-Camera"
+      ]
+    },
+    {
+      "name": "build-ch12-macos-debug",
+      "displayName": "Build Ch12 (FaceCulling)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter12-FaceCulling"
+      ]
+    },
+    {
+      "name": "build-ch13-macos-debug",
+      "displayName": "Build Ch13 (LightingPhong)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter13-LightingPhong"
+      ]
+    },
+    {
+      "name": "build-ch14-macos-debug",
+      "displayName": "Build Ch14 (LightingBlinnPhong)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter14-LightingBlinnPhong"
+      ]
+    },
+    {
+      "name": "build-ch15-macos-debug",
+      "displayName": "Build Ch15 (Materials)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter15-Materials"
+      ]
+    },
+    {
+      "name": "build-ch16-macos-debug",
+      "displayName": "Build Ch16 (LightingMapping)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter16-LightingMapping"
+      ]
+    },
+    {
+      "name": "build-ch17-macos-debug",
+      "displayName": "Build Ch17 (LightTypes)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter17-LightTypes"
+      ]
+    },
+    {
+      "name": "build-ch18-macos-debug",
+      "displayName": "Build Ch18 (MultipleLights)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter18-MultipleLights"
+      ]
+    },
+    {
+      "name": "build-ch19-macos-debug",
+      "displayName": "Build Ch19 (Skybox)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter19-Skybox"
+      ]
+    },
+    {
+      "name": "build-ch20-macos-debug",
+      "displayName": "Build Ch20 (ModelLoading)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter20-ModelLoading"
+      ]
+    },
+    {
+      "name": "build-ch21-macos-debug",
+      "displayName": "Build Ch21 (Blending)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter21-Blending"
+      ]
+    },
+    {
+      "name": "build-ch22-macos-debug",
+      "displayName": "Build Ch22 (GammaCorrection)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter22-GammaCorrection"
+      ]
+    },
+    {
+      "name": "build-ch23-macos-debug",
+      "displayName": "Build Ch23 (DepthTesting)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter23-DepthTesting"
+      ]
+    },
+    {
+      "name": "build-ch24-macos-debug",
+      "displayName": "Build Ch24 (StencilTesting)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter24-StencilTesting"
+      ]
+    },
+    {
+      "name": "build-ch25-macos-debug",
+      "displayName": "Build Ch25 (Framebuffer)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter25-Framebuffer"
+      ]
+    },
+    {
+      "name": "build-ch26-macos-debug",
+      "displayName": "Build Ch26 (ShadowMapping)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter26-ShadowMapping"
+      ]
+    },
+    {
+      "name": "build-ch27-macos-debug",
+      "displayName": "Build Ch27 (OmniDirShadowMapping)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter27-OmniDirShadowMapping"
+      ]
+    },
+    {
+      "name": "build-ch28-macos-debug",
+      "displayName": "Build Ch28 (NormalMapping)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter28-NormalMapping"
+      ]
+    },
+    {
+      "name": "build-ch29-macos-debug",
+      "displayName": "Build Ch29 (ParallaxMapping)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter29-ParallaxMapping"
+      ]
+    },
+    {
+      "name": "build-ch30-macos-debug",
+      "displayName": "Build Ch30 (HDR)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter30-HDR"
+      ]
+    },
+    {
+      "name": "build-ch31-macos-debug",
+      "displayName": "Build Ch31 (Bloom)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter31-Bloom"
+      ]
+    },
+    {
+      "name": "build-ch32-macos-debug",
+      "displayName": "Build Ch32 (SSAO)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter32-SSAO"
+      ]
+    },
+    {
+      "name": "build-ch33-macos-debug",
+      "displayName": "Build Ch33 (PBR)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter33-PBR"
+      ]
+    },
+    {
+      "name": "build-ch34-macos-debug",
+      "displayName": "Build Ch34 (IBL)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter34-IBL"
+      ]
+    },
+    {
+      "name": "build-ch35-macos-debug",
+      "displayName": "Build Ch35 (FrustumCulling)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter35-FrustumCulling"
+      ]
+    },
+    {
+      "name": "build-ch36-macos-debug",
+      "displayName": "Build Ch36 (Instancing)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter36-Instancing"
+      ]
+    },
+    {
+      "name": "build-ch37-macos-debug",
+      "displayName": "Build Ch37 (TextRendering)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter37-TextRendering"
+      ]
+    },
+    {
+      "name": "build-ch38-macos-debug",
+      "displayName": "Build Ch38 (Particles)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter38-Particles"
+      ]
+    },
+    {
+      "name": "build-ch39-macos-debug",
+      "displayName": "Build Ch39 (PostProcessing)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter39-PostProcessing"
+      ]
+    },
+    {
+      "name": "build-ch40-macos-debug",
+      "displayName": "Build Ch40 (HeightMap)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter40-HeightMap"
+      ]
+    },
+    {
+      "name": "build-ch41-macos-debug",
+      "displayName": "Build Ch41 (Tesselation)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter41-Tesselation"
+      ]
+    },
+    {
+      "name": "build-ch42-macos-debug",
+      "displayName": "Build Ch42 (DeferedShading)",
+      "configurePreset": "macos-arm64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [
+        "Chapter42-DeferedShading"
+      ]
+    },
+    {
+      "name": "android-arm64-v8a-debug",
+      "configurePreset": "android-arm64-v8a-debug",
       "inherits": "base-build"
     },
     {
-      "name": "macos-arm64-release",
-      "configurePreset": "macos-arm64-release",
+      "name": "android-arm64-v8a-release",
+      "configurePreset": "android-arm64-v8a-release",
       "inherits": "base-build"
     },
     {
-      "name": "macos-x86_64-debug",
-      "configurePreset": "macos-x86_64-debug",
+      "name": "android-armeabi-v7a-debug",
+      "configurePreset": "android-armeabi-v7a-debug",
       "inherits": "base-build"
     },
     {
-      "name": "macos-x86_64-release",
-      "configurePreset": "macos-x86_64-release",
+      "name": "android-armeabi-v7a-release",
+      "configurePreset": "android-armeabi-v7a-release",
+      "inherits": "base-build"
+    },
+    {
+      "name": "android-x86_64-debug",
+      "configurePreset": "android-x86_64-debug",
+      "inherits": "base-build"
+    },
+    {
+      "name": "android-x86_64-release",
+      "configurePreset": "android-x86_64-release",
       "inherits": "base-build"
     },
     {
@@ -364,14 +873,18 @@
       "displayName": "Build with Gradle (Debug)",
       "description": "Runs './gradlew installDebug' for the specified chapter.",
       "jobs": 1,
-      "targets": ["runGradleBuildDebug"]
+      "targets": [
+        "runGradleBuildDebug"
+      ]
     },
     {
       "name": "android-gradle-release",
       "displayName": "Build with Gradle (Release)",
       "description": "Runs './gradlew installRelease' for the specified chapter.",
       "jobs": 1,
-      "targets": ["runGradleBuildRelease"]
+      "targets": [
+        "runGradleBuildRelease"
+      ]
     }
   ],
   "testPresets": [
@@ -384,46 +897,6 @@
       "execution": {
         "noTestsAction": "error"
       }
-    },
-    {
-      "name": "windows-x64-debug",
-      "configurePreset": "windows-x64-debug",
-      "inherits": "base-test"
-    },
-    {
-      "name": "windows-x64-release",
-      "configurePreset": "windows-x64-release",
-      "inherits": "base-test"
-    },
-    {
-      "name": "linux-x64-debug",
-      "configurePreset": "linux-x64-debug",
-      "inherits": "base-test"
-    },
-    {
-      "name": "linux-x64-release",
-      "configurePreset": "linux-x64-release",
-      "inherits": "base-test"
-    },
-    {
-      "name": "macos-arm64-debug",
-      "configurePreset": "macos-arm64-debug",
-      "inherits": "base-test"
-    },
-    {
-      "name": "macos-arm64-release",
-      "configurePreset": "macos-arm64-release",
-      "inherits": "base-test"
-    },
-    {
-      "name": "macos-x86_64-debug",
-      "configurePreset": "macos-x86_64-debug",
-      "inherits": "base-test"
-    },
-    {
-      "name": "macos-x86_64-release",
-      "configurePreset": "macos-x86_64-release",
-      "inherits": "base-test"
     }
   ],
   "packagePresets": [
@@ -482,7 +955,7 @@
     },
     {
       "name": "macos-arm64-release-package",
-      "configurePreset": "macos-arm64-release",
+      "configurePreset": "macos-arm64-release-bundled",
       "description": "Create macOS App Bundle and .tar.gz package",
       "condition": {
         "type": "equals",
@@ -509,14 +982,18 @@
     },
     {
       "name": "macos-x86_64-release-package",
-      "configurePreset": "macos-x86_64-release",
+      "configurePreset": "macos-x86_64-release-bundled",
       "description": "Create macOS App Bundle and .tar.gz package",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Darwin"
       },
-      "generators": ["Bundle", "DragNDrop", "TGZ"],
+      "generators": [
+        "Bundle",
+        "DragNDrop",
+        "TGZ"
+      ],
       "variables": {
         "CPACK_PACKAGE_NAME": "MyAwesomeApp",
         "CPACK_PACKAGE_VENDOR": "My Company Inc.",
@@ -531,6 +1008,5 @@
       }
     }
   ],
-  "workflowPresets": [
-  ]
+  "workflowPresets": []
 }

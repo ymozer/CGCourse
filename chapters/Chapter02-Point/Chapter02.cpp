@@ -1,8 +1,21 @@
 #include "Chapter02.hpp"
+#include "Log.hpp"
 #include <imgui.h>
 
 
-Chapter02_Application::Chapter02_Application() : IChapter() {}
+#ifdef BUILD_STANDALONE
+Chapter02_Application::Chapter02_Application(std::string title, int width, int height)
+    : ChapterBase(title, width, height) // Calls Base::Application constructor
+{
+    LOG_INFO("Chapter 02 constructed in STANDALONE mode.");
+}
+#else
+Chapter02_Application::Chapter02_Application() 
+    : ChapterBase() // Calls IChapter constructor
+{
+    LOG_INFO("Chapter 02 constructed in BUNDLED mode.");
+}
+#endif
 
 void Chapter02_Application::setup()
 {

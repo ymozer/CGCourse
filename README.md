@@ -16,18 +16,18 @@ Multi-platform OpenGL examples to learn step-by-step.
 
 | Executable |  Windows | Linux |  Mac | Android | iOS |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **[Chapter01](./chapters/Chapter01-Window/README.md)**                 | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
-| **[Chapter02.1](./chapters/Chapter02.1-Point/README.md)**              | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
-| **[Chapter02.2](./chapters/Chapter02.2-Triangle/README.md)**           | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
-| **[Chapter02.3](./chapters/Chapter02.3-Colors/README.md)**             | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
-| **[Chapter02.4](./chapters/Chapter02.4-Square/README.md)**             | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
-| **[Chapter02.5](./chapters/Chapter02.5-IndexBuffer/README.md)**        | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
-| **[Chapter03](./chapters/Chapter03-Textures/README.md)**               | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
-| **[Chapter04](./chapters/Chapter04-Transformations/README.md)**        | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
-| **[Chapter04](./chapters/Chapter04-TransformationsCube/README.md)**    | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
-| **[Chapter05](./chapters/Chapter05-Camera/README.md)**                 | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
-| **[Chapter06](./chapters/Chapter06-FaceCulling/README.md)**            | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
-| **[Chapter07.1](./chapters/Chapter07.1-LightingPhong/README.md)**      | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
+| **[Chapter01](./chapters/Chapter01-Window/README.md)**                 | 🟡 Not Tested | 🟡 Not Tested | 🟢 Working | 🟡 Not Tested | 🟡 Not Tested |
+| **[Chapter02.1](./chapters/Chapter02.1-Point/README.md)**              | 🟡 Not Tested | 🟡 Not Tested | 🟢 Working | 🟡 Not Tested | 🟡 Not Tested |
+| **[Chapter02.2](./chapters/Chapter02.2-Triangle/README.md)**           | 🟡 Not Tested | 🟡 Not Tested | 🟢 Working | 🟡 Not Tested | 🟡 Not Tested |
+| **[Chapter02.3](./chapters/Chapter02.3-Colors/README.md)**             | 🟡 Not Tested | 🟡 Not Tested | 🟢 Working | 🟡 Not Tested | 🟡 Not Tested |
+| **[Chapter02.4](./chapters/Chapter02.4-Square/README.md)**             | 🟡 Not Tested | 🟡 Not Tested | 🟢 Working | 🟡 Not Tested | 🟡 Not Tested |
+| **[Chapter02.5](./chapters/Chapter02.5-IndexBuffer/README.md)**        | 🟡 Not Tested | 🟡 Not Tested | 🟢 Working | 🟡 Not Tested | 🟡 Not Tested |
+| **[Chapter03](./chapters/Chapter03-Textures/README.md)**               | 🟡 Not Tested | 🟡 Not Tested | 🟢 Working | 🟡 Not Tested | 🟡 Not Tested |
+| **[Chapter04](./chapters/Chapter04-Transformations/README.md)**        | 🟡 Not Tested | 🟡 Not Tested | 🟢 Working | 🟡 Not Tested | 🟡 Not Tested |
+| **[Chapter04](./chapters/Chapter04-TransformationsCube/README.md)**    | 🟡 Not Tested | 🟡 Not Tested | 🟢 Working | 🟡 Not Tested | 🟡 Not Tested |
+| **[Chapter05](./chapters/Chapter05-Camera/README.md)**                 | 🟡 Not Tested | 🟡 Not Tested | 🟢 Working | 🟡 Not Tested | 🟡 Not Tested |
+| **[Chapter06](./chapters/Chapter06-FaceCulling/README.md)**            | 🟡 Not Tested | 🟡 Not Tested | 🟢 Working | 🟡 Not Tested | 🟡 Not Tested |
+| **[Chapter07.1](./chapters/Chapter07.1-LightingPhong/README.md)**      | 🟡 Not Tested | 🟡 Not Tested | 🟢 Working | 🟡 Not Tested | 🟡 Not Tested |
 | **[Chapter07.2](./chapters/Chapter07.2-LightingBlinnPhong/README.md)** | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
 | **[Chapter07.3](./chapters/Chapter07.3-Materials/)**          | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
 | **[Chapter08](./chapters/Chapter08-LightingMapping/)**        | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
