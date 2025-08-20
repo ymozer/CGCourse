@@ -57,3 +57,16 @@ Multi-platform OpenGL examples to learn step-by-step.
 | **[Chapter31](./chapters/Chapter31-HeightMap/)**              | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
 | **[Chapter32](./chapters/Chapter32-Tesselation/)**            | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
 | **[Chapter35](./chapters/Chapter35-DeferedShading/)**         | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested | 🟡 Not Tested |
+
+GL version                     GLSL version
+2.0                            1.10
+2.1                            1.20
+3.0                            1.30
+3.1                            1.40
+3.2                            1.50
+3.3                            3.30
+4.0                            4.00
+4.1                            4.10
+4.2                            4.20
+4.3                            4.30
+4.4                            4.40
