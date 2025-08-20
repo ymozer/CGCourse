@@ -1,6 +1,8 @@
 # TODOs
 
-- [ ] fix initial UI scaling issue on MacOS
+- [ ] fix initial UI scaling issue on 
+  - [ ] Emscripten
+  - [ ] MacOS (maybe because of the dpi scaling (Retina displays))
 
 
 /opt/homebrew/Frameworks/Python.framework/Versions/3.13/bin/python3.13 -m pip install jinja2 --break-system-packages

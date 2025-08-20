@@ -1,28 +1,54 @@
-# Build Environment 
+# Build Environment
 
 ## Quick Commands
 
 ```bash
 cmake -S . -B build # configure project
 cmake --build build # build project
+cmake --build build --target <target_name> # build project with target
+cmake -DCMAKE_BUILD_TYPE=Release -S . -B build
+cmake -DANDROID_NDK_HOME=/path/to/ndk -S . -B build # configure project with NDK
 ./build/bin/CHAPTERNAME # launch chapter
 cmake --install build --prefix install # install project
 ```
 
 ## Editor/IDE
 
-Choice is up to you. I am using VsCode and [CMake extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools). 
+Choice is up to you. I am using VsCode and [CMake extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) which automates and simplifies the CMake workflow by using gui buttons.
+
+You can use cmake without presets like in the [*Quick Commands*](#quick-commands) section.
+
 If [CMakePresets file](./CMakePresets.json) doesn't include your desired environment you can use CMake itself by terminal or gui without presets or modify the file.
 
 ## CMake
 
-Download latest CMake from [here](https://cmake.org/download/) according to your OS.
+Download the latest CMake from the [official CMake download page](https://cmake.org/download/) according to your OS.
 
 **Note:** To work with Android you will need:
 
+* [Install JRE](https://www.java.com/tr/download/manual.jsp) or in MacOS `brew install openjdk@17` and read the instructions in Caveats symlink with system Java wrappers and add openjdk to PATH.
+* in MacOS `brew install --cask android-platform-tools` for adb
 * [Android NDK](https://developer.android.com/ndk/downloads)
 * Android SDK: Download [Android Studio](https://developer.android.com/studio) and use SDK Manager tool or use [*sdkmanager*](https://developer.android.com/studio#command-line-tools-only) cli tool
 * Also set Environment Variable `ANDROID_NDK_HOME` to the installation location of the SDK.
+  * In MacOS it comes with bundle format. You need to extract this to your desired location. Then directory you need set env var to inside of the bundle is: ./Contents/NDK
+  * In Linux it is usually installed to `/usr/lib/android-sdk/ndk/<version>` or `/home/<user>/Android/Sdk/ndk/<version>`.
+  * In Windows it is usually installed to `C:\Users\<user>\AppData\Local\Android\Sdk\ndk\<version>`.
+* Here is my .bashrc file for example:
+```bash
+export JAVA_HOME="/opt/homebrew/opt/openjdk@17"
+export ANDROID_HOME="${ZDOTDIR:-$HOME}/Library/Android/sdk"
+export ANDROID_NDK_HOME="${ZDOTDIR:-$HOME}/Libraries/AndroidNDK/AndroidNDK13676358.app/Contents/NDK"
+export EMSDK_QUIET=1
+source "${ZDOTDIR:-$HOME}/Libraries/emsdk/emsdk_env.sh"
+```
+
+* Change build.gradle with ndk version and path.
+* Create `local.properties` file in the [./platform/android](./platform/android) with the following content:
+
+```md
+sdk.dir=/path/to/your/sdk
+```
 
 **Note:** To work with Emscripten (Web Builds) you will need [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html).
 
