@@ -1,4 +1,4 @@
-#version 410 core
+// Chapter 1 - Window Fragment Shader
 out vec4 FragColor;
 
 void main()

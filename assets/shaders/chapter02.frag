@@ -1,11 +1,7 @@
-#version 300 es
-
-precision mediump float;
-precision mediump int;
-
+// Chapter 2 - Point Fragment Shader
 out vec4 FragColor;
-uniform vec4 u_TriangleColor;
 
-void main() {
-    FragColor = u_TriangleColor;
+void main()
+{
+    FragColor = vec4(1.0, 1.0, 0.0, 1.0);
 }

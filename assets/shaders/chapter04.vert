@@ -1,14 +1,12 @@
-#version 330 core
+// Chapter 4 - Color Fragment Shader
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec2 aTexCoord;
+layout (location = 1) in vec3 aColor; // New color attribute
 
-// A single matrix to handle all transformations (Model, View, Projection)
-uniform mat4 u_Transform;
-
-out vec2 v_TexCoord;
+// We need to pass the color to the fragment shader.
+out vec3 v_Color;
 
 void main()
 {
-    gl_Position = u_Transform * vec4(aPos, 1.0);
-    v_TexCoord = aTexCoord;
+    gl_Position = vec4(aPos, 1.0);
+    v_Color = aColor; // Pass the color through
 }
