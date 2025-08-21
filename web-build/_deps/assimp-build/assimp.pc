@@ -1,9 +1,0 @@
-libdir=/Users/metin/Libraries/emsdk/upstream/emscripten/cache/sysroot/lib
-includedir=/Users/metin/Libraries/emsdk/upstream/emscripten/cache/sysroot/include
-
-Name: OpenGLCourseTemplate
-Description: Import various well-known 3D model formats in an uniform manner.
-Version: 5.2.4
-Libs: -L${libdir} -lassimp
-Libs.private:  
-Cflags: -I${includedir}
