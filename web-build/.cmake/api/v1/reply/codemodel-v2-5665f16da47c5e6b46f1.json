@@ -1,0 +1,445 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2,
+						4,
+						5,
+						6,
+						7,
+						10,
+						11
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						8,
+						10,
+						11,
+						12
+					]
+				},
+				{
+					"build" : "_deps/sdl3-build",
+					"jsonFile" : "directory-_deps.sdl3-build-Debug-f8033627b3963e96d1ae.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : ".cache/cpm/sdl3/1b4d",
+					"targetIndexes" : 
+					[
+						2,
+						3,
+						4
+					]
+				},
+				{
+					"build" : "_deps/glm-build",
+					"childIndexes" : 
+					[
+						3
+					],
+					"jsonFile" : "directory-_deps.glm-build-Debug-6d15e69980657a622af7.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.6"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 2,
+					"source" : ".cache/cpm/glm/df6a"
+				},
+				{
+					"build" : "_deps/glm-build/glm",
+					"jsonFile" : "directory-_deps.glm-build.glm-Debug-a23f95ebb42eb382e7b0.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.6"
+					},
+					"parentIndex" : 2,
+					"projectIndex" : 2,
+					"source" : ".cache/cpm/glm/df6a/glm",
+					"targetIndexes" : 
+					[
+						9
+					]
+				},
+				{
+					"build" : "glad_cmake",
+					"jsonFile" : "directory-glad_cmake-Debug-92fd3264d3c0957626e0.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 3,
+					"source" : ".cache/cpm/glad/49be/cmake"
+				},
+				{
+					"build" : "_deps/spdlog-build",
+					"jsonFile" : "directory-_deps.spdlog-build-Debug-ff771ffcf6c6a51accb6.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 4,
+					"source" : ".cache/cpm/spdlog/42d4",
+					"targetIndexes" : 
+					[
+						13
+					]
+				},
+				{
+					"build" : "_deps/tracy-build",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.tracy-build-Debug-7750726b28c2bbbe52c5.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 5,
+					"source" : ".cache/cpm/tracy/f4b7",
+					"targetIndexes" : 
+					[
+						5
+					]
+				},
+				{
+					"build" : "_deps/assimp-build",
+					"childIndexes" : 
+					[
+						8,
+						9
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.assimp-build-Debug-b487a2776c8ab336de80.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 6,
+					"source" : ".cache/cpm/assimp/2675"
+				},
+				{
+					"build" : "_deps/assimp-build/contrib/zlib",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.assimp-build.contrib.zlib-Debug-944dcbe3da54f05fad00.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10.0"
+					},
+					"parentIndex" : 7,
+					"projectIndex" : 7,
+					"source" : ".cache/cpm/assimp/2675/contrib/zlib",
+					"targetIndexes" : 
+					[
+						14
+					]
+				},
+				{
+					"build" : "_deps/assimp-build/code",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.assimp-build.code-Debug-1af82b3027d5edaf15a5.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 7,
+					"projectIndex" : 6,
+					"source" : ".cache/cpm/assimp/2675/code",
+					"targetIndexes" : 
+					[
+						6
+					]
+				},
+				{
+					"build" : "base",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-base-Debug-1d1ae84c0bb533863772.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "base",
+					"targetIndexes" : 
+					[
+						7
+					]
+				},
+				{
+					"build" : "chapters",
+					"jsonFile" : "directory-chapters-Debug-37598d96031ba44ba7c2.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "chapters"
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					],
+					"directoryIndexes" : 
+					[
+						0,
+						10,
+						11
+					],
+					"name" : "OpenGLCourseTemplate",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						7,
+						8,
+						10,
+						11,
+						12
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1
+					],
+					"name" : "SDL3",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						2,
+						3,
+						4
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2,
+						3
+					],
+					"name" : "glm",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						9
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						4
+					],
+					"name" : "glad",
+					"parentIndex" : 0
+				},
+				{
+					"directoryIndexes" : 
+					[
+						5
+					],
+					"name" : "spdlog",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						13
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						6
+					],
+					"name" : "Tracy",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						5
+					]
+				},
+				{
+					"childIndexes" : 
+					[
+						7
+					],
+					"directoryIndexes" : 
+					[
+						7,
+						9
+					],
+					"name" : "Assimp",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						6
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						8
+					],
+					"name" : "zlib",
+					"parentIndex" : 6,
+					"targetIndexes" : 
+					[
+						14
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "CopyAssets::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-CopyAssets-Debug-c1042c8eb84dad106e4b.json",
+					"name" : "CopyAssets",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "OpenGLCourseApp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-OpenGLCourseApp-Debug-f8b8b3cdf28c68c826f6.json",
+					"name" : "OpenGLCourseApp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "SDL3-static::@405c074760d2f6728126",
+					"jsonFile" : "target-SDL3-static-Debug-ee6b9f52ecb724cd2107.json",
+					"name" : "SDL3-static",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "SDL3_test::@405c074760d2f6728126",
+					"jsonFile" : "target-SDL3_test-Debug-14f8788e3867c41e9a4e.json",
+					"name" : "SDL3_test",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "SDL_uclibc::@405c074760d2f6728126",
+					"jsonFile" : "target-SDL_uclibc-Debug-0ba882cd8d27d8980516.json",
+					"name" : "SDL_uclibc",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "TracyClient::@5312c6e87bd9d431bdc8",
+					"jsonFile" : "target-TracyClient-Debug-1af0d7a42648ce5b57f4.json",
+					"name" : "TracyClient",
+					"projectIndex" : 5
+				},
+				{
+					"directoryIndex" : 9,
+					"id" : "assimp::@b1ea6f5c2178ebc90389",
+					"jsonFile" : "target-assimp-Debug-59f12c468123c6838a9f.json",
+					"name" : "assimp",
+					"projectIndex" : 6
+				},
+				{
+					"directoryIndex" : 10,
+					"id" : "base::@4506b02e7a4fef989908",
+					"jsonFile" : "target-base-Debug-fbaa966452fc6d91130b.json",
+					"name" : "base",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "glad::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-glad-Debug-bacb20fd93d5eb285474.json",
+					"name" : "glad",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "glm::@ce54d98d7b326a3e12a8",
+					"jsonFile" : "target-glm-Debug-adedc0d2a845a5862409.json",
+					"name" : "glm",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "imgui::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-imgui-Debug-23f817d41be2d90f1136.json",
+					"name" : "imgui",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "imgui_impl_opengl3::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-imgui_impl_opengl3-Debug-12e0e4689cffed6ca3c4.json",
+					"name" : "imgui_impl_opengl3",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "imgui_impl_sdl3::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-imgui_impl_sdl3-Debug-2fe57d824d0c2c472881.json",
+					"name" : "imgui_impl_sdl3",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "spdlog::@eb35cfce7893ccfeff1e",
+					"jsonFile" : "target-spdlog-Debug-ad6c946aa087fddb32b1.json",
+					"name" : "spdlog",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "zlibstatic::@7fd99959cf8fe87d223a",
+					"jsonFile" : "target-zlibstatic-Debug-8528756706910c43d036.json",
+					"name" : "zlibstatic",
+					"projectIndex" : 7
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/Users/metin/CGCourse/web-build",
+		"source" : "/Users/metin/CGCourse"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 8
+	}
+}

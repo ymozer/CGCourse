@@ -8,6 +8,8 @@ option(BUILD_STANDALONE "Build each chapter as a separate executable" OFF)
 if(BUILD_STANDALONE)
     set(STANDALONE_CHAPTER_NAME "Chapter10-TransformationsCube" CACHE STRING "The name of the single chapter to build when BUILD_STANDALONE is ON")
 endif()
+set(DEVELOPMENT_TEAM_ID "8MRFDR3542" CACHE STRING "Apple Developer Team ID for code signing")
+set(BUNDLE_IDENTIFIER_PREFIX "com.adu.muh" CACHE STRING "Base bundle identifier for Apple targets")
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -19,21 +21,23 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-# For Windows
-if(WIN32)
-    set(GRADLEW_COMMAND "${CMAKE_SOURCE_DIR}/platform/android/gradlew.bat")
-# For Linux/macOS
-else()
-    set(GRADLEW_COMMAND "${CMAKE_SOURCE_DIR}/platform/android/gradlew")
-endif()
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(platforms) 
+include(CPM)
+set(CPM_SOURCE_CACHE ${CMAKE_CURRENT_SOURCE_DIR}/.cache/cpm)
 
-
-if(ANDROID)
-    option(CHAPTER_TO_BUILD_FOR_ANDROID "Chapter01-Window")
+if(PLATFORM_IS_ANDROID)
+    option(CHAPTER_TO_BUILD_FOR_ANDROID "Chapter01-Window" "The chapter to build for Android.")
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static linking for all dependencies" FORCE)
     set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "No postfix for debug builds" FORCE)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     message(STATUS "Android target chapter: ${CHAPTER_TO_BUILD_FOR_ANDROID}")
+
+    if(WIN32)
+        set(GRADLEW_COMMAND "${CMAKE_SOURCE_DIR}/platform/android/gradlew.bat")
+    else()
+        set(GRADLEW_COMMAND "${CMAKE_SOURCE_DIR}/platform/android/gradlew")
+    endif()
 
     add_custom_target(runGradleBuildDebug
         COMMAND ${GRADLEW_COMMAND} -PchapterToBuild=${CHAPTER_TO_BUILD_FOR_ANDROID} installDebug
@@ -51,12 +55,6 @@ if(ANDROID)
 else()
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static linking for all dependencies" FORCE)
 endif()
-
-# Add the 'cmake' subdirectory to the module path so we can find CPM.cmake
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-include(CPM)
-set(CPM_SOURCE_CACHE ${CMAKE_CURRENT_SOURCE_DIR}/.cache/cpm)
-include(platforms) 
 
 # SDL (Windowing and Input)
 CPMAddPackage(
@@ -84,28 +82,19 @@ if(imgui_SOURCE_DIR)
     set(ROOT ${imgui_SOURCE_DIR})
     message("IMGUI ROOT: ${imgui_SOURCE_DIR}")
 
-    # --- Core ImGui Library ---
-    if(ANDROID)
-        add_library(imgui STATIC
-            ${ROOT}/imgui.cpp
-            ${ROOT}/imgui_draw.cpp
-            ${ROOT}/imgui_tables.cpp
-            ${ROOT}/imgui_widgets.cpp
-            ${ROOT}/imgui_demo.cpp
-        )
-    else()
-        add_library(imgui STATIC
-            ${ROOT}/imgui.cpp
-            ${ROOT}/imgui_draw.cpp
-            ${ROOT}/imgui_tables.cpp
-            ${ROOT}/imgui_widgets.cpp
-            ${ROOT}/imgui_demo.cpp
-        )
-    endif()
+    add_library(imgui STATIC
+        ${ROOT}/imgui.cpp
+        ${ROOT}/imgui_draw.cpp
+        ${ROOT}/imgui_tables.cpp
+        ${ROOT}/imgui_widgets.cpp
+        ${ROOT}/imgui_demo.cpp
+    )
+
     target_include_directories(imgui PUBLIC
         $<BUILD_INTERFACE:${ROOT}>
         $<INSTALL_INTERFACE:include>
     )
+
     set_property(TARGET imgui PROPERTY CXX_STANDARD ${CMAKE_CXX_STANDARD})
     target_compile_definitions(imgui PRIVATE IMGUI_IMPL_API=)
     set_target_properties(imgui PROPERTIES FOLDER "External Libraries/imgui")
@@ -113,30 +102,21 @@ if(imgui_SOURCE_DIR)
     set(IMGUI_BACKEND_INSTALL_TARGETS "")
     set(IMGUI_BACKEND_INSTALL_HEADERS "")
 
-    # sdl3 Backend
-    if(ANDROID)
-        add_library(imgui_impl_sdl3 STATIC ${ROOT}/backends/imgui_impl_sdl3.cpp)
-    else()
-        add_library(imgui_impl_sdl3 STATIC ${ROOT}/backends/imgui_impl_sdl3.cpp)
-    endif()
+    add_library(imgui_impl_sdl3 STATIC ${ROOT}/backends/imgui_impl_sdl3.cpp)
+
     target_link_libraries(imgui_impl_sdl3 PUBLIC imgui SDL3::SDL3)
     target_include_directories(imgui_impl_sdl3 PUBLIC
         $<BUILD_INTERFACE:${ROOT}>
         $<INSTALL_INTERFACE:include>
     )
-    set_property(TARGET imgui_impl_sdl3 PROPERTY CXX_STANDARD ${CMAKE_CXX_STANDARD})
-    target_compile_definitions(imgui_impl_sdl3 PRIVATE IMGUI_IMPL_API=)
     list(APPEND IMGUI_BACKEND_INSTALL_TARGETS imgui_impl_sdl3)
     list(APPEND IMGUI_BACKEND_INSTALL_HEADERS ${ROOT}/backends/imgui_impl_sdl3.h)
+    target_compile_definitions(imgui_impl_sdl3 PRIVATE IMGUI_IMPL_API=)
     set_target_properties(imgui_impl_sdl3 PROPERTIES FOLDER "External Libraries/imgui")
+    set_target_properties(imgui_impl_sdl3 PROPERTIES CXX_STANDARD ${CMAKE_CXX_STANDARD})
 
+    add_library(imgui_impl_opengl3 STATIC ${ROOT}/backends/imgui_impl_opengl3.cpp)
 
-    # OpenGL3 Backend
-    if(ANDROID)
-        add_library(imgui_impl_opengl3 STATIC ${ROOT}/backends/imgui_impl_opengl3.cpp)
-    else()
-        add_library(imgui_impl_opengl3 STATIC ${ROOT}/backends/imgui_impl_opengl3.cpp)
-    endif()
     if(PLATFORM_IS_DESKTOP)
         find_package(OpenGL REQUIRED)
         target_link_libraries(imgui_impl_opengl3 PUBLIC imgui OpenGL::GL)
@@ -147,6 +127,7 @@ if(imgui_SOURCE_DIR)
     elseif(PLATFORM_IS_EMSCRIPTEN)
         target_link_libraries(imgui_impl_opengl3 PUBLIC imgui GLESv2)
     endif()
+    
     target_include_directories(imgui_impl_opengl3 PUBLIC
         $<BUILD_INTERFACE:${ROOT}>
         $<INSTALL_INTERFACE:include>
@@ -289,7 +270,7 @@ if(TARGET zlibstatic)
     set_target_properties(zlibstatic PROPERTIES FOLDER "External Libraries/assimp/utils")
 endif()
 
-file(GLOB_RECURSE ASSET_FILES
+file(GLOB_RECURSE ASSET_FILES CONFIGURE_DEPENDS
     "${CMAKE_SOURCE_DIR}/assets/*"
 )
 add_custom_target(CopyAssets ALL
@@ -305,24 +286,71 @@ set_target_properties(CopyAssets PROPERTIES FOLDER "Utility")
 add_subdirectory(base)
 add_subdirectory(chapters)
 
-if(NOT ANDROID AND NOT EMSCRIPTEN AND NOT IOS)
-    if(BUILD_STANDALONE)
-        message(STATUS "Build Mode: Standalone Chapter (${STANDALONE_CHAPTER_NAME})")
+if(PLATFORM_IS_ANDROID)
+    message(STATUS "Build Mode: Android (Chapter: ${CHAPTER_TO_BUILD_FOR_ANDROID})")
+    if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/chapters/${CHAPTER_TO_BUILD_FOR_ANDROID}")
+        add_chapter(${CHAPTER_TO_BUILD_FOR_ANDROID})
     else()
-        message(STATUS "Build Mode: Host Application (All Chapters)")
-        add_executable(OpenGLCourseApp
-            bundledApp/main.cpp
-            bundledApp/BundledApp.cpp
-            ${ALL_CHAPTER_SOURCES}
+        message(FATAL_ERROR "Chapter directory not found: ${CHAPTER_TO_BUILD_FOR_ANDROID}")
+    endif()
+
+elseif(BUILD_STANDALONE)
+    if(STANDALONE_CHAPTER_NAME)
+        # Build one specific standalone chapter
+        message(STATUS "Build Mode: Standalone (Single Chapter: ${STANDALONE_CHAPTER_NAME})")
+        if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/chapters/${STANDALONE_CHAPTER_NAME}")
+            add_chapter(${STANDALONE_CHAPTER_NAME})
+        else()
+            message(FATAL_ERROR "Chapter directory not found: ${STANDALONE_CHAPTER_NAME}")
+        endif()
+    else()
+        # Build all available standalone chapters
+        message(STATUS "Build Mode: Standalone (All Chapters)")
+        file(GLOB CHAPTER_DIRS LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/chapters/*")
+        foreach(DIR ${CHAPTER_DIRS})
+            get_filename_component(CHAPTER_NAME ${DIR} NAME)
+            if(EXISTS "${DIR}/main.cpp")
+                message(STATUS "Found standalone-ready chapter: ${CHAPTER_NAME}")
+                add_chapter(${CHAPTER_NAME})
+            endif()
+        endforeach()
+    endif()
+
+else() # Bundled Host Application Mode (Default for Desktop/Web)
+    message(STATUS "Build Mode: Bundled Host Application")
+
+    # Glob sources for all chapters
+    file(GLOB_RECURSE ALL_CHAPTER_SOURCES CONFIGURE_DEPENDS
+        "${CMAKE_SOURCE_DIR}/chapters/*/Chapter*.cpp"
+    )
+
+    add_executable(OpenGLCourseApp
+        bundledApp/main.cpp
+        bundledApp/BundledApp.cpp
+        ${ALL_CHAPTER_SOURCES}
+    )
+    target_link_libraries(OpenGLCourseApp PRIVATE base)
+    add_dependencies(OpenGLCourseApp CopyAssets)
+
+    target_include_directories(OpenGLCourseApp PRIVATE
+        "bundledApp"
+        "chapters"
+        "base"
+    )
+    set_target_properties(OpenGLCourseApp PROPERTIES FOLDER "Course Projects")
+
+    if(PLATFORM_IS_EMSCRIPTEN)
+        set(ASSETS_SOURCE_PATH "${CMAKE_SOURCE_DIR}/assets")
+        set_target_properties(OpenGLCourseApp PROPERTIES SUFFIX ".html")
+        target_link_options(OpenGLCourseApp PRIVATE
+            "SHELL:-s FORCE_FILESYSTEM=1"
+            "SHELL:-s FULL_ES3"
+            "SHELL:-s MIN_WEBGL_VERSION=2"
+            "SHELL:-s ALLOW_MEMORY_GROWTH=1"
+            "SHELL:-s USE_SDL=3"
+            "SHELL:--use-preload-plugins"
+            "SHELL:--preload-file ${ASSETS_SOURCE_PATH}@/assets"
         )
-        add_dependencies(OpenGLCourseApp CopyAssets)
-        target_include_directories(OpenGLCourseApp PRIVATE
-            "${CMAKE_CURRENT_SOURCE_DIR}/bundledApp"  # So it can find IChapter.hpp
-            "${CMAKE_CURRENT_SOURCE_DIR}/chapters"         # So it can find all the ChapterXX.hpp files
-            "${CMAKE_CURRENT_SOURCE_DIR}/base"             # Good practice to include this too
-        )
-        target_link_libraries(OpenGLCourseApp PRIVATE base)
-        set_target_properties(OpenGLCourseApp PROPERTIES FOLDER "Course Projects")
     endif()
 endif()
 

@@ -1,0 +1,173 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			".cache/cpm/tracy/f4b7/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 160,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 170,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 172,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 174,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 176,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 184,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "lib",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"lib/libTracyClientd.a"
+			],
+			"targetId" : "TracyClient::@5312c6e87bd9d431bdc8",
+			"targetIndex" : 5,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "include/tracy",
+			"paths" : 
+			[
+				".cache/cpm/tracy/f4b7/public/tracy/TracyC.h",
+				".cache/cpm/tracy/f4b7/public/tracy/Tracy.hpp",
+				".cache/cpm/tracy/f4b7/public/tracy/TracyD3D11.hpp",
+				".cache/cpm/tracy/f4b7/public/tracy/TracyD3D12.hpp",
+				".cache/cpm/tracy/f4b7/public/tracy/TracyLua.hpp",
+				".cache/cpm/tracy/f4b7/public/tracy/TracyOpenCL.hpp",
+				".cache/cpm/tracy/f4b7/public/tracy/TracyOpenGL.hpp",
+				".cache/cpm/tracy/f4b7/public/tracy/TracyVulkan.hpp"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 3,
+			"component" : "Unspecified",
+			"destination" : "include/client",
+			"paths" : 
+			[
+				".cache/cpm/tracy/f4b7/public/client/tracy_concurrentqueue.h",
+				".cache/cpm/tracy/f4b7/public/client/tracy_rpmalloc.hpp",
+				".cache/cpm/tracy/f4b7/public/client/tracy_SPSCQueue.h",
+				".cache/cpm/tracy/f4b7/public/client/TracyKCore.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracyArmCpuTable.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracyCallstack.h",
+				".cache/cpm/tracy/f4b7/public/client/TracyCallstack.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracyCpuid.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracyDebug.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracyDxt1.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracyFastVector.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracyLock.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracyProfiler.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracyRingBuffer.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracyScoped.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracyStringHelpers.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracySysPower.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracySysTime.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracySysTrace.hpp",
+				".cache/cpm/tracy/f4b7/public/client/TracyThread.hpp"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "Unspecified",
+			"destination" : "include/common",
+			"paths" : 
+			[
+				".cache/cpm/tracy/f4b7/public/common/tracy_lz4.hpp",
+				".cache/cpm/tracy/f4b7/public/common/tracy_lz4hc.hpp",
+				".cache/cpm/tracy/f4b7/public/common/TracyAlign.hpp",
+				".cache/cpm/tracy/f4b7/public/common/TracyAlloc.hpp",
+				".cache/cpm/tracy/f4b7/public/common/TracyApi.h",
+				".cache/cpm/tracy/f4b7/public/common/TracyColor.hpp",
+				".cache/cpm/tracy/f4b7/public/common/TracyForceInline.hpp",
+				".cache/cpm/tracy/f4b7/public/common/TracyMutex.hpp",
+				".cache/cpm/tracy/f4b7/public/common/TracyProtocol.hpp",
+				".cache/cpm/tracy/f4b7/public/common/TracyQueue.hpp",
+				".cache/cpm/tracy/f4b7/public/common/TracySocket.hpp",
+				".cache/cpm/tracy/f4b7/public/common/TracyStackFrames.hpp",
+				".cache/cpm/tracy/f4b7/public/common/TracySystem.hpp",
+				".cache/cpm/tracy/f4b7/public/common/TracyUwp.hpp",
+				".cache/cpm/tracy/f4b7/public/common/TracyYield.hpp"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 5,
+			"component" : "Unspecified",
+			"destination" : "share/Tracy",
+			"exportName" : "TracyConfig",
+			"exportTargets" : 
+			[
+				{
+					"id" : "TracyClient::@5312c6e87bd9d431bdc8",
+					"index" : 5
+				}
+			],
+			"paths" : 
+			[
+				"_deps/tracy-build/CMakeFiles/Export/7430802ac276f58e70c46cf34d169c6f/TracyTargets.cmake"
+			],
+			"type" : "export"
+		},
+		{
+			"backtrace" : 6,
+			"component" : "Unspecified",
+			"destination" : "share/Tracy",
+			"paths" : 
+			[
+				"web-build/_deps/tracy-build/TracyConfig.cmake"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "_deps/tracy-build",
+		"source" : ".cache/cpm/tracy/f4b7"
+	}
+}

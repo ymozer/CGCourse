@@ -536,6 +536,19 @@ namespace Base
     {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
+#if PLATFORM_EMSCRIPTEN
+        ImGuiIO& io = ImGui::GetIO();
+        if (io.DisplaySize.x > 0.0f && io.DisplaySize.y > 0.0f)
+        {
+            ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+            if (platform_io.Monitors.Size > 0)
+            {
+                ImGuiPlatformMonitor& monitor = platform_io.Monitors[0];
+                monitor.WorkPos = monitor.MainPos;
+                monitor.WorkSize = monitor.MainSize;
+            }
+        }
+#endif
         if (Base::Input::Get().IsRelativeMouseMode())
         {
             ImGuiIO &io = ImGui::GetIO();

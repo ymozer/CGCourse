@@ -1,6 +1,3 @@
-set(DEVELOPMENT_TEAM_ID "8MRFDR3542" CACHE STRING "Apple Developer Team ID for code signing")
-set(BUNDLE_IDENTIFIER_PREFIX "com.adu.muh" CACHE STRING "Base bundle identifier for Apple targets")
-
 function(add_chapter CHAPTER_NAME)
 
     if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${CHAPTER_NAME}/main.cpp")
@@ -11,12 +8,9 @@ function(add_chapter CHAPTER_NAME)
     file(GLOB CHAPTER_SOURCES CONFIGURE_DEPENDS 
         "${CMAKE_CURRENT_SOURCE_DIR}/${CHAPTER_NAME}/*.cpp"
         "${CHAPTER_NAME}/main.cpp"
-
     )
     
     if(PLATFORM_IS_ANDROID)
-        # For Android, we must build a SHARED library named "main".
-        # The SDL Java activity will load libmain.so.
         add_library(main SHARED ${CHAPTER_SOURCES})
         set_target_properties(main PROPERTIES DEBUG_POSTFIX "")
         target_link_libraries(main PRIVATE base)
@@ -25,16 +19,14 @@ function(add_chapter CHAPTER_NAME)
         )
     else()
         add_executable(${CHAPTER_NAME} ${CHAPTER_SOURCES})
-        add_dependencies(${CHAPTER_NAME} CopyAssets)
-
         target_link_libraries(${CHAPTER_NAME} PRIVATE base)
+        add_dependencies(${CHAPTER_NAME} CopyAssets)
         
         if(PLATFORM_IS_APPLE)
             set_target_properties(${CHAPTER_NAME} PROPERTIES
                 MACOSX_BUNDLE_GUI_IDENTIFIER "${BUNDLE_IDENTIFIER_PREFIX}.${CHAPTER_NAME}"
                 XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${DEVELOPMENT_TEAM_ID}
                 XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic"
-
             )
             target_compile_definitions(${CHAPTER_NAME} PRIVATE GLES_SILENCE_DEPRECATION=1)
         endif()
@@ -60,14 +52,6 @@ function(add_chapter CHAPTER_NAME)
             VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
         )
 
-        add_custom_command(
-            TARGET ${CHAPTER_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-                    ${CMAKE_SOURCE_DIR}/assets
-                    $<TARGET_FILE_DIR:${CHAPTER_NAME}>/assets
-            COMMENT "Copying assets to build directory for ${CHAPTER_NAME}"
-        )
-
         install(TARGETS ${CHAPTER_NAME}
             BUNDLE DESTINATION .
             RUNTIME DESTINATION bin 
@@ -75,51 +59,5 @@ function(add_chapter CHAPTER_NAME)
             LIBRARY DESTINATION lib
             ARCHIVE DESTINATION lib
         )
-
-        install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets/
-            DESTINATION bin/assets   # Installs the assets to 'bin/assets'
-            COMPONENT "Applications"
-        )
     endif()
 endfunction()
-
-
-
-if(PLATFORM_IS_ANDROID)
-    # --- Android Mode ---
-    message(STATUS "Configuring Android build for chapter: ${CHAPTER_TO_BUILD_FOR_ANDROID}")
-    if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${CHAPTER_TO_BUILD_FOR_ANDROID}")
-        add_chapter(${CHAPTER_TO_BUILD_FOR_ANDROID})
-    else()
-        message(FATAL_ERROR "Chapter directory not found for Android target: ${CHAPTER_TO_BUILD_FOR_ANDROID}")
-    endif()
-
-elseif(BUILD_STANDALONE)
-   # --- STANDALONE MODE ---
-    message(STATUS "Build mode: Standalone. Searching for all valid chapters...")
-
-    # Find all subdirectories inside the 'chapters' directory
-    file(GLOB CHAPTER_DIRS LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/*")
-
-    foreach(DIR ${CHAPTER_DIRS})
-        if(IS_DIRECTORY ${DIR})
-            # Extract the directory name (e.g., "Chapter01-Window")
-            get_filename_component(CHAPTER_NAME ${DIR} NAME)
-            if(EXISTS "${DIR}/main.cpp")
-                message(STATUS "Found standalone-ready chapter: ${CHAPTER_NAME}")
-                add_chapter(${CHAPTER_NAME})
-            endif()
-        endif()
-    endforeach()
-else()
-    # --- Host Application Desktop/Web Mode (Default) ---
-
-    # NOTE: This assumes your refactored C++ files are named like "ChapterXX.cpp"
-    # and live in their respective subfolders.
-    file(GLOB_RECURSE CHAPTER_SOURCES CONFIGURE_DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/*/Chapter*.cpp"
-    )
-
-    set(ALL_CHAPTER_SOURCES ${CHAPTER_SOURCES} PARENT_SCOPE)
-
-endif()
