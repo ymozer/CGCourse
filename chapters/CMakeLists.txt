@@ -1,13 +1,13 @@
-function(add_chapter CHAPTER_NAME)
+function(add_chapter CHAPTER_PATH)
+    get_filename_component(CHAPTER_NAME ${CHAPTER_PATH} NAME)
 
-    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${CHAPTER_NAME}/main.cpp")
+    if(NOT EXISTS "${CHAPTER_PATH}/main.cpp")
         message(WARNING "Skipping standalone build for ${CHAPTER_NAME}: missing main.cpp")
         return()
     endif()
 
     file(GLOB CHAPTER_SOURCES CONFIGURE_DEPENDS 
-        "${CMAKE_CURRENT_SOURCE_DIR}/${CHAPTER_NAME}/*.cpp"
-        "${CHAPTER_NAME}/main.cpp"
+        "${CHAPTER_PATH}/*.cpp"
     )
     
     if(PLATFORM_IS_ANDROID)

@@ -31,6 +31,7 @@
 #include <thread>
 #include <utility>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <backends/imgui_impl_sdl3.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <spdlog/spdlog.h>
@@ -240,7 +241,7 @@ namespace Base
         style.ScaleAllSizes(scale);
 
         ImGuiIO &io = ImGui::GetIO();
-        io.FontGlobalScale = 1.0f / ImGui::GetIO().DisplayFramebufferScale.x * scale;
+        io.FontGlobalScale = 1.0f;
     }
 
     void Application::handleEvents()
@@ -420,7 +421,7 @@ namespace Base
                           GL_COLOR_BUFFER_BIT, GL_LINEAR);
 #endif
         // --- End of Render Path Change ---
-        
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, m_Width, m_Height);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -474,7 +475,6 @@ namespace Base
         ImGui_ImplSDL3_Shutdown();
         ImGui::DestroyContext();
 
-
         SDL_GL_DestroyContext(appContext.glcontext);
         SDL_DestroyWindow(appContext.window);
         SDL_Quit();
@@ -492,7 +492,7 @@ namespace Base
         io.IniFilename = nullptr;
 #else
 
-        m_ImGuiIniPath  = getPrefPath("imgui.ini");
+        m_ImGuiIniPath = getPrefPath("imgui.ini");
         if (m_ImGuiIniPath.empty())
         {
             io.IniFilename = "imgui.ini";
@@ -537,13 +537,13 @@ namespace Base
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
 #if PLATFORM_EMSCRIPTEN
-        ImGuiIO& io = ImGui::GetIO();
+        ImGuiIO &io = ImGui::GetIO();
         if (io.DisplaySize.x > 0.0f && io.DisplaySize.y > 0.0f)
         {
-            ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+            ImGuiPlatformIO &platform_io = ImGui::GetPlatformIO();
             if (platform_io.Monitors.Size > 0)
             {
-                ImGuiPlatformMonitor& monitor = platform_io.Monitors[0];
+                ImGuiPlatformMonitor &monitor = platform_io.Monitors[0];
                 monitor.WorkPos = monitor.MainPos;
                 monitor.WorkSize = monitor.MainSize;
             }
@@ -609,6 +609,26 @@ namespace Base
             {
                 ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
                 ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+                static bool first_time = true;
+                if (first_time)
+                {
+                    first_time = false;
+
+                    ImGui::DockBuilderRemoveNode(dockspace_id); // Clear out existing layout
+                    ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
+                    ImGui::DockBuilderSetNodeSize(dockspace_id, main_viewport->WorkSize);
+
+                    // Split the dockspace into two columns: left for the viewport, right for controls
+                    ImGuiID dock_main_id = dockspace_id;
+                    ImGuiID dock_right_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.25f, nullptr, &dock_main_id);
+
+                    // Dock windows
+                    ImGui::DockBuilderDockWindow("Viewport", dock_main_id);
+                    ImGui::DockBuilderDockWindow("Debug Info", dock_right_id);
+                    ImGui::DockBuilderDockWindow("Settings", dock_right_id); // Assuming your chapter UI is in a "Settings" window
+
+                    ImGui::DockBuilderFinish(dockspace_id);
+                }
             }
 
             static bool show_borders = false;
@@ -636,7 +656,6 @@ namespace Base
                     ImGui::SetWindowFocus("Viewport");
                     Base::Input::Get().SetRelativeMouseMode(true);
                     Base::Input::Get().GetRelativeMouseState(nullptr, nullptr);
-
                 }
 
                 ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
@@ -665,7 +684,7 @@ namespace Base
 
             ImGui::Begin("Debug Info");
             {
-                // want to capture keyboard & mosue 
+                // want to capture keyboard & mosue
                 ImGui::Text("ImGui Wants Capture: %s", ImGui::GetIO().WantCaptureKeyboard ? "Yes" : "No");
                 ImGui::Text("ImGui Wants Mouse Capture: %s", ImGui::GetIO().WantCaptureMouse ? "Yes" : "No");
                 ImGui::Text("Viewport Hovered: %s", is_viewport_hovered ? "Yes" : "No");
@@ -785,7 +804,7 @@ namespace Base
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_MsDepthAttachmentID);
 #endif
-        
+
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             LOG_ERROR("Resolve Framebuffer is not complete!");
 
@@ -812,7 +831,7 @@ namespace Base
         glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 #endif
-        
+
         // --- Resize final color attachment (used by all) ---
         glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
@@ -829,13 +848,13 @@ namespace Base
 #endif
         // m_MsDepthAttachmentID is used by both paths (MSAA depth / Emscripten depth), so it's always deleted.
         glDeleteRenderbuffers(1, &m_MsDepthAttachmentID);
-        
+
         // --- Clean up common resources ---
         glDeleteFramebuffers(1, &m_FboID);
         glDeleteTextures(1, &m_ColorAttachmentID);
 
         // This is a bug in the original code, as m_DepthAttachmentID is never created.
-        // glDeleteRenderbuffers(1, &m_DepthAttachmentID); 
+        // glDeleteRenderbuffers(1, &m_DepthAttachmentID);
     }
 
     float Application::getViewportAspectRatio() const

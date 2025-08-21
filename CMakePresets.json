@@ -34,6 +34,7 @@
       "name": "base-windows",
       "hidden": true,
       "generator": "Visual Studio 17 2022",
+      "inherits": "base-preset",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -44,6 +45,7 @@
       "name": "base-linux",
       "hidden": true,
       "generator": "Ninja",
+      "inherits": "base-preset",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -54,52 +56,78 @@
       "name": "base-darwin",
       "hidden": true,
       "generator": "Ninja",
+      "inherits": "base-preset",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Darwin"
       }
     },
-    {
+  {
       "name": "windows-x64-debug-bundled",
-      "displayName": "Windows (x64) Debug",
-      "description": "Build for Windows x64 with MSVC (Debug)",
-      "inherits": [
-        "base-debug",
-        "base-windows"
-      ],
-      "architecture": {
-        "value": "x64",
-        "strategy": "set"
-      },
-      "cacheVariables": {
-        "BUILD_STANDALONE": "OFF"
-      }
+      "displayName": "Windows Bundled App (x64 Debug)",
+      "description": "Configures the bundled application for Windows x64.",
+      "inherits": ["base-debug", "base-windows"],
+      "architecture": { "value": "x64", "strategy": "set" },
+      "cacheVariables": { "BUILD_STANDALONE": "OFF" }
     },
     {
       "name": "windows-x64-release-bundled",
-      "displayName": "Windows (x64) Release",
-      "description": "Build for Windows x64 with MSVC (Release)",
-      "inherits": [
-        "base-release",
-        "base-windows"
-      ],
-      "architecture": {
-        "value": "x64",
-        "strategy": "set"
+      "displayName": "Windows Bundled App (x64 Release)",
+      "description": "Configures the bundled application for Windows x64.",
+      "inherits": ["base-release", "base-windows"],
+      "architecture": { "value": "x64", "strategy": "set" },
+      "cacheVariables": { "BUILD_STANDALONE": "OFF" }
+    },
+    {
+      "name": "windows-x64-debug-standalone",
+      "displayName": "Windows Standalone Chapters (x64 Debug)",
+      "description": "Configures all standalone chapters for Windows x64.",
+      "inherits": ["base-debug", "base-windows"],
+      "architecture": { "value": "x64", "strategy": "set" },
+      "cacheVariables": { "BUILD_STANDALONE": "ON" }
+    },
+    {
+      "name": "windows-x64-release-standalone",
+      "displayName": "Windows Standalone Chapters (x64 Release)",
+      "description": "Configures all standalone chapters for Windows x64.",
+      "inherits": ["base-release", "base-windows"],
+      "architecture": { "value": "x64", "strategy": "set" },
+      "cacheVariables": { "BUILD_STANDALONE": "ON" }
+    },
+    {
+      "name": "linux-x86_64-debug-standalone",
+      "displayName": "Linux (x86_64) Debug",
+      "description": "Standalone build for Linux x86_64 with Ninja (Debug)",
+      "inherits": ["base-debug", "base-linux"],
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
       },
       "cacheVariables": {
-        "BUILD_STANDALONE": "OFF"
+        "BUILD_STANDALONE": "ON"
+      }
+    },
+        {
+      "name": "linux-x86_64-release-standalone",
+      "displayName": "Linux (x86_64) Release",
+      "description": "Standalone build for Linux x86_64 with Ninja (Release)",
+      "inherits": ["base-release", "base-linux"],
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "BUILD_STANDALONE": "ON"
       }
     },
     {
-      "name": "linux-x64-debug-bundled",
-      "displayName": "Linux (x64) Debug",
-      "description": "Build for Linux x64 with Ninja (Debug)",
-      "inherits": [
-        "base-debug",
-        "base-linux"
-      ],
+      "name": "linux-x86_64-release-bundled",
+      "displayName": "Linux (x86_64) Release",
+      "description": "Build for Linux x86_64 with Ninja (Release)",
+      "inherits": ["base-release", "base-linux"],
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -110,13 +138,10 @@
       }
     },
     {
-      "name": "linux-x64-release-bundled",
-      "displayName": "Linux (x64) Release",
-      "description": "Build for Linux x64 with Ninja (Release)",
-      "inherits": [
-        "base-release",
-        "base-linux"
-      ],
+      "name": "linux-x86_64-debug-bundled",
+      "displayName": "Linux (x86_64) Debug",
+      "description": "Build for Linux x86_64 with Ninja (Debug)",
+      "inherits": ["base-debug", "base-linux"],
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -130,10 +155,7 @@
       "name": "macos-arm64-debug-bundled",
       "displayName": "macOS Bundled App (Debug)",
       "description": "Configures the single, bundled application for macOS arm64.",
-      "inherits": [
-        "base-debug",
-        "base-darwin"
-      ],
+      "inherits": ["base-debug", "base-darwin"],
       "cacheVariables": {
         "BUILD_STANDALONE": "OFF",
         "CMAKE_OSX_ARCHITECTURES": "arm64"
@@ -143,10 +165,7 @@
       "name": "macos-arm64-release-bundled",
       "displayName": "macOS Bundled App (Release)",
       "description": "Configures the single, bundled application for macOS arm64.",
-      "inherits": [
-        "base-release",
-        "base-darwin"
-      ],
+      "inherits": ["base-release", "base-darwin"],
       "cacheVariables": {
         "BUILD_STANDALONE": "OFF",
         "CMAKE_OSX_ARCHITECTURES": "arm64"
@@ -156,10 +175,7 @@
       "name": "macos-arm64-debug-standalone",
       "displayName": "macOS Standalone Chapters (Debug)",
       "description": "Configures all standalone chapters for macOS arm64.",
-      "inherits": [
-        "base-debug",
-        "base-darwin"
-      ],
+      "inherits": ["base-debug", "base-darwin"],
       "cacheVariables": {
         "CMAKE_OSX_ARCHITECTURES": "arm64",
         "BUILD_STANDALONE": "ON"
@@ -169,10 +185,7 @@
       "name": "macos-arm64-release-standalone",
       "displayName": "macOS Standalone Chapters (Release)",
       "description": "Configures all standalone chapters for macOS arm64.",
-      "inherits": [
-        "base-release",
-        "base-darwin"
-      ],
+      "inherits": ["base-release", "base-darwin"],
       "cacheVariables": {
         "CMAKE_OSX_ARCHITECTURES": "arm64",
         "BUILD_STANDALONE": "ON"
@@ -182,10 +195,7 @@
       "name": "macos-x86_64-debug-bundled",
       "displayName": "macOS Bundled App (Debug, x86_64)",
       "description": "Configures the single, bundled application for macOS x86_64.",
-      "inherits": [
-        "base-debug",
-        "base-darwin"
-      ],
+      "inherits": ["base-debug", "base-darwin"],
       "cacheVariables": {
         "CMAKE_OSX_ARCHITECTURES": "x86_64",
         "BUILD_STANDALONE": "OFF"
@@ -195,10 +205,7 @@
       "name": "macos-x86_64-release-bundled",
       "displayName": "macOS Bundled App (Release, x86_64)",
       "description": "Configures the single, bundled application for macOS x86_64.",
-      "inherits": [
-        "base-release",
-        "base-darwin"
-      ],
+      "inherits": ["base-release", "base-darwin"],
       "cacheVariables": {
         "CMAKE_OSX_ARCHITECTURES": "x86_64",
         "BUILD_STANDALONE": "OFF"
@@ -208,10 +215,7 @@
       "name": "macos-x86_64-debug-standalone",
       "displayName": "macOS Standalone Chapters (Debug, x86_64)",
       "description": "Configures all standalone chapters for macOS x86_64.",
-      "inherits": [
-        "base-debug",
-        "base-darwin"
-      ],
+      "inherits": ["base-debug", "base-darwin"],
       "cacheVariables": {
         "CMAKE_OSX_ARCHITECTURES": "x86_64",
         "BUILD_STANDALONE": "ON"
@@ -221,10 +225,7 @@
       "name": "macos-x86_64-release-standalone",
       "displayName": "macOS Standalone Chapters (Release, x86_64)",
       "description": "Configures all standalone chapters for macOS x86_64.",
-      "inherits": [
-        "base-release",
-        "base-darwin"
-      ],
+      "inherits": ["base-release", "base-darwin"],
       "cacheVariables": {
         "CMAKE_OSX_ARCHITECTURES": "x86_64",
         "BUILD_STANDALONE": "ON"
@@ -253,10 +254,7 @@
       "name": "android-arm64-v8a-debug",
       "displayName": "Android (arm64-v8a) Debug",
       "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": [
-        "base-debug",
-        "base-android"
-      ],
+      "inherits": ["base-debug", "base-android"],
       "cacheVariables": {
         "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a"
       }
@@ -265,10 +263,7 @@
       "name": "android-arm64-v8a-release",
       "displayName": "Android (arm64-v8a) Release",
       "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": [
-        "base-release",
-        "base-android"
-      ],
+      "inherits": ["base-release", "base-android"],
       "cacheVariables": {
         "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a"
       }
@@ -277,10 +272,7 @@
       "name": "android-armeabi-v7a-debug",
       "displayName": "Android (armeabi-v7a) Debug",
       "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": [
-        "base-debug",
-        "base-android"
-      ],
+      "inherits": ["base-debug", "base-android"],
       "cacheVariables": {
         "CMAKE_ANDROID_ARCH_ABI": "armeabi-v7a"
       }
@@ -289,10 +281,7 @@
       "name": "android-armeabi-v7a-release",
       "displayName": "Android (armeabi-v7a) Release",
       "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": [
-        "base-release",
-        "base-android"
-      ],
+      "inherits": ["base-release", "base-android"],
       "cacheVariables": {
         "CMAKE_ANDROID_ARCH_ABI": "armeabi-v7a"
       }
@@ -301,10 +290,7 @@
       "name": "android-x86_64-debug",
       "displayName": "Android (x86_64) Debug",
       "description": "Build for Android x86_64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": [
-        "base-debug",
-        "base-android"
-      ],
+      "inherits": ["base-debug", "base-android"],
       "cacheVariables": {
         "CMAKE_ANDROID_ARCH_ABI": "x86_64"
       }
@@ -313,10 +299,7 @@
       "name": "android-x86_64-release",
       "displayName": "Android (x86_64) Release",
       "description": "Build for Android x86_64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": [
-        "base-release",
-        "base-android"
-      ],
+      "inherits": ["base-release", "base-android"],
       "cacheVariables": {
         "CMAKE_ANDROID_ARCH_ABI": "x86_64"
       }
@@ -329,33 +312,6 @@
       "inherits": "android-arm64-v8a-debug",
       "cacheVariables": {
         "CHAPTER_TO_BUILD_FOR_ANDROID": "Chapter01-Window"
-      }
-    },
-    {
-      "name": "android-arm64-v8a-debug-chapter02.1",
-      "displayName": "Android arm64-v8a Debug (Chapter02.1)",
-      "description": "Build for Android arm64-v8a Debug (Chapter02.1). Requires ANDROID_NDK_HOME to be set.",
-      "inherits": "android-arm64-v8a-debug",
-      "cacheVariables": {
-        "CHAPTER_TO_BUILD_FOR_ANDROID": "Chapter02.1-Point"
-      }
-    },
-    {
-      "name": "android-arm64-v8a-debug-chapter02.2",
-      "displayName": "Android arm64-v8a Debug (Chapter02.2)",
-      "description": "Build for Android arm64-v8a Debug (Chapter02.2). Requires ANDROID_NDK_HOME to be set.",
-      "inherits": "android-arm64-v8a-debug",
-      "cacheVariables": {
-        "CHAPTER_TO_BUILD_FOR_ANDROID": "Chapter02.2-Triangle"
-      }
-    },
-    {
-      "name": "android-arm64-v8a-debug-chapter07.1",
-      "displayName": "Android arm64-v8a Debug (Chapter07.1)",
-      "description": "Build for Android arm64-v8a Debug (Chapter07.1-LightingPhong). Requires ANDROID_NDK_HOME to be set.",
-      "inherits": "android-arm64-v8a-debug",
-      "cacheVariables": {
-        "CHAPTER_TO_BUILD_FOR_ANDROID": "Chapter07.1-LightingPhong"
       }
     },
     {
@@ -373,10 +329,7 @@
       "name": "web-debug-bundled",
       "displayName": "Web (Emscripten) Bundled Debug",
       "description": "Build for WebAssembly. Requires EMSDK to be set and configured.",
-      "inherits": [
-        "base-debug",
-        "web-base"
-      ],
+      "inherits": ["base-debug", "web-base"],
       "cacheVariables": {
         "BUILD_STANDALONE": "OFF"
       }
@@ -385,22 +338,16 @@
       "name": "web-release-bundled",
       "displayName": "Web (Emscripten) Bundled Release",
       "description": "Build for WebAssembly. Requires EMSDK to be set and configured.",
-      "inherits": [
-        "base-release",
-        "web-base"
-      ],
+      "inherits": ["base-release", "web-base"],
       "cacheVariables": {
         "BUILD_STANDALONE": "OFF"
       }
     },
-        {
+    {
       "name": "web-debug-standalone",
       "displayName": "Web (Emscripten) Standalone Debug",
       "description": "Build for WebAssembly. Requires EMSDK to be set and configured.",
-      "inherits": [
-        "base-debug",
-        "web-base"
-      ],
+      "inherits": ["base-debug", "web-base"],
       "cacheVariables": {
         "BUILD_STANDALONE": "ON"
       }
@@ -409,10 +356,7 @@
       "name": "web-release-standalone",
       "displayName": "Web (Emscripten) Standalone Release",
       "description": "Build for WebAssembly. Requires EMSDK to be set and configured.",
-      "inherits": [
-        "base-release",
-        "web-base"
-      ],
+      "inherits": ["base-release", "web-base"],
       "cacheVariables": {
         "BUILD_STANDALONE": "ON"
       }
@@ -436,10 +380,7 @@
       "name": "ios-simulator-debug",
       "displayName": "iOS Simulator (Debug)",
       "description": "Build for the iOS Simulator (Debug)",
-      "inherits": [
-        "base-debug",
-        "base-darwin"
-      ],
+      "inherits": ["base-debug", "base-darwin"],
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/ios.toolchain.cmake",
@@ -456,22 +397,26 @@
     },
     {
       "name": "build-bundled-windows-x64-debug",
+      "displayName": "Build Bundled App (Windows Debug)",
       "configurePreset": "windows-x64-debug-bundled",
       "inherits": "base-build"
     },
     {
       "name": "build-bundled-windows-x64-release",
+      "displayName": "Build Bundled App (Windows Release)",
       "configurePreset": "windows-x64-release-bundled",
       "inherits": "base-build"
     },
     {
-      "name": "build-bundled-linux-x64-debug",
-      "configurePreset": "linux-x64-debug-bundled",
+      "name": "build-bundled-linux-x86_64-debug",
+      "displayName": "Build Bundled App (Linux Debug)",
+      "configurePreset": "linux-x86_64-debug-bundled",
       "inherits": "base-build"
     },
     {
-      "name": "build-bundled-linux-x64-release",
-      "configurePreset": "linux-x64-release-bundled",
+      "name": "build-bundled-linux-x86_64-release",
+      "displayName": "Build Bundled App (Linux Release)",
+      "configurePreset": "linux-x86_64-release-bundled",
       "inherits": "base-build"
     },
     {
@@ -479,396 +424,1190 @@
       "displayName": "Build Bundled App (macOS Debug)",
       "configurePreset": "macos-arm64-debug-bundled",
       "inherits": "base-build",
-      "targets": [
-        "OpenGLCourseApp"
-      ]
+      "targets": ["OpenGLCourseApp"]
     },
     {
       "name": "build-bundled-app-macos-arm64-release",
       "displayName": "Build Bundled App (macOS Release)",
       "configurePreset": "macos-arm64-release-bundled",
       "inherits": "base-build",
-      "targets": [
-        "OpenGLCourseApp"
-      ]
+      "targets": ["OpenGLCourseApp"]
+    },
+    {
+      "name": "build-ch01-windows-debug",
+      "displayName": "Build Ch01 (Window)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter01-Window" ]
+    },
+    {
+      "name": "build-ch02-windows-debug",
+      "displayName": "Build Ch02 (Point)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter02-Point" ]
+    },
+    {
+      "name": "build-ch03-windows-debug",
+      "displayName": "Build Ch03 (Triangle)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter03-Triangle" ]
+    },
+    {
+      "name": "build-ch04-windows-debug",
+      "displayName": "Build Ch04 (Colors)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter04-Colors" ]
+    },
+    {
+      "name": "build-ch05-windows-debug",
+      "displayName": "Build Ch05 (Square)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter05-Square" ]
+    },
+    {
+      "name": "build-ch06-windows-debug",
+      "displayName": "Build Ch06 (Uniforms)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter06-Uniforms" ]
+    },
+    {
+      "name": "build-ch07-windows-debug",
+      "displayName": "Build Ch07 (IndexBuffer)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter07-IndexBuffer" ]
+    },
+    {
+      "name": "build-ch08-windows-debug",
+      "displayName": "Build Ch08 (Textures)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter08-Textures" ]
+    },
+    {
+      "name": "build-ch09-windows-debug",
+      "displayName": "Build Ch09 (Transformations)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter09-Transformations" ]
+    },
+    {
+      "name": "build-ch10-windows-debug",
+      "displayName": "Build Ch10 (TransformationsCube)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter10-TransformationsCube" ]
+    },
+    {
+      "name": "build-ch11-windows-debug",
+      "displayName": "Build Ch11 (Camera)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter11-Camera" ]
+    },
+    {
+      "name": "build-ch12-windows-debug",
+      "displayName": "Build Ch12 (FaceCulling)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter12-FaceCulling" ]
+    },
+    {
+      "name": "build-ch13-windows-debug",
+      "displayName": "Build Ch13 (LightingPhong)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter13-LightingPhong" ]
+    },
+    {
+      "name": "build-ch14-windows-debug",
+      "displayName": "Build Ch14 (LightingBlinnPhong)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter14-LightingBlinnPhong" ]
+    },
+    {
+      "name": "build-ch15-windows-debug",
+      "displayName": "Build Ch15 (Materials)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter15-Materials" ]
+    },
+    {
+      "name": "build-ch16-windows-debug",
+      "displayName": "Build Ch16 (LightingMapping)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter16-LightingMapping" ]
+    },
+    {
+      "name": "build-ch17-windows-debug",
+      "displayName": "Build Ch17 (LightTypes)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter17-LightTypes" ]
+    },
+    {
+      "name": "build-ch18-windows-debug",
+      "displayName": "Build Ch18 (MultipleLights)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter18-MultipleLights" ]
+    },
+    {
+      "name": "build-ch19-windows-debug",
+      "displayName": "Build Ch19 (Skybox)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter19-Skybox" ]
+    },
+    {
+      "name": "build-ch20-windows-debug",
+      "displayName": "Build Ch20 (ModelLoading)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter20-ModelLoading" ]
+    },
+    {
+      "name": "build-ch21-windows-debug",
+      "displayName": "Build Ch21 (Blending)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter21-Blending" ]
+    },
+    {
+      "name": "build-ch22-windows-debug",
+      "displayName": "Build Ch22 (GammaCorrection)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter22-GammaCorrection" ]
+    },
+    {
+      "name": "build-ch23-windows-debug",
+      "displayName": "Build Ch23 (DepthTesting)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter23-DepthTesting" ]
+    },
+    {
+      "name": "build-ch24-windows-debug",
+      "displayName": "Build Ch24 (StencilTesting)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter24-StencilTesting" ]
+    },
+    {
+      "name": "build-ch25-windows-debug",
+      "displayName": "Build Ch25 (Framebuffer)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter25-Framebuffer" ]
+    },
+    {
+      "name": "build-ch26-windows-debug",
+      "displayName": "Build Ch26 (ShadowMapping)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter26-ShadowMapping" ]
+    },
+    {
+      "name": "build-ch27-windows-debug",
+      "displayName": "Build Ch27 (OmniDirShadowMapping)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter27-OmniDirShadowMapping" ]
+    },
+    {
+      "name": "build-ch28-windows-debug",
+      "displayName": "Build Ch28 (NormalMapping)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter28-NormalMapping" ]
+    },
+    {
+      "name": "build-ch29-windows-debug",
+      "displayName": "Build Ch29 (ParallaxMapping)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter29-ParallaxMapping" ]
+    },
+    {
+      "name": "build-ch30-windows-debug",
+      "displayName": "Build Ch30 (HDR)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter30-HDR" ]
+    },
+    {
+      "name": "build-ch31-windows-debug",
+      "displayName": "Build Ch31 (Bloom)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter31-Bloom" ]
+    },
+    {
+      "name": "build-ch32-windows-debug",
+      "displayName": "Build Ch32 (SSAO)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter32-SSAO" ]
+    },
+    {
+      "name": "build-ch33-windows-debug",
+      "displayName": "Build Ch33 (PBR)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter33-PBR" ]
+    },
+    {
+      "name": "build-ch34-windows-debug",
+      "displayName": "Build Ch34 (IBL)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter34-IBL" ]
+    },
+    {
+      "name": "build-ch35-windows-debug",
+      "displayName": "Build Ch35 (FrustumCulling)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter35-FrustumCulling" ]
+    },
+    {
+      "name": "build-ch36-windows-debug",
+      "displayName": "Build Ch36 (Instancing)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter36-Instancing" ]
+    },
+    {
+      "name": "build-ch37-windows-debug",
+      "displayName": "Build Ch37 (TextRendering)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter37-TextRendering" ]
+    },
+    {
+      "name": "build-ch38-windows-debug",
+      "displayName": "Build Ch38 (Particles)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter38-Particles" ]
+    },
+    {
+      "name": "build-ch39-windows-debug",
+      "displayName": "Build Ch39 (PostProcessing)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter39-PostProcessing" ]
+    },
+    {
+      "name": "build-ch40-windows-debug",
+      "displayName": "Build Ch40 (HeightMap)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter40-HeightMap" ]
+    },
+    {
+      "name": "build-ch41-windows-debug",
+      "displayName": "Build Ch41 (Tesselation)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter41-Tesselation" ]
+    },
+    {
+      "name": "build-ch42-windows-debug",
+      "displayName": "Build Ch42 (DeferedShading)",
+      "configurePreset": "windows-x64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter42-DeferedShading" ]
+    },
+     {
+      "name": "build-ch01-linux-debug",
+      "displayName": "Build Ch01 (Window)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter01-Window" ]
+    },
+    {
+      "name": "build-ch02-linux-debug",
+      "displayName": "Build Ch02 (Point)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter02-Point" ]
+    },
+    {
+      "name": "build-ch03-linux-debug",
+      "displayName": "Build Ch03 (Triangle)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter03-Triangle" ]
+    },
+    {
+      "name": "build-ch04-linux-debug",
+      "displayName": "Build Ch04 (Colors)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter04-Colors" ]
+    },
+    {
+      "name": "build-ch05-linux-debug",
+      "displayName": "Build Ch05 (Square)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter05-Square" ]
+    },
+    {
+      "name": "build-ch06-linux-debug",
+      "displayName": "Build Ch06 (Uniforms)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter06-Uniforms" ]
+    },
+    {
+      "name": "build-ch07-linux-debug",
+      "displayName": "Build Ch07 (IndexBuffer)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter07-IndexBuffer" ]
+    },
+    {
+      "name": "build-ch08-linux-debug",
+      "displayName": "Build Ch08 (Textures)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter08-Textures" ]
+    },
+    {
+      "name": "build-ch09-linux-debug",
+      "displayName": "Build Ch09 (Transformations)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter09-Transformations" ]
+    },
+    {
+      "name": "build-ch10-linux-debug",
+      "displayName": "Build Ch10 (TransformationsCube)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter10-TransformationsCube" ]
+    },
+    {
+      "name": "build-ch11-linux-debug",
+      "displayName": "Build Ch11 (Camera)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter11-Camera" ]
+    },
+    {
+      "name": "build-ch12-linux-debug",
+      "displayName": "Build Ch12 (FaceCulling)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter12-FaceCulling" ]
+    },
+    {
+      "name": "build-ch13-linux-debug",
+      "displayName": "Build Ch13 (LightingPhong)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter13-LightingPhong" ]
+    },
+    {
+      "name": "build-ch14-linux-debug",
+      "displayName": "Build Ch14 (LightingBlinnPhong)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter14-LightingBlinnPhong" ]
+    },
+    {
+      "name": "build-ch15-linux-debug",
+      "displayName": "Build Ch15 (Materials)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter15-Materials" ]
+    },
+    {
+      "name": "build-ch16-linux-debug",
+      "displayName": "Build Ch16 (LightingMapping)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter16-LightingMapping" ]
+    },
+    {
+      "name": "build-ch17-linux-debug",
+      "displayName": "Build Ch17 (LightTypes)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter17-LightTypes" ]
+    },
+    {
+      "name": "build-ch18-linux-debug",
+      "displayName": "Build Ch18 (MultipleLights)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter18-MultipleLights" ]
+    },
+    {
+      "name": "build-ch19-linux-debug",
+      "displayName": "Build Ch19 (Skybox)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter19-Skybox" ]
+    },
+    {
+      "name": "build-ch20-linux-debug",
+      "displayName": "Build Ch20 (ModelLoading)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter20-ModelLoading" ]
+    },
+    {
+      "name": "build-ch21-linux-debug",
+      "displayName": "Build Ch21 (Blending)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter21-Blending" ]
+    },
+    {
+      "name": "build-ch22-linux-debug",
+      "displayName": "Build Ch22 (GammaCorrection)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter22-GammaCorrection" ]
+    },
+    {
+      "name": "build-ch23-linux-debug",
+      "displayName": "Build Ch23 (DepthTesting)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter23-DepthTesting" ]
+    },
+    {
+      "name": "build-ch24-linux-debug",
+      "displayName": "Build Ch24 (StencilTesting)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter24-StencilTesting" ]
+    },
+    {
+      "name": "build-ch25-linux-debug",
+      "displayName": "Build Ch25 (Framebuffer)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter25-Framebuffer" ]
+    },
+    {
+      "name": "build-ch26-linux-debug",
+      "displayName": "Build Ch26 (ShadowMapping)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter26-ShadowMapping" ]
+    },
+    {
+      "name": "build-ch27-linux-debug",
+      "displayName": "Build Ch27 (OmniDirShadowMapping)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter27-OmniDirShadowMapping" ]
+    },
+    {
+      "name": "build-ch28-linux-debug",
+      "displayName": "Build Ch28 (NormalMapping)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter28-NormalMapping" ]
+    },
+    {
+      "name": "build-ch29-linux-debug",
+      "displayName": "Build Ch29 (ParallaxMapping)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter29-ParallaxMapping" ]
+    },
+    {
+      "name": "build-ch30-linux-debug",
+      "displayName": "Build Ch30 (HDR)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter30-HDR" ]
+    },
+    {
+      "name": "build-ch31-linux-debug",
+      "displayName": "Build Ch31 (Bloom)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter31-Bloom" ]
+    },
+    {
+      "name": "build-ch32-linux-debug",
+      "displayName": "Build Ch32 (SSAO)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter32-SSAO" ]
+    },
+    {
+      "name": "build-ch33-linux-debug",
+      "displayName": "Build Ch33 (PBR)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter33-PBR" ]
+    },
+    {
+      "name": "build-ch34-linux-debug",
+      "displayName": "Build Ch34 (IBL)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter34-IBL" ]
+    },
+    {
+      "name": "build-ch35-linux-debug",
+      "displayName": "Build Ch35 (FrustumCulling)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter35-FrustumCulling" ]
+    },
+    {
+      "name": "build-ch36-linux-debug",
+      "displayName": "Build Ch36 (Instancing)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter36-Instancing" ]
+    },
+    {
+      "name": "build-ch37-linux-debug",
+      "displayName": "Build Ch37 (TextRendering)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter37-TextRendering" ]
+    },
+    {
+      "name": "build-ch38-linux-debug",
+      "displayName": "Build Ch38 (Particles)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter38-Particles" ]
+    },
+    {
+      "name": "build-ch39-linux-debug",
+      "displayName": "Build Ch39 (PostProcessing)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter39-PostProcessing" ]
+    },
+    {
+      "name": "build-ch40-linux-debug",
+      "displayName": "Build Ch40 (HeightMap)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter40-HeightMap" ]
+    },
+    {
+      "name": "build-ch41-linux-debug",
+      "displayName": "Build Ch41 (Tesselation)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter41-Tesselation" ]
+    },
+    {
+      "name": "build-ch42-linux-debug",
+      "displayName": "Build Ch42 (DeferedShading)",
+      "configurePreset": "linux-x86_64-debug-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter42-DeferedShading" ]
+    },
+    {
+      "name": "build-ch01-linux-release",
+      "displayName": "Build Ch01 (Window)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter01-Window" ]
+    },
+    {
+      "name": "build-ch02-linux-release",
+      "displayName": "Build Ch02 (Point)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter02-Point" ]
+    },
+    {
+      "name": "build-ch03-linux-release",
+      "displayName": "Build Ch03 (Triangle)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter03-Triangle" ]
+    },
+    {
+      "name": "build-ch04-linux-release",
+      "displayName": "Build Ch04 (Colors)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter04-Colors" ]
+    },
+    {
+      "name": "build-ch05-linux-release",
+      "displayName": "Build Ch05 (Square)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter05-Square" ]
+    },
+    {
+      "name": "build-ch06-linux-release",
+      "displayName": "Build Ch06 (Uniforms)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter06-Uniforms" ]
+    },
+    {
+      "name": "build-ch07-linux-release",
+      "displayName": "Build Ch07 (IndexBuffer)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter07-IndexBuffer" ]
+    },
+    {
+      "name": "build-ch08-linux-release",
+      "displayName": "Build Ch08 (Textures)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter08-Textures" ]
+    },
+    {
+      "name": "build-ch09-linux-release",
+      "displayName": "Build Ch09 (Transformations)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter09-Transformations" ]
+    },
+    {
+      "name": "build-ch10-linux-release",
+      "displayName": "Build Ch10 (TransformationsCube)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter10-TransformationsCube" ]
+    },
+    {
+      "name": "build-ch11-linux-release",
+      "displayName": "Build Ch11 (Camera)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter11-Camera" ]
+    },
+    {
+      "name": "build-ch12-linux-release",
+      "displayName": "Build Ch12 (FaceCulling)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter12-FaceCulling" ]
+    },
+    {
+      "name": "build-ch13-linux-release",
+      "displayName": "Build Ch13 (LightingPhong)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter13-LightingPhong" ]
+    },
+    {
+      "name": "build-ch14-linux-release",
+      "displayName": "Build Ch14 (LightingBlinnPhong)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter14-LightingBlinnPhong" ]
+    },
+    {
+      "name": "build-ch15-linux-release",
+      "displayName": "Build Ch15 (Materials)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter15-Materials" ]
+    },
+    {
+      "name": "build-ch16-linux-release",
+      "displayName": "Build Ch16 (LightingMapping)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter16-LightingMapping" ]
+    },
+    {
+      "name": "build-ch17-linux-release",
+      "displayName": "Build Ch17 (LightTypes)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter17-LightTypes" ]
+    },
+    {
+      "name": "build-ch18-linux-release",
+      "displayName": "Build Ch18 (MultipleLights)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter18-MultipleLights" ]
+    },
+    {
+      "name": "build-ch19-linux-release",
+      "displayName": "Build Ch19 (Skybox)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter19-Skybox" ]
+    },
+    {
+      "name": "build-ch20-linux-release",
+      "displayName": "Build Ch20 (ModelLoading)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter20-ModelLoading" ]
+    },
+    {
+      "name": "build-ch21-linux-release",
+      "displayName": "Build Ch21 (Blending)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter21-Blending" ]
+    },
+    {
+      "name": "build-ch22-linux-release",
+      "displayName": "Build Ch22 (GammaCorrection)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter22-GammaCorrection" ]
+    },
+    {
+      "name": "build-ch23-linux-release",
+      "displayName": "Build Ch23 (DepthTesting)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter23-DepthTesting" ]
+    },
+    {
+      "name": "build-ch24-linux-release",
+      "displayName": "Build Ch24 (StencilTesting)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter24-StencilTesting" ]
+    },
+    {
+      "name": "build-ch25-linux-release",
+      "displayName": "Build Ch25 (Framebuffer)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter25-Framebuffer" ]
+    },
+    {
+      "name": "build-ch26-linux-release",
+      "displayName": "Build Ch26 (ShadowMapping)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter26-ShadowMapping" ]
+    },
+    {
+      "name": "build-ch27-linux-release",
+      "displayName": "Build Ch27 (OmniDirShadowMapping)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter27-OmniDirShadowMapping" ]
+    },
+    {
+      "name": "build-ch28-linux-release",
+      "displayName": "Build Ch28 (NormalMapping)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter28-NormalMapping" ]
+    },
+    {
+      "name": "build-ch29-linux-release",
+      "displayName": "Build Ch29 (ParallaxMapping)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter29-ParallaxMapping" ]
+    },
+    {
+      "name": "build-ch30-linux-release",
+      "displayName": "Build Ch30 (HDR)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter30-HDR" ]
+    },
+    {
+      "name": "build-ch31-linux-release",
+      "displayName": "Build Ch31 (Bloom)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter31-Bloom" ]
+    },
+    {
+      "name": "build-ch32-linux-release",
+      "displayName": "Build Ch32 (SSAO)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter32-SSAO" ]
+    },
+    {
+      "name": "build-ch33-linux-release",
+      "displayName": "Build Ch33 (PBR)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter33-PBR" ]
+    },
+    {
+      "name": "build-ch34-linux-release",
+      "displayName": "Build Ch34 (IBL)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter34-IBL" ]
+    },
+    {
+      "name": "build-ch35-linux-release",
+      "displayName": "Build Ch35 (FrustumCulling)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter35-FrustumCulling" ]
+    },
+    {
+      "name": "build-ch36-linux-release",
+      "displayName": "Build Ch36 (Instancing)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter36-Instancing" ]
+    },
+    {
+      "name": "build-ch37-linux-release",
+      "displayName": "Build Ch37 (TextRendering)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter37-TextRendering" ]
+    },
+    {
+      "name": "build-ch38-linux-release",
+      "displayName": "Build Ch38 (Particles)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter38-Particles" ]
+    },
+    {
+      "name": "build-ch39-linux-release",
+      "displayName": "Build Ch39 (PostProcessing)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter39-PostProcessing" ]
+    },
+    {
+      "name": "build-ch40-linux-release",
+      "displayName": "Build Ch40 (HeightMap)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter40-HeightMap" ]
+    },
+    {
+      "name": "build-ch41-linux-release",
+      "displayName": "Build Ch41 (Tesselation)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter41-Tesselation" ]
+    },
+    {
+      "name": "build-ch42-linux-release",
+      "displayName": "Build Ch42 (DeferedShading)",
+      "configurePreset": "linux-x86_64-release-standalone",
+      "inherits": "base-build",
+      "targets": [ "Chapter42-DeferedShading" ]
     },
     {
       "name": "build-ch01-macos-debug",
       "displayName": "Build Ch01 (Window)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter01-Window"
-      ]
+      "targets": ["Chapter01-Window"]
     },
     {
       "name": "build-ch02-macos-debug",
       "displayName": "Build Ch02 (Point)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter02-Point"
-      ]
+      "targets": ["Chapter02-Point"]
     },
     {
       "name": "build-ch03-macos-debug",
       "displayName": "Build Ch03 (Triangle)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter03-Triangle"
-      ]
+      "targets": ["Chapter03-Triangle"]
     },
     {
       "name": "build-ch04-macos-debug",
       "displayName": "Build Ch04 (Colors)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter04-Colors"
-      ]
+      "targets": ["Chapter04-Colors"]
     },
     {
       "name": "build-ch05-macos-debug",
       "displayName": "Build Ch05 (Square)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter05-Square"
-      ]
+      "targets": ["Chapter05-Square"]
     },
     {
       "name": "build-ch06-macos-debug",
       "displayName": "Build Ch06 (Uniforms)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter06-Uniforms"
-      ]
+      "targets": ["Chapter06-Uniforms"]
     },
     {
       "name": "build-ch07-macos-debug",
       "displayName": "Build Ch07 (IndexBuffer)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter07-IndexBuffer"
-      ]
+      "targets": ["Chapter07-IndexBuffer"]
     },
     {
       "name": "build-ch08-macos-debug",
       "displayName": "Build Ch08 (Textures)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter08-Textures"
-      ]
+      "targets": ["Chapter08-Textures"]
     },
     {
       "name": "build-ch09-macos-debug",
       "displayName": "Build Ch09 (Transformations)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter09-Transformations"
-      ]
+      "targets": ["Chapter09-Transformations"]
     },
     {
       "name": "build-ch10-macos-debug",
       "displayName": "Build Ch10 (TransformationsCube)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter10-TransformationsCube"
-      ]
+      "targets": ["Chapter10-TransformationsCube"]
     },
     {
       "name": "build-ch11-macos-debug",
       "displayName": "Build Ch11 (Camera)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter11-Camera"
-      ]
+      "targets": ["Chapter11-Camera"]
     },
     {
       "name": "build-ch12-macos-debug",
       "displayName": "Build Ch12 (FaceCulling)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter12-FaceCulling"
-      ]
+      "targets": ["Chapter12-FaceCulling"]
     },
     {
       "name": "build-ch13-macos-debug",
       "displayName": "Build Ch13 (LightingPhong)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter13-LightingPhong"
-      ]
+      "targets": ["Chapter13-LightingPhong"]
     },
     {
       "name": "build-ch14-macos-debug",
       "displayName": "Build Ch14 (LightingBlinnPhong)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter14-LightingBlinnPhong"
-      ]
+      "targets": ["Chapter14-LightingBlinnPhong"]
     },
     {
       "name": "build-ch15-macos-debug",
       "displayName": "Build Ch15 (Materials)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter15-Materials"
-      ]
+      "targets": ["Chapter15-Materials"]
     },
     {
       "name": "build-ch16-macos-debug",
       "displayName": "Build Ch16 (LightingMapping)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter16-LightingMapping"
-      ]
+      "targets": ["Chapter16-LightingMapping"]
     },
     {
       "name": "build-ch17-macos-debug",
       "displayName": "Build Ch17 (LightTypes)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter17-LightTypes"
-      ]
+      "targets": ["Chapter17-LightTypes"]
     },
     {
       "name": "build-ch18-macos-debug",
       "displayName": "Build Ch18 (MultipleLights)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter18-MultipleLights"
-      ]
+      "targets": ["Chapter18-MultipleLights"]
     },
     {
       "name": "build-ch19-macos-debug",
       "displayName": "Build Ch19 (Skybox)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter19-Skybox"
-      ]
+      "targets": ["Chapter19-Skybox"]
     },
     {
       "name": "build-ch20-macos-debug",
       "displayName": "Build Ch20 (ModelLoading)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter20-ModelLoading"
-      ]
+      "targets": ["Chapter20-ModelLoading"]
     },
     {
       "name": "build-ch21-macos-debug",
       "displayName": "Build Ch21 (Blending)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter21-Blending"
-      ]
+      "targets": ["Chapter21-Blending"]
     },
     {
       "name": "build-ch22-macos-debug",
       "displayName": "Build Ch22 (GammaCorrection)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter22-GammaCorrection"
-      ]
+      "targets": ["Chapter22-GammaCorrection"]
     },
     {
       "name": "build-ch23-macos-debug",
       "displayName": "Build Ch23 (DepthTesting)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter23-DepthTesting"
-      ]
+      "targets": ["Chapter23-DepthTesting"]
     },
     {
       "name": "build-ch24-macos-debug",
       "displayName": "Build Ch24 (StencilTesting)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter24-StencilTesting"
-      ]
+      "targets": ["Chapter24-StencilTesting"]
     },
     {
       "name": "build-ch25-macos-debug",
       "displayName": "Build Ch25 (Framebuffer)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter25-Framebuffer"
-      ]
+      "targets": ["Chapter25-Framebuffer"]
     },
     {
       "name": "build-ch26-macos-debug",
       "displayName": "Build Ch26 (ShadowMapping)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter26-ShadowMapping"
-      ]
+      "targets": ["Chapter26-ShadowMapping"]
     },
     {
       "name": "build-ch27-macos-debug",
       "displayName": "Build Ch27 (OmniDirShadowMapping)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter27-OmniDirShadowMapping"
-      ]
+      "targets": ["Chapter27-OmniDirShadowMapping"]
     },
     {
       "name": "build-ch28-macos-debug",
       "displayName": "Build Ch28 (NormalMapping)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter28-NormalMapping"
-      ]
+      "targets": ["Chapter28-NormalMapping"]
     },
     {
       "name": "build-ch29-macos-debug",
       "displayName": "Build Ch29 (ParallaxMapping)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter29-ParallaxMapping"
-      ]
+      "targets": ["Chapter29-ParallaxMapping"]
     },
     {
       "name": "build-ch30-macos-debug",
       "displayName": "Build Ch30 (HDR)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter30-HDR"
-      ]
+      "targets": ["Chapter30-HDR"]
     },
     {
       "name": "build-ch31-macos-debug",
       "displayName": "Build Ch31 (Bloom)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter31-Bloom"
-      ]
+      "targets": ["Chapter31-Bloom"]
     },
     {
       "name": "build-ch32-macos-debug",
       "displayName": "Build Ch32 (SSAO)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter32-SSAO"
-      ]
+      "targets": ["Chapter32-SSAO"]
     },
     {
       "name": "build-ch33-macos-debug",
       "displayName": "Build Ch33 (PBR)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter33-PBR"
-      ]
+      "targets": ["Chapter33-PBR"]
     },
     {
       "name": "build-ch34-macos-debug",
       "displayName": "Build Ch34 (IBL)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter34-IBL"
-      ]
+      "targets": ["Chapter34-IBL"]
     },
     {
       "name": "build-ch35-macos-debug",
       "displayName": "Build Ch35 (FrustumCulling)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter35-FrustumCulling"
-      ]
+      "targets": ["Chapter35-FrustumCulling"]
     },
     {
       "name": "build-ch36-macos-debug",
       "displayName": "Build Ch36 (Instancing)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter36-Instancing"
-      ]
+      "targets": ["Chapter36-Instancing"]
     },
     {
       "name": "build-ch37-macos-debug",
       "displayName": "Build Ch37 (TextRendering)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter37-TextRendering"
-      ]
+      "targets": ["Chapter37-TextRendering"]
     },
     {
       "name": "build-ch38-macos-debug",
       "displayName": "Build Ch38 (Particles)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter38-Particles"
-      ]
+      "targets": ["Chapter38-Particles"]
     },
     {
       "name": "build-ch39-macos-debug",
       "displayName": "Build Ch39 (PostProcessing)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter39-PostProcessing"
-      ]
+      "targets": ["Chapter39-PostProcessing"]
     },
     {
       "name": "build-ch40-macos-debug",
       "displayName": "Build Ch40 (HeightMap)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter40-HeightMap"
-      ]
+      "targets": ["Chapter40-HeightMap"]
     },
     {
       "name": "build-ch41-macos-debug",
       "displayName": "Build Ch41 (Tesselation)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter41-Tesselation"
-      ]
+      "targets": ["Chapter41-Tesselation"]
     },
     {
       "name": "build-ch42-macos-debug",
       "displayName": "Build Ch42 (DeferedShading)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": [
-        "Chapter42-DeferedShading"
-      ]
+      "targets": ["Chapter42-DeferedShading"]
     },
     {
       "name": "android-arm64-v8a-debug",
@@ -911,24 +1650,20 @@
       "inherits": "base-build"
     },
     {
-      "name": "android-gradle-debug",
+      "name": "android-arm64-v8a-gradle-debug",
       "displayName": "Build with Gradle (Debug)",
       "description": "Runs './gradlew installDebug' for the specified chapter.",
       "configurePreset": "android-arm64-v8a-debug",
       "jobs": 1,
-      "targets": [
-        "runGradleBuildDebug"
-      ]
+      "targets": ["runGradleBuildDebug"]
     },
     {
-      "name": "android-gradle-release",
+      "name": "android-arm64-v8a-gradle-release",
       "displayName": "Build with Gradle (Release)",
       "description": "Runs './gradlew installRelease' for the specified chapter.",
       "configurePreset": "android-arm64-v8a-release",
       "jobs": 1,
-      "targets": [
-        "runGradleBuildRelease"
-      ]
+      "targets": ["runGradleBuildRelease"]
     }
   ],
   "testPresets": [
@@ -953,10 +1688,7 @@
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       },
-      "generators": [
-        "ZIP",
-        "NSIS"
-      ],
+      "generators": ["ZIP", "NSIS"],
       "variables": {
         "CPACK_PACKAGE_NAME": "MyAwesomeApp",
         "CPACK_PACKAGE_VENDOR": "ADÜ",
@@ -971,19 +1703,15 @@
       }
     },
     {
-      "name": "linux-x64-release-package",
-      "configurePreset": "linux-x64-release-bundled",
+      "name": "linux-x86_64-release-package",
+      "configurePreset": "linux-x86_64-release-bundled",
       "description": "Create Linux .deb and .tar.gz package",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
       },
-      "generators": [
-        "DEB",
-        "RPM",
-        "TGZ"
-      ],
+      "generators": ["DEB", "RPM", "TGZ"],
       "variables": {
         "CPACK_PACKAGE_NAME": "myawesomeapp",
         "CPACK_PACKAGE_VENDOR": "ADÜ",
@@ -1006,11 +1734,7 @@
         "lhs": "${hostSystemName}",
         "rhs": "Darwin"
       },
-      "generators": [
-        "Bundle",
-        "DragNDrop",
-        "TGZ"
-      ],
+      "generators": ["Bundle", "DragNDrop", "TGZ"],
       "variables": {
         "CPACK_PACKAGE_NAME": "MyAwesomeApp",
         "CPACK_PACKAGE_VENDOR": "My Company Inc.",
@@ -1033,11 +1757,7 @@
         "lhs": "${hostSystemName}",
         "rhs": "Darwin"
       },
-      "generators": [
-        "Bundle",
-        "DragNDrop",
-        "TGZ"
-      ],
+      "generators": ["Bundle", "DragNDrop", "TGZ"],
       "variables": {
         "CPACK_PACKAGE_NAME": "MyAwesomeApp",
         "CPACK_PACKAGE_VENDOR": "My Company Inc.",

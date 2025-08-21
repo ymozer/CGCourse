@@ -70,3 +70,6 @@ GL version                     GLSL version
 4.2                            4.20
 4.3                            4.30
 4.4                            4.40
+
+
+https://wiki.libsdl.org/SDL3/README-ios https://github.com/Ravbug/sdl3-sample/blob/main/CMakeLists.txt
