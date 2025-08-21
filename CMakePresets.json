@@ -63,7 +63,7 @@
         "rhs": "Darwin"
       }
     },
-  {
+    {
       "name": "windows-x64-debug-bundled",
       "displayName": "Windows Bundled App (x64 Debug)",
       "description": "Configures the bundled application for Windows x64.",
@@ -109,7 +109,7 @@
         "BUILD_STANDALONE": "ON"
       }
     },
-        {
+    {
       "name": "linux-x86_64-release-standalone",
       "displayName": "Linux (x86_64) Release",
       "description": "Standalone build for Linux x86_64 with Ninja (Release)",
@@ -240,79 +240,588 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/android",
       "cacheVariables": {
-        "CHAPTER_TO_BUILD_FOR_ANDROID": "Chapter07.1-LightingPhong",
+        "STANDALONE_CHAPTER_NAME": "Chapter07.1-LightingPhong",
         "CMAKE_SYSTEM_NAME": "Android",
         "CMAKE_SYSTEM_VERSION": "26",
         "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a",
         "CMAKE_ANDROID_STL_TYPE": "c++_shared",
         "CMAKE_ANDROID_NDK": "$env{ANDROID_NDK_HOME}",
-        "CMAKE_ANDROID_NDK_TOOLCHAIN_VERSION": "clang",
-        "BUILD_STANDALONE": "OFF"
+        "CMAKE_ANDROID_NDK_TOOLCHAIN_VERSION": "clang"
       }
     },
     {
-      "name": "android-arm64-v8a-debug",
-      "displayName": "Android (arm64-v8a) Debug",
-      "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": ["base-debug", "base-android"],
+      "$comment": "Base preset for building single, runnable Android chapters.",
+      "name": "base-android-standalone",
+      "hidden": true,
+      "inherits": "base-android",
       "cacheVariables": {
-        "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a"
+        "BUILD_STANDALONE": "ON"
       }
     },
     {
-      "name": "android-arm64-v8a-release",
-      "displayName": "Android (arm64-v8a) Release",
-      "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": ["base-release", "base-android"],
+      "name": "base-android-bundled",
+      "hidden": true,
+      "inherits": "base-android",
       "cacheVariables": {
-        "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a"
+        "BUILD_STANDALONE": "OFF",
+        "STANDALONE_CHAPTER_NAME": ""
       }
     },
     {
-      "name": "android-armeabi-v7a-debug",
-      "displayName": "Android (armeabi-v7a) Debug",
-      "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": ["base-debug", "base-android"],
-      "cacheVariables": {
-        "CMAKE_ANDROID_ARCH_ABI": "armeabi-v7a"
-      }
+      "name": "android-arm64-v8a-debug-standalone",
+      "hidden": true,
+      "displayName": "Android Standalone (arm64-v8a) Debug",
+      "inherits": ["base-debug", "base-android-standalone"],
+      "cacheVariables": { "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a" }
     },
     {
-      "name": "android-armeabi-v7a-release",
-      "displayName": "Android (armeabi-v7a) Release",
-      "description": "Build for Android ARM64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": ["base-release", "base-android"],
-      "cacheVariables": {
-        "CMAKE_ANDROID_ARCH_ABI": "armeabi-v7a"
-      }
+      "name": "android-arm64-v8a-release-standalone",
+      "hidden": true,
+      "displayName": "Android Standalone (arm64-v8a) Release",
+      "inherits": ["base-release", "base-android-standalone"],
+      "cacheVariables": { "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a" }
     },
     {
-      "name": "android-x86_64-debug",
-      "displayName": "Android (x86_64) Debug",
-      "description": "Build for Android x86_64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": ["base-debug", "base-android"],
-      "cacheVariables": {
-        "CMAKE_ANDROID_ARCH_ABI": "x86_64"
-      }
+      "name": "android-arm64-v8a-debug-bundled",
+      "displayName": "Android Bundled (arm64-v8a) Debug",
+      "inherits": ["base-debug", "base-android-bundled"],
+      "cacheVariables": { "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a" }
     },
     {
-      "name": "android-x86_64-release",
-      "displayName": "Android (x86_64) Release",
-      "description": "Build for Android x86_64. Requires ANDROID_NDK_HOME to be set.",
-      "inherits": ["base-release", "base-android"],
-      "cacheVariables": {
-        "CMAKE_ANDROID_ARCH_ABI": "x86_64"
-      }
+      "name": "android-arm64-v8a-release-bundled",
+      "displayName": "Android Bundled (arm64-v8a) Release",
+      "inherits": ["base-release", "base-android-bundled"],
+      "cacheVariables": { "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a" }
     },
     {
-      "$comment": "TODO: Need more robust system. Android Debug preset for Chapter01",
+      "name": "android-x86_64-debug-standalone",
+      "hidden": true,
+      "displayName": "Android Standalone (x86_64) Debug",
+      "inherits": ["base-debug", "base-android-standalone"],
+      "cacheVariables": { "CMAKE_ANDROID_ARCH_ABI": "x86_64" }
+    },
+    {
+      "name": "android-x86_64-release-standalone",
+      "hidden": true,
+      "displayName": "Android Standalone (x86_64) Release",
+      "inherits": ["base-release", "base-android-standalone"],
+      "cacheVariables": { "CMAKE_ANDROID_ARCH_ABI": "x86_64" }
+    },
+    {
+      "name": "android-x86_64-debug-bundled",
+      "displayName": "Android Bundled (x86_64) Debug",
+      "inherits": ["base-debug", "base-android-bundled"],
+      "cacheVariables": { "CMAKE_ANDROID_ARCH_ABI": "x86_64" }
+    },
+    {
+      "name": "android-x86_64-release-bundled",
+      "displayName": "Android Bundled (x86_64) Release",
+      "inherits": ["base-release", "base-android-bundled"],
+      "cacheVariables": { "CMAKE_ANDROID_ARCH_ABI": "x86_64" }
+    },
+    {
       "name": "android-arm64-v8a-debug-chapter01",
-      "displayName": "Android arm64-v8a Debug (Chapter01)",
-      "description": "Build for Android arm64-v8a Debug (Chapter01). Requires ANDROID_NDK_HOME to be set.",
-      "inherits": "android-arm64-v8a-debug",
-      "cacheVariables": {
-        "CHAPTER_TO_BUILD_FOR_ANDROID": "Chapter01-Window"
-      }
+      "displayName": "Android arm64-v8a Debug (Chapter01-Window)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter01-Window" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter01",
+      "displayName": "Android arm64-v8a Release (Chapter01-Window)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter01-Window" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter02",
+      "displayName": "Android arm64-v8a Debug (Chapter02-Point)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter02-Point" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter02",
+      "displayName": "Android arm64-v8a Release (Chapter02-Point)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter02-Point" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter03",
+      "displayName": "Android arm64-v8a Debug (Chapter03-Triangle)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter03-Triangle" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter03",
+      "displayName": "Android arm64-v8a Release (Chapter03-Triangle)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter03-Triangle" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter04",
+      "displayName": "Android arm64-v8a Debug (Chapter04-Colors)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter04-Colors" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter04",
+      "displayName": "Android arm64-v8a Release (Chapter04-Colors)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter04-Colors" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter05",
+      "displayName": "Android arm64-v8a Debug (Chapter05-Square)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter05-Square" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter05",
+      "displayName": "Android arm64-v8a Release (Chapter05-Square)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter05-Square" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter06",
+      "displayName": "Android arm64-v8a Debug (Chapter06-Colors)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter06-Colors" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter06",
+      "displayName": "Android arm64-v8a Release (Chapter06-Colors)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter06-Colors" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter07",
+      "displayName": "Android arm64-v8a Debug (Chapter07-IndexBuffer)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter07-IndexBuffer" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter07",
+      "displayName": "Android arm64-v8a Release (Chapter07-IndexBuffer)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter07-IndexBuffer" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter08",
+      "displayName": "Android arm64-v8a Debug (Chapter08-Textures)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter08-Textures" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter08",
+      "displayName": "Android arm64-v8a Release (Chapter08-Textures)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter08-Textures" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter09",
+      "displayName": "Android arm64-v8a Debug (Chapter09-Transformations)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter09-Transformations" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter09",
+      "displayName": "Android arm64-v8a Release (Chapter09-Transformations)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter09-Transformations" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter10",
+      "displayName": "Android arm64-v8a Debug (Chapter10-TransformationsCube)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter10-TransformationsCube" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter10",
+      "displayName": "Android arm64-v8a Release (Chapter10-TransformationsCube)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter10-TransformationsCube" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter11",
+      "displayName": "Android arm64-v8a Debug (Chapter11-Camera)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter11-Camera" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter11",
+      "displayName": "Android arm64-v8a Release (Chapter11-Camera)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter11-Camera" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter12",
+      "displayName": "Android arm64-v8a Debug (Chapter12-FaceCulling)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter12-FaceCulling" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter12",
+      "displayName": "Android arm64-v8a Release (Chapter12-FaceCulling)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter12-FaceCulling" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter13",
+      "displayName": "Android arm64-v8a Debug (Chapter13-LightingPhong)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter13-LightingPhong" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter13",
+      "displayName": "Android arm64-v8a Release (Chapter13-LightingPhong)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter13-LightingPhong" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter14",
+      "displayName": "Android arm64-v8a Debug (Chapter14-LightingBlinnPhong)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter14-LightingBlinnPhong" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter14",
+      "displayName": "Android arm64-v8a Release (Chapter14-LightingBlinnPhong)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter14-LightingBlinnPhong" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter15",
+      "displayName": "Android arm64-v8a Debug (Chapter15-Materials)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter15-Materials" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter15",
+      "displayName": "Android arm64-v8a Release (Chapter15-Materials)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter15-Materials" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter16",
+      "displayName": "Android arm64-v8a Debug (Chapter16-LightingMapping)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter16-LightingMapping" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter16",
+      "displayName": "Android arm64-v8a Release (Chapter16-LightingMapping)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter16-LightingMapping" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter17",
+      "displayName": "Android arm64-v8a Debug (Chapter17-LightTypes)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter17-LightTypes" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter17",
+      "displayName": "Android arm64-v8a Release (Chapter17-LightTypes)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter17-LightTypes" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter18",
+      "displayName": "Android arm64-v8a Debug (Chapter18-MultipleLights)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter18-MultipleLights" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter18",
+      "displayName": "Android arm64-v8a Release (Chapter18-MultipleLights)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter18-MultipleLights" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter19",
+      "displayName": "Android arm64-v8a Debug (Chapter19-Skybox)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter19-Skybox" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter19",
+      "displayName": "Android arm64-v8a Release (Chapter19-Skybox)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter19-Skybox" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter20",
+      "displayName": "Android arm64-v8a Debug (Chapter20-ModelLoading)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter20-ModelLoading" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter20",
+      "displayName": "Android arm64-v8a Release (Chapter20-ModelLoading)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter20-ModelLoading" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter21",
+      "displayName": "Android arm64-v8a Debug (Chapter21-Blending)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter21-Blending" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter21",
+      "displayName": "Android arm64-v8a Release (Chapter21-Blending)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter21-Blending" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter22",
+      "displayName": "Android arm64-v8a Debug (Chapter22-GammaCorrection)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter22-GammaCorrection" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter22",
+      "displayName": "Android arm64-v8a Release (Chapter22-GammaCorrection)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter22-GammaCorrection" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter23",
+      "displayName": "Android arm64-v8a Debug (Chapter23-DepthTesting)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter23-DepthTesting" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter23",
+      "displayName": "Android arm64-v8a Release (Chapter23-DepthTesting)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter23-DepthTesting" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter24",
+      "displayName": "Android arm64-v8a Debug (Chapter24-StencilTesting)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter24-StencilTesting" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter24",
+      "displayName": "Android arm64-v8a Release (Chapter24-StencilTesting)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter24-StencilTesting" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter25",
+      "displayName": "Android arm64-v8a Debug (Chapter25-Framebuffer)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter25-Framebuffer" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter25",
+      "displayName": "Android arm64-v8a Release (Chapter25-Framebuffer)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter25-Framebuffer" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter26",
+      "displayName": "Android arm64-v8a Debug (Chapter26-ShadowMapping)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter26-ShadowMapping" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter26",
+      "displayName": "Android arm64-v8a Release (Chapter26-ShadowMapping)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter26-ShadowMapping" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter27",
+      "displayName": "Android arm64-v8a Debug (Chapter27-OmniDirShadowMapping)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter27-OmniDirShadowMapping" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter27",
+      "displayName": "Android arm64-v8a Release (Chapter27-OmniDirShadowMapping)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter27-OmniDirShadowMapping" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter28",
+      "displayName": "Android arm64-v8a Debug (Chapter28-NormalMapping)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter28-NormalMapping" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter28",
+      "displayName": "Android arm64-v8a Release (Chapter28-NormalMapping)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter28-NormalMapping" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter29",
+      "displayName": "Android arm64-v8a Debug (Chapter29-ParallaxMapping)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter29-ParallaxMapping" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter29",
+      "displayName": "Android arm64-v8a Release (Chapter29-ParallaxMapping)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter29-ParallaxMapping" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter30",
+      "displayName": "Android arm64-v8a Debug (Chapter30-HDR)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter30-HDR" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter30",
+      "displayName": "Android arm64-v8a Release (Chapter30-HDR)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter30-HDR" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter31",
+      "displayName": "Android arm64-v8a Debug (Chapter31-Bloom)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter31-Bloom" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter31",
+      "displayName": "Android arm64-v8a Release (Chapter31-Bloom)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter31-Bloom" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter32",
+      "displayName": "Android arm64-v8a Debug (Chapter32-SSAO)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter32-SSAO" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter32",
+      "displayName": "Android arm64-v8a Release (Chapter32-SSAO)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter32-SSAO" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter33",
+      "displayName": "Android arm64-v8a Debug (Chapter33-PBR)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter33-PBR" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter33",
+      "displayName": "Android arm64-v8a Release (Chapter33-PBR)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter33-PBR" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter34",
+      "displayName": "Android arm64-v8a Debug (Chapter34-IBL)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter34-IBL" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter34",
+      "displayName": "Android arm64-v8a Release (Chapter34-IBL)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter34-IBL" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter35",
+      "displayName": "Android arm64-v8a Debug (Chapter35-FrustumCulling)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter35-FrustumCulling" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter35",
+      "displayName": "Android arm64-v8a Release (Chapter35-FrustumCulling)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter35-FrustumCulling" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter36",
+      "displayName": "Android arm64-v8a Debug (Chapter36-Instancing)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter36-Instancing" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter36",
+      "displayName": "Android arm64-v8a Release (Chapter36-Instancing)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter36-Instancing" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter37",
+      "displayName": "Android arm64-v8a Debug (Chapter37-TextRendering)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter37-TextRendering" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter37",
+      "displayName": "Android arm64-v8a Release (Chapter37-TextRendering)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter37-TextRendering" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter38",
+      "displayName": "Android arm64-v8a Debug (Chapter38-Particles)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter38-Particles" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter38",
+      "displayName": "Android arm64-v8a Release (Chapter38-Particles)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter38-Particles" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter39",
+      "displayName": "Android arm64-v8a Debug (Chapter39-PostProcessing)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter39-PostProcessing" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter39",
+      "displayName": "Android arm64-v8a Release (Chapter39-PostProcessing)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter39-PostProcessing" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter40",
+      "displayName": "Android arm64-v8a Debug (Chapter40-HeightMap)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter40-HeightMap" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter40",
+      "displayName": "Android arm64-v8a Release (Chapter40-HeightMap)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter40-HeightMap" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter41",
+      "displayName": "Android arm64-v8a Debug (Chapter41-Tesselation)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter41-Tesselation" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter41",
+      "displayName": "Android arm64-v8a Release (Chapter41-Tesselation)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter41-Tesselation" }
+    },
+    {
+      "name": "android-arm64-v8a-debug-chapter42",
+      "displayName": "Android arm64-v8a Debug (Chapter42-DeferedShading)",
+      "inherits": "android-arm64-v8a-debug-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter42-DeferedShading" }
+    },
+    {
+      "name": "android-arm64-v8a-release-chapter42",
+      "displayName": "Android arm64-v8a Release (Chapter42-DeferedShading)",
+      "inherits": "android-arm64-v8a-release-standalone",
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter42-DeferedShading" }
     },
     {
       "name": "web-base",
@@ -424,896 +933,896 @@
       "displayName": "Build Bundled App (macOS Debug)",
       "configurePreset": "macos-arm64-debug-bundled",
       "inherits": "base-build",
-      "targets": ["OpenGLCourseApp"]
+      "targets": ["main"]
     },
     {
       "name": "build-bundled-app-macos-arm64-release",
       "displayName": "Build Bundled App (macOS Release)",
       "configurePreset": "macos-arm64-release-bundled",
       "inherits": "base-build",
-      "targets": ["OpenGLCourseApp"]
+      "targets": ["main"]
     },
     {
       "name": "build-ch01-windows-debug",
       "displayName": "Build Ch01 (Window)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter01-Window" ]
+      "targets": ["Chapter01-Window"]
     },
     {
       "name": "build-ch02-windows-debug",
       "displayName": "Build Ch02 (Point)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter02-Point" ]
+      "targets": ["Chapter02-Point"]
     },
     {
       "name": "build-ch03-windows-debug",
       "displayName": "Build Ch03 (Triangle)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter03-Triangle" ]
+      "targets": ["Chapter03-Triangle"]
     },
     {
       "name": "build-ch04-windows-debug",
       "displayName": "Build Ch04 (Colors)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter04-Colors" ]
+      "targets": ["Chapter04-Colors"]
     },
     {
       "name": "build-ch05-windows-debug",
       "displayName": "Build Ch05 (Square)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter05-Square" ]
+      "targets": ["Chapter05-Square"]
     },
     {
       "name": "build-ch06-windows-debug",
       "displayName": "Build Ch06 (Uniforms)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter06-Uniforms" ]
+      "targets": ["Chapter06-Uniforms"]
     },
     {
       "name": "build-ch07-windows-debug",
       "displayName": "Build Ch07 (IndexBuffer)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter07-IndexBuffer" ]
+      "targets": ["Chapter07-IndexBuffer"]
     },
     {
       "name": "build-ch08-windows-debug",
       "displayName": "Build Ch08 (Textures)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter08-Textures" ]
+      "targets": ["Chapter08-Textures"]
     },
     {
       "name": "build-ch09-windows-debug",
       "displayName": "Build Ch09 (Transformations)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter09-Transformations" ]
+      "targets": ["Chapter09-Transformations"]
     },
     {
       "name": "build-ch10-windows-debug",
       "displayName": "Build Ch10 (TransformationsCube)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter10-TransformationsCube" ]
+      "targets": ["Chapter10-TransformationsCube"]
     },
     {
       "name": "build-ch11-windows-debug",
       "displayName": "Build Ch11 (Camera)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter11-Camera" ]
+      "targets": ["Chapter11-Camera"]
     },
     {
       "name": "build-ch12-windows-debug",
       "displayName": "Build Ch12 (FaceCulling)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter12-FaceCulling" ]
+      "targets": ["Chapter12-FaceCulling"]
     },
     {
       "name": "build-ch13-windows-debug",
       "displayName": "Build Ch13 (LightingPhong)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter13-LightingPhong" ]
+      "targets": ["Chapter13-LightingPhong"]
     },
     {
       "name": "build-ch14-windows-debug",
       "displayName": "Build Ch14 (LightingBlinnPhong)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter14-LightingBlinnPhong" ]
+      "targets": ["Chapter14-LightingBlinnPhong"]
     },
     {
       "name": "build-ch15-windows-debug",
       "displayName": "Build Ch15 (Materials)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter15-Materials" ]
+      "targets": ["Chapter15-Materials"]
     },
     {
       "name": "build-ch16-windows-debug",
       "displayName": "Build Ch16 (LightingMapping)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter16-LightingMapping" ]
+      "targets": ["Chapter16-LightingMapping"]
     },
     {
       "name": "build-ch17-windows-debug",
       "displayName": "Build Ch17 (LightTypes)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter17-LightTypes" ]
+      "targets": ["Chapter17-LightTypes"]
     },
     {
       "name": "build-ch18-windows-debug",
       "displayName": "Build Ch18 (MultipleLights)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter18-MultipleLights" ]
+      "targets": ["Chapter18-MultipleLights"]
     },
     {
       "name": "build-ch19-windows-debug",
       "displayName": "Build Ch19 (Skybox)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter19-Skybox" ]
+      "targets": ["Chapter19-Skybox"]
     },
     {
       "name": "build-ch20-windows-debug",
       "displayName": "Build Ch20 (ModelLoading)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter20-ModelLoading" ]
+      "targets": ["Chapter20-ModelLoading"]
     },
     {
       "name": "build-ch21-windows-debug",
       "displayName": "Build Ch21 (Blending)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter21-Blending" ]
+      "targets": ["Chapter21-Blending"]
     },
     {
       "name": "build-ch22-windows-debug",
       "displayName": "Build Ch22 (GammaCorrection)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter22-GammaCorrection" ]
+      "targets": ["Chapter22-GammaCorrection"]
     },
     {
       "name": "build-ch23-windows-debug",
       "displayName": "Build Ch23 (DepthTesting)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter23-DepthTesting" ]
+      "targets": ["Chapter23-DepthTesting"]
     },
     {
       "name": "build-ch24-windows-debug",
       "displayName": "Build Ch24 (StencilTesting)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter24-StencilTesting" ]
+      "targets": ["Chapter24-StencilTesting"]
     },
     {
       "name": "build-ch25-windows-debug",
       "displayName": "Build Ch25 (Framebuffer)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter25-Framebuffer" ]
+      "targets": ["Chapter25-Framebuffer"]
     },
     {
       "name": "build-ch26-windows-debug",
       "displayName": "Build Ch26 (ShadowMapping)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter26-ShadowMapping" ]
+      "targets": ["Chapter26-ShadowMapping"]
     },
     {
       "name": "build-ch27-windows-debug",
       "displayName": "Build Ch27 (OmniDirShadowMapping)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter27-OmniDirShadowMapping" ]
+      "targets": ["Chapter27-OmniDirShadowMapping"]
     },
     {
       "name": "build-ch28-windows-debug",
       "displayName": "Build Ch28 (NormalMapping)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter28-NormalMapping" ]
+      "targets": ["Chapter28-NormalMapping"]
     },
     {
       "name": "build-ch29-windows-debug",
       "displayName": "Build Ch29 (ParallaxMapping)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter29-ParallaxMapping" ]
+      "targets": ["Chapter29-ParallaxMapping"]
     },
     {
       "name": "build-ch30-windows-debug",
       "displayName": "Build Ch30 (HDR)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter30-HDR" ]
+      "targets": ["Chapter30-HDR"]
     },
     {
       "name": "build-ch31-windows-debug",
       "displayName": "Build Ch31 (Bloom)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter31-Bloom" ]
+      "targets": ["Chapter31-Bloom"]
     },
     {
       "name": "build-ch32-windows-debug",
       "displayName": "Build Ch32 (SSAO)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter32-SSAO" ]
+      "targets": ["Chapter32-SSAO"]
     },
     {
       "name": "build-ch33-windows-debug",
       "displayName": "Build Ch33 (PBR)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter33-PBR" ]
+      "targets": ["Chapter33-PBR"]
     },
     {
       "name": "build-ch34-windows-debug",
       "displayName": "Build Ch34 (IBL)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter34-IBL" ]
+      "targets": ["Chapter34-IBL"]
     },
     {
       "name": "build-ch35-windows-debug",
       "displayName": "Build Ch35 (FrustumCulling)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter35-FrustumCulling" ]
+      "targets": ["Chapter35-FrustumCulling"]
     },
     {
       "name": "build-ch36-windows-debug",
       "displayName": "Build Ch36 (Instancing)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter36-Instancing" ]
+      "targets": ["Chapter36-Instancing"]
     },
     {
       "name": "build-ch37-windows-debug",
       "displayName": "Build Ch37 (TextRendering)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter37-TextRendering" ]
+      "targets": ["Chapter37-TextRendering"]
     },
     {
       "name": "build-ch38-windows-debug",
       "displayName": "Build Ch38 (Particles)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter38-Particles" ]
+      "targets": ["Chapter38-Particles"]
     },
     {
       "name": "build-ch39-windows-debug",
       "displayName": "Build Ch39 (PostProcessing)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter39-PostProcessing" ]
+      "targets": ["Chapter39-PostProcessing"]
     },
     {
       "name": "build-ch40-windows-debug",
       "displayName": "Build Ch40 (HeightMap)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter40-HeightMap" ]
+      "targets": ["Chapter40-HeightMap"]
     },
     {
       "name": "build-ch41-windows-debug",
       "displayName": "Build Ch41 (Tesselation)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter41-Tesselation" ]
+      "targets": ["Chapter41-Tesselation"]
     },
     {
       "name": "build-ch42-windows-debug",
       "displayName": "Build Ch42 (DeferedShading)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter42-DeferedShading" ]
+      "targets": ["Chapter42-DeferedShading"]
     },
-     {
+    {
       "name": "build-ch01-linux-debug",
       "displayName": "Build Ch01 (Window)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter01-Window" ]
+      "targets": ["Chapter01-Window"]
     },
     {
       "name": "build-ch02-linux-debug",
       "displayName": "Build Ch02 (Point)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter02-Point" ]
+      "targets": ["Chapter02-Point"]
     },
     {
       "name": "build-ch03-linux-debug",
       "displayName": "Build Ch03 (Triangle)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter03-Triangle" ]
+      "targets": ["Chapter03-Triangle"]
     },
     {
       "name": "build-ch04-linux-debug",
       "displayName": "Build Ch04 (Colors)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter04-Colors" ]
+      "targets": ["Chapter04-Colors"]
     },
     {
       "name": "build-ch05-linux-debug",
       "displayName": "Build Ch05 (Square)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter05-Square" ]
+      "targets": ["Chapter05-Square"]
     },
     {
       "name": "build-ch06-linux-debug",
       "displayName": "Build Ch06 (Uniforms)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter06-Uniforms" ]
+      "targets": ["Chapter06-Uniforms"]
     },
     {
       "name": "build-ch07-linux-debug",
       "displayName": "Build Ch07 (IndexBuffer)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter07-IndexBuffer" ]
+      "targets": ["Chapter07-IndexBuffer"]
     },
     {
       "name": "build-ch08-linux-debug",
       "displayName": "Build Ch08 (Textures)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter08-Textures" ]
+      "targets": ["Chapter08-Textures"]
     },
     {
       "name": "build-ch09-linux-debug",
       "displayName": "Build Ch09 (Transformations)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter09-Transformations" ]
+      "targets": ["Chapter09-Transformations"]
     },
     {
       "name": "build-ch10-linux-debug",
       "displayName": "Build Ch10 (TransformationsCube)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter10-TransformationsCube" ]
+      "targets": ["Chapter10-TransformationsCube"]
     },
     {
       "name": "build-ch11-linux-debug",
       "displayName": "Build Ch11 (Camera)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter11-Camera" ]
+      "targets": ["Chapter11-Camera"]
     },
     {
       "name": "build-ch12-linux-debug",
       "displayName": "Build Ch12 (FaceCulling)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter12-FaceCulling" ]
+      "targets": ["Chapter12-FaceCulling"]
     },
     {
       "name": "build-ch13-linux-debug",
       "displayName": "Build Ch13 (LightingPhong)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter13-LightingPhong" ]
+      "targets": ["Chapter13-LightingPhong"]
     },
     {
       "name": "build-ch14-linux-debug",
       "displayName": "Build Ch14 (LightingBlinnPhong)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter14-LightingBlinnPhong" ]
+      "targets": ["Chapter14-LightingBlinnPhong"]
     },
     {
       "name": "build-ch15-linux-debug",
       "displayName": "Build Ch15 (Materials)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter15-Materials" ]
+      "targets": ["Chapter15-Materials"]
     },
     {
       "name": "build-ch16-linux-debug",
       "displayName": "Build Ch16 (LightingMapping)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter16-LightingMapping" ]
+      "targets": ["Chapter16-LightingMapping"]
     },
     {
       "name": "build-ch17-linux-debug",
       "displayName": "Build Ch17 (LightTypes)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter17-LightTypes" ]
+      "targets": ["Chapter17-LightTypes"]
     },
     {
       "name": "build-ch18-linux-debug",
       "displayName": "Build Ch18 (MultipleLights)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter18-MultipleLights" ]
+      "targets": ["Chapter18-MultipleLights"]
     },
     {
       "name": "build-ch19-linux-debug",
       "displayName": "Build Ch19 (Skybox)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter19-Skybox" ]
+      "targets": ["Chapter19-Skybox"]
     },
     {
       "name": "build-ch20-linux-debug",
       "displayName": "Build Ch20 (ModelLoading)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter20-ModelLoading" ]
+      "targets": ["Chapter20-ModelLoading"]
     },
     {
       "name": "build-ch21-linux-debug",
       "displayName": "Build Ch21 (Blending)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter21-Blending" ]
+      "targets": ["Chapter21-Blending"]
     },
     {
       "name": "build-ch22-linux-debug",
       "displayName": "Build Ch22 (GammaCorrection)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter22-GammaCorrection" ]
+      "targets": ["Chapter22-GammaCorrection"]
     },
     {
       "name": "build-ch23-linux-debug",
       "displayName": "Build Ch23 (DepthTesting)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter23-DepthTesting" ]
+      "targets": ["Chapter23-DepthTesting"]
     },
     {
       "name": "build-ch24-linux-debug",
       "displayName": "Build Ch24 (StencilTesting)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter24-StencilTesting" ]
+      "targets": ["Chapter24-StencilTesting"]
     },
     {
       "name": "build-ch25-linux-debug",
       "displayName": "Build Ch25 (Framebuffer)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter25-Framebuffer" ]
+      "targets": ["Chapter25-Framebuffer"]
     },
     {
       "name": "build-ch26-linux-debug",
       "displayName": "Build Ch26 (ShadowMapping)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter26-ShadowMapping" ]
+      "targets": ["Chapter26-ShadowMapping"]
     },
     {
       "name": "build-ch27-linux-debug",
       "displayName": "Build Ch27 (OmniDirShadowMapping)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter27-OmniDirShadowMapping" ]
+      "targets": ["Chapter27-OmniDirShadowMapping"]
     },
     {
       "name": "build-ch28-linux-debug",
       "displayName": "Build Ch28 (NormalMapping)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter28-NormalMapping" ]
+      "targets": ["Chapter28-NormalMapping"]
     },
     {
       "name": "build-ch29-linux-debug",
       "displayName": "Build Ch29 (ParallaxMapping)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter29-ParallaxMapping" ]
+      "targets": ["Chapter29-ParallaxMapping"]
     },
     {
       "name": "build-ch30-linux-debug",
       "displayName": "Build Ch30 (HDR)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter30-HDR" ]
+      "targets": ["Chapter30-HDR"]
     },
     {
       "name": "build-ch31-linux-debug",
       "displayName": "Build Ch31 (Bloom)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter31-Bloom" ]
+      "targets": ["Chapter31-Bloom"]
     },
     {
       "name": "build-ch32-linux-debug",
       "displayName": "Build Ch32 (SSAO)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter32-SSAO" ]
+      "targets": ["Chapter32-SSAO"]
     },
     {
       "name": "build-ch33-linux-debug",
       "displayName": "Build Ch33 (PBR)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter33-PBR" ]
+      "targets": ["Chapter33-PBR"]
     },
     {
       "name": "build-ch34-linux-debug",
       "displayName": "Build Ch34 (IBL)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter34-IBL" ]
+      "targets": ["Chapter34-IBL"]
     },
     {
       "name": "build-ch35-linux-debug",
       "displayName": "Build Ch35 (FrustumCulling)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter35-FrustumCulling" ]
+      "targets": ["Chapter35-FrustumCulling"]
     },
     {
       "name": "build-ch36-linux-debug",
       "displayName": "Build Ch36 (Instancing)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter36-Instancing" ]
+      "targets": ["Chapter36-Instancing"]
     },
     {
       "name": "build-ch37-linux-debug",
       "displayName": "Build Ch37 (TextRendering)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter37-TextRendering" ]
+      "targets": ["Chapter37-TextRendering"]
     },
     {
       "name": "build-ch38-linux-debug",
       "displayName": "Build Ch38 (Particles)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter38-Particles" ]
+      "targets": ["Chapter38-Particles"]
     },
     {
       "name": "build-ch39-linux-debug",
       "displayName": "Build Ch39 (PostProcessing)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter39-PostProcessing" ]
+      "targets": ["Chapter39-PostProcessing"]
     },
     {
       "name": "build-ch40-linux-debug",
       "displayName": "Build Ch40 (HeightMap)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter40-HeightMap" ]
+      "targets": ["Chapter40-HeightMap"]
     },
     {
       "name": "build-ch41-linux-debug",
       "displayName": "Build Ch41 (Tesselation)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter41-Tesselation" ]
+      "targets": ["Chapter41-Tesselation"]
     },
     {
       "name": "build-ch42-linux-debug",
       "displayName": "Build Ch42 (DeferedShading)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter42-DeferedShading" ]
+      "targets": ["Chapter42-DeferedShading"]
     },
     {
       "name": "build-ch01-linux-release",
       "displayName": "Build Ch01 (Window)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter01-Window" ]
+      "targets": ["Chapter01-Window"]
     },
     {
       "name": "build-ch02-linux-release",
       "displayName": "Build Ch02 (Point)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter02-Point" ]
+      "targets": ["Chapter02-Point"]
     },
     {
       "name": "build-ch03-linux-release",
       "displayName": "Build Ch03 (Triangle)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter03-Triangle" ]
+      "targets": ["Chapter03-Triangle"]
     },
     {
       "name": "build-ch04-linux-release",
       "displayName": "Build Ch04 (Colors)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter04-Colors" ]
+      "targets": ["Chapter04-Colors"]
     },
     {
       "name": "build-ch05-linux-release",
       "displayName": "Build Ch05 (Square)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter05-Square" ]
+      "targets": ["Chapter05-Square"]
     },
     {
       "name": "build-ch06-linux-release",
       "displayName": "Build Ch06 (Uniforms)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter06-Uniforms" ]
+      "targets": ["Chapter06-Uniforms"]
     },
     {
       "name": "build-ch07-linux-release",
       "displayName": "Build Ch07 (IndexBuffer)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter07-IndexBuffer" ]
+      "targets": ["Chapter07-IndexBuffer"]
     },
     {
       "name": "build-ch08-linux-release",
       "displayName": "Build Ch08 (Textures)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter08-Textures" ]
+      "targets": ["Chapter08-Textures"]
     },
     {
       "name": "build-ch09-linux-release",
       "displayName": "Build Ch09 (Transformations)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter09-Transformations" ]
+      "targets": ["Chapter09-Transformations"]
     },
     {
       "name": "build-ch10-linux-release",
       "displayName": "Build Ch10 (TransformationsCube)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter10-TransformationsCube" ]
+      "targets": ["Chapter10-TransformationsCube"]
     },
     {
       "name": "build-ch11-linux-release",
       "displayName": "Build Ch11 (Camera)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter11-Camera" ]
+      "targets": ["Chapter11-Camera"]
     },
     {
       "name": "build-ch12-linux-release",
       "displayName": "Build Ch12 (FaceCulling)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter12-FaceCulling" ]
+      "targets": ["Chapter12-FaceCulling"]
     },
     {
       "name": "build-ch13-linux-release",
       "displayName": "Build Ch13 (LightingPhong)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter13-LightingPhong" ]
+      "targets": ["Chapter13-LightingPhong"]
     },
     {
       "name": "build-ch14-linux-release",
       "displayName": "Build Ch14 (LightingBlinnPhong)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter14-LightingBlinnPhong" ]
+      "targets": ["Chapter14-LightingBlinnPhong"]
     },
     {
       "name": "build-ch15-linux-release",
       "displayName": "Build Ch15 (Materials)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter15-Materials" ]
+      "targets": ["Chapter15-Materials"]
     },
     {
       "name": "build-ch16-linux-release",
       "displayName": "Build Ch16 (LightingMapping)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter16-LightingMapping" ]
+      "targets": ["Chapter16-LightingMapping"]
     },
     {
       "name": "build-ch17-linux-release",
       "displayName": "Build Ch17 (LightTypes)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter17-LightTypes" ]
+      "targets": ["Chapter17-LightTypes"]
     },
     {
       "name": "build-ch18-linux-release",
       "displayName": "Build Ch18 (MultipleLights)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter18-MultipleLights" ]
+      "targets": ["Chapter18-MultipleLights"]
     },
     {
       "name": "build-ch19-linux-release",
       "displayName": "Build Ch19 (Skybox)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter19-Skybox" ]
+      "targets": ["Chapter19-Skybox"]
     },
     {
       "name": "build-ch20-linux-release",
       "displayName": "Build Ch20 (ModelLoading)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter20-ModelLoading" ]
+      "targets": ["Chapter20-ModelLoading"]
     },
     {
       "name": "build-ch21-linux-release",
       "displayName": "Build Ch21 (Blending)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter21-Blending" ]
+      "targets": ["Chapter21-Blending"]
     },
     {
       "name": "build-ch22-linux-release",
       "displayName": "Build Ch22 (GammaCorrection)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter22-GammaCorrection" ]
+      "targets": ["Chapter22-GammaCorrection"]
     },
     {
       "name": "build-ch23-linux-release",
       "displayName": "Build Ch23 (DepthTesting)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter23-DepthTesting" ]
+      "targets": ["Chapter23-DepthTesting"]
     },
     {
       "name": "build-ch24-linux-release",
       "displayName": "Build Ch24 (StencilTesting)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter24-StencilTesting" ]
+      "targets": ["Chapter24-StencilTesting"]
     },
     {
       "name": "build-ch25-linux-release",
       "displayName": "Build Ch25 (Framebuffer)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter25-Framebuffer" ]
+      "targets": ["Chapter25-Framebuffer"]
     },
     {
       "name": "build-ch26-linux-release",
       "displayName": "Build Ch26 (ShadowMapping)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter26-ShadowMapping" ]
+      "targets": ["Chapter26-ShadowMapping"]
     },
     {
       "name": "build-ch27-linux-release",
       "displayName": "Build Ch27 (OmniDirShadowMapping)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter27-OmniDirShadowMapping" ]
+      "targets": ["Chapter27-OmniDirShadowMapping"]
     },
     {
       "name": "build-ch28-linux-release",
       "displayName": "Build Ch28 (NormalMapping)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter28-NormalMapping" ]
+      "targets": ["Chapter28-NormalMapping"]
     },
     {
       "name": "build-ch29-linux-release",
       "displayName": "Build Ch29 (ParallaxMapping)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter29-ParallaxMapping" ]
+      "targets": ["Chapter29-ParallaxMapping"]
     },
     {
       "name": "build-ch30-linux-release",
       "displayName": "Build Ch30 (HDR)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter30-HDR" ]
+      "targets": ["Chapter30-HDR"]
     },
     {
       "name": "build-ch31-linux-release",
       "displayName": "Build Ch31 (Bloom)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter31-Bloom" ]
+      "targets": ["Chapter31-Bloom"]
     },
     {
       "name": "build-ch32-linux-release",
       "displayName": "Build Ch32 (SSAO)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter32-SSAO" ]
+      "targets": ["Chapter32-SSAO"]
     },
     {
       "name": "build-ch33-linux-release",
       "displayName": "Build Ch33 (PBR)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter33-PBR" ]
+      "targets": ["Chapter33-PBR"]
     },
     {
       "name": "build-ch34-linux-release",
       "displayName": "Build Ch34 (IBL)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter34-IBL" ]
+      "targets": ["Chapter34-IBL"]
     },
     {
       "name": "build-ch35-linux-release",
       "displayName": "Build Ch35 (FrustumCulling)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter35-FrustumCulling" ]
+      "targets": ["Chapter35-FrustumCulling"]
     },
     {
       "name": "build-ch36-linux-release",
       "displayName": "Build Ch36 (Instancing)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter36-Instancing" ]
+      "targets": ["Chapter36-Instancing"]
     },
     {
       "name": "build-ch37-linux-release",
       "displayName": "Build Ch37 (TextRendering)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter37-TextRendering" ]
+      "targets": ["Chapter37-TextRendering"]
     },
     {
       "name": "build-ch38-linux-release",
       "displayName": "Build Ch38 (Particles)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter38-Particles" ]
+      "targets": ["Chapter38-Particles"]
     },
     {
       "name": "build-ch39-linux-release",
       "displayName": "Build Ch39 (PostProcessing)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter39-PostProcessing" ]
+      "targets": ["Chapter39-PostProcessing"]
     },
     {
       "name": "build-ch40-linux-release",
       "displayName": "Build Ch40 (HeightMap)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter40-HeightMap" ]
+      "targets": ["Chapter40-HeightMap"]
     },
     {
       "name": "build-ch41-linux-release",
       "displayName": "Build Ch41 (Tesselation)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter41-Tesselation" ]
+      "targets": ["Chapter41-Tesselation"]
     },
     {
       "name": "build-ch42-linux-release",
       "displayName": "Build Ch42 (DeferedShading)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": [ "Chapter42-DeferedShading" ]
+      "targets": ["Chapter42-DeferedShading"]
     },
     {
       "name": "build-ch01-macos-debug",
@@ -1610,36 +2119,6 @@
       "targets": ["Chapter42-DeferedShading"]
     },
     {
-      "name": "android-arm64-v8a-debug",
-      "configurePreset": "android-arm64-v8a-debug",
-      "inherits": "base-build"
-    },
-    {
-      "name": "android-arm64-v8a-release",
-      "configurePreset": "android-arm64-v8a-release",
-      "inherits": "base-build"
-    },
-    {
-      "name": "android-armeabi-v7a-debug",
-      "configurePreset": "android-armeabi-v7a-debug",
-      "inherits": "base-build"
-    },
-    {
-      "name": "android-armeabi-v7a-release",
-      "configurePreset": "android-armeabi-v7a-release",
-      "inherits": "base-build"
-    },
-    {
-      "name": "android-x86_64-debug",
-      "configurePreset": "android-x86_64-debug",
-      "inherits": "base-build"
-    },
-    {
-      "name": "android-x86_64-release",
-      "configurePreset": "android-x86_64-release",
-      "inherits": "base-build"
-    },
-    {
       "name": "web-debug",
       "configurePreset": "web-debug-bundled",
       "inherits": "base-build"
@@ -1650,19 +2129,523 @@
       "inherits": "base-build"
     },
     {
-      "name": "android-arm64-v8a-gradle-debug",
+      "name": "android-arm64-v8a-gradle-debug-bundled",
       "displayName": "Build with Gradle (Debug)",
       "description": "Runs './gradlew installDebug' for the specified chapter.",
-      "configurePreset": "android-arm64-v8a-debug",
+      "configurePreset": "android-arm64-v8a-debug-bundled",
       "jobs": 1,
       "targets": ["runGradleBuildDebug"]
     },
     {
-      "name": "android-arm64-v8a-gradle-release",
+      "name": "android-arm64-v8a-gradle-release-bundled",
       "displayName": "Build with Gradle (Release)",
       "description": "Runs './gradlew installRelease' for the specified chapter.",
-      "configurePreset": "android-arm64-v8a-release",
+      "configurePreset": "android-arm64-v8a-release-bundled",
       "jobs": 1,
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter01-debug",
+      "displayName": "Build Android Ch01 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter01",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter01-release",
+      "displayName": "Build Android Ch01 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter01",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter02-debug",
+      "displayName": "Build Android Ch02 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter02",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter02-release",
+      "displayName": "Build Android Ch02 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter02",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter03-debug",
+      "displayName": "Build Android Ch03 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter03",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter03-release",
+      "displayName": "Build Android Ch03 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter03",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter04-debug",
+      "displayName": "Build Android Ch04 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter04",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter04-release",
+      "displayName": "Build Android Ch04 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter04",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter05-debug",
+      "displayName": "Build Android Ch05 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter05",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter05-release",
+      "displayName": "Build Android Ch05 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter05",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter06-debug",
+      "displayName": "Build Android Ch06 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter06",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter06-release",
+      "displayName": "Build Android Ch06 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter06",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter07-debug",
+      "displayName": "Build Android Ch07 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter07",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter07-release",
+      "displayName": "Build Android Ch07 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter07",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter08-debug",
+      "displayName": "Build Android Ch08 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter08",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter08-release",
+      "displayName": "Build Android Ch08 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter08",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter09-debug",
+      "displayName": "Build Android Ch09 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter09",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter09-release",
+      "displayName": "Build Android Ch09 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter09",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter10-debug",
+      "displayName": "Build Android Ch10 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter10",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter10-release",
+      "displayName": "Build Android Ch10 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter10",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter11-debug",
+      "displayName": "Build Android Ch11 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter11",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter11-release",
+      "displayName": "Build Android Ch11 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter11",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter12-debug",
+      "displayName": "Build Android Ch12 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter12",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter12-release",
+      "displayName": "Build Android Ch12 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter12",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter13-debug",
+      "displayName": "Build Android Ch13 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter13",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter13-release",
+      "displayName": "Build Android Ch13 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter13",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter14-debug",
+      "displayName": "Build Android Ch14 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter14",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter14-release",
+      "displayName": "Build Android Ch14 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter14",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter15-debug",
+      "displayName": "Build Android Ch15 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter15",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter15-release",
+      "displayName": "Build Android Ch15 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter15",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter16-debug",
+      "displayName": "Build Android Ch16 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter16",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter16-release",
+      "displayName": "Build Android Ch16 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter16",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter17-debug",
+      "displayName": "Build Android Ch17 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter17",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter17-release",
+      "displayName": "Build Android Ch17 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter17",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter18-debug",
+      "displayName": "Build Android Ch18 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter18",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter18-release",
+      "displayName": "Build Android Ch18 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter18",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter19-debug",
+      "displayName": "Build Android Ch19 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter19",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter19-release",
+      "displayName": "Build Android Ch19 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter19",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter20-debug",
+      "displayName": "Build Android Ch20 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter20",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter20-release",
+      "displayName": "Build Android Ch20 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter20",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter21-debug",
+      "displayName": "Build Android Ch21 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter21",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter21-release",
+      "displayName": "Build Android Ch21 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter21",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter22-debug",
+      "displayName": "Build Android Ch22 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter22",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter22-release",
+      "displayName": "Build Android Ch22 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter22",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter23-debug",
+      "displayName": "Build Android Ch23 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter23",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter23-release",
+      "displayName": "Build Android Ch23 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter23",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter24-debug",
+      "displayName": "Build Android Ch24 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter24",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter24-release",
+      "displayName": "Build Android Ch24 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter24",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter25-debug",
+      "displayName": "Build Android Ch25 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter25",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter25-release",
+      "displayName": "Build Android Ch25 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter25",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter26-debug",
+      "displayName": "Build Android Ch26 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter26",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter26-release",
+      "displayName": "Build Android Ch26 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter26",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter27-debug",
+      "displayName": "Build Android Ch27 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter27",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter27-release",
+      "displayName": "Build Android Ch27 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter27",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter28-debug",
+      "displayName": "Build Android Ch28 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter28",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter28-release",
+      "displayName": "Build Android Ch28 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter28",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter29-debug",
+      "displayName": "Build Android Ch29 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter29",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter29-release",
+      "displayName": "Build Android Ch29 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter29",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter30-debug",
+      "displayName": "Build Android Ch30 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter30",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter30-release",
+      "displayName": "Build Android Ch30 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter30",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter31-debug",
+      "displayName": "Build Android Ch31 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter31",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter31-release",
+      "displayName": "Build Android Ch31 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter31",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter32-debug",
+      "displayName": "Build Android Ch32 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter32",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter32-release",
+      "displayName": "Build Android Ch32 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter32",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter33-debug",
+      "displayName": "Build Android Ch33 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter33",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter33-release",
+      "displayName": "Build Android Ch33 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter33",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter34-debug",
+      "displayName": "Build Android Ch34 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter34",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter34-release",
+      "displayName": "Build Android Ch34 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter34",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter35-debug",
+      "displayName": "Build Android Ch35 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter35",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter35-release",
+      "displayName": "Build Android Ch35 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter35",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter36-debug",
+      "displayName": "Build Android Ch36 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter36",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter36-release",
+      "displayName": "Build Android Ch36 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter36",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter37-debug",
+      "displayName": "Build Android Ch37 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter37",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter37-release",
+      "displayName": "Build Android Ch37 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter37",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter38-debug",
+      "displayName": "Build Android Ch38 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter38",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter38-release",
+      "displayName": "Build Android Ch38 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter38",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter39-debug",
+      "displayName": "Build Android Ch39 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter39",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter39-release",
+      "displayName": "Build Android Ch39 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter39",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter40-debug",
+      "displayName": "Build Android Ch40 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter40",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter40-release",
+      "displayName": "Build Android Ch40 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter40",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter41-debug",
+      "displayName": "Build Android Ch41 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter41",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter41-release",
+      "displayName": "Build Android Ch41 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter41",
+      "targets": ["runGradleBuildRelease"]
+    },
+    {
+      "name": "build-android-chapter42-debug",
+      "displayName": "Build Android Ch42 (Debug)",
+      "configurePreset": "android-arm64-v8a-debug-chapter42",
+      "targets": ["runGradleBuildDebug"]
+    },
+    {
+      "name": "build-android-chapter42-release",
+      "displayName": "Build Android Ch42 (Release)",
+      "configurePreset": "android-arm64-v8a-release-chapter42",
       "targets": ["runGradleBuildRelease"]
     }
   ],

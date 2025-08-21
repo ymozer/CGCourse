@@ -5,13 +5,13 @@ plugins {
 buildDir = '../../../build/android'
 
 android {
-    namespace "org.libsdl.app"
+    namespace "com.adu.muh.OpenGLCourse"
     compileSdkVersion 36
     ndkVersion "28.2.13676358"
     ndkPath "/Users/metin/Libraries/AndroidNDK/AndroidNDK13676358.app/Contents/NDK"
 
     defaultConfig {
-        applicationId "org.libsdl.app"
+        applicationId "com.adu.muh.OpenGLCourse"
         minSdkVersion 21
         targetSdkVersion 35
         versionCode 1
@@ -19,11 +19,18 @@ android {
 
         externalNativeBuild {
             cmake {
-                def chapter = project.hasProperty('chapterToBuild') ? project.property('chapterToBuild') : 'Chapter07.1-LightingPhong'
-                arguments "-DANDROID_STL=c++_shared",
-                          "-DCHAPTER_TO_BUILD_FOR_ANDROID=${chapter}"
+                if (project.hasProperty('chapterToBuild') && !project.property('chapterToBuild').empty) 
+                {
+                    arguments "-DBUILD_STANDALONE=ON"
+                    arguments "-DSTANDALONE_CHAPTER_NAME=${project.property('chapterToBuild')}"
+                    targets "main"
+                } 
+                else 
+                {
+                    arguments "-DBUILD_STANDALONE=OFF"
+                    targets "main" 
+                }
                 abiFilters 'x86_64','arm64-v8a'
-                targets "main"
             }
         }
     }

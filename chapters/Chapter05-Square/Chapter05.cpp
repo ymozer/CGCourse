@@ -3,7 +3,7 @@
 
 #include <imgui.h>
 
-#ifdef BUILD_STANDALONE
+#if defined(BUILD_STANDALONE)
 Chapter05_Application::Chapter05_Application(std::string title, int width, int height)
     : ChapterBase(title, width, height) // Calls Base::Application constructor
 {

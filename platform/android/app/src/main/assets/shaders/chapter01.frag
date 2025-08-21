@@ -1,0 +1,7 @@
+// Chapter 1 - Window Fragment Shader
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f); // Orange
+}

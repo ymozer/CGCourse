@@ -6,7 +6,7 @@ project(OpenGLCourseTemplate VERSION 1.0 LANGUAGES CXX C)
 # ON            = Build one specific chapter as a standalone executable.
 option(BUILD_STANDALONE "Build each chapter as a separate executable" OFF)
 if(BUILD_STANDALONE)
-    set(STANDALONE_CHAPTER_NAME "Chapter10-TransformationsCube" CACHE STRING "The name of the single chapter to build when BUILD_STANDALONE is ON")
+    set(STANDALONE_CHAPTER_NAME "" CACHE STRING "The name of the single chapter to build when BUILD_STANDALONE is ON")
 endif()
 set(DEVELOPMENT_TEAM_ID "8MRFDR3542" CACHE STRING "Apple Developer Team ID for code signing")
 set(BUNDLE_IDENTIFIER_PREFIX "com.adu.muh" CACHE STRING "Base bundle identifier for Apple targets")
@@ -27,11 +27,9 @@ include(CPM)
 set(CPM_SOURCE_CACHE ${CMAKE_CURRENT_SOURCE_DIR}/.cache/cpm)
 
 if(PLATFORM_IS_ANDROID)
-    option(CHAPTER_TO_BUILD_FOR_ANDROID "Chapter01-Window" "The chapter to build for Android.")
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static linking for all dependencies" FORCE)
     set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "No postfix for debug builds" FORCE)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-    message(STATUS "Android target chapter: ${CHAPTER_TO_BUILD_FOR_ANDROID}")
 
     if(WIN32)
         set(GRADLEW_COMMAND "${CMAKE_SOURCE_DIR}/platform/android/gradlew.bat")
@@ -39,19 +37,38 @@ if(PLATFORM_IS_ANDROID)
         set(GRADLEW_COMMAND "${CMAKE_SOURCE_DIR}/platform/android/gradlew")
     endif()
 
-    add_custom_target(runGradleBuildDebug
-        COMMAND ${GRADLEW_COMMAND} -PchapterToBuild=${CHAPTER_TO_BUILD_FOR_ANDROID} installDebug
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/platform/android
-        COMMENT "Running Gradle build for ${CHAPTER_TO_BUILD_FOR_ANDROID} in Debug mode..."
-        VERBATIM
-    )
-    add_custom_target(runGradleBuildRelease
-        COMMAND ${GRADLEW_COMMAND} -PchapterToBuild=${CHAPTER_TO_BUILD_FOR_ANDROID} installRelease
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/platform/android
-        COMMENT "Running Gradle build for ${CHAPTER_TO_BUILD_FOR_ANDROID} in Release mode..."
-        VERBATIM
-    )
+    
+    # This check is important. We only define Gradle targets if we are in standalone mode.
+    if(BUILD_STANDALONE)
+        message(STATUS "Android target chapter: ${STANDALONE_CHAPTER_NAME}")
 
+        # Pass STANDALONE_CHAPTER_NAME to Gradle
+        add_custom_target(runGradleBuildDebug
+            COMMAND ${GRADLEW_COMMAND} -PchapterToBuild=${STANDALONE_CHAPTER_NAME} installDebug
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/platform/android
+            COMMENT "Running Gradle build for ${STANDALONE_CHAPTER_NAME} in Debug mode..."
+            VERBATIM
+        )
+        add_custom_target(runGradleBuildRelease
+            COMMAND ${GRADLEW_COMMAND} -PchapterToBuild=${STANDALONE_CHAPTER_NAME} installRelease
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/platform/android
+            COMMENT "Running Gradle build for ${STANDALONE_CHAPTER_NAME} in Release mode..."
+            VERBATIM
+        )
+    else()  
+        add_custom_target(runGradleBuildDebug
+            COMMAND ${GRADLEW_COMMAND} installDebug
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/platform/android
+            COMMENT "Running Gradle bundled build in Debug mode..."
+            VERBATIM
+        )
+        add_custom_target(runGradleBuildRelease
+            COMMAND ${GRADLEW_COMMAND} installRelease
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/platform/android
+            COMMENT "Running Gradle bundled build in Release mode..."
+            VERBATIM
+        )
+    endif()
 else()
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static linking for all dependencies" FORCE)
 endif()
@@ -259,7 +276,6 @@ if(TARGET assimp AND CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(assimp PRIVATE "-Wno-error=dangling-reference")
 endif()
 set_target_properties(assimp PROPERTIES FOLDER "External Libraries/assimp")
-# These targets may or may not be generated depending on the version and platform
 if(TARGET unit)
     set_target_properties(unit PROPERTIES FOLDER "External Libraries/assimp/tests")
 endif()
@@ -270,69 +286,95 @@ if(TARGET zlibstatic)
     set_target_properties(zlibstatic PROPERTIES FOLDER "External Libraries/assimp/utils")
 endif()
 
-file(GLOB_RECURSE ASSET_FILES CONFIGURE_DEPENDS
-    "${CMAKE_SOURCE_DIR}/assets/*"
-)
-add_custom_target(CopyAssets ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-            "${CMAKE_SOURCE_DIR}/assets"
-            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets"
-    DEPENDS ${ASSET_FILES}
-    COMMENT "Copying modified assets to build directory..."
-)
-# We also want folders to work for this target
+if(PLATFORM_IS_ANDROID)
+    # For Android, copy assets to the location Gradle expects for packaging.
+    set(ANDROID_ASSETS_DIR "${CMAKE_SOURCE_DIR}/platform/android/app/src/main/assets")
+    add_custom_target(CopyAssets ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/assets"
+                "${ANDROID_ASSETS_DIR}"
+        DEPENDS ${ASSET_FILES}
+        COMMENT "Copying assets to Android project for packaging..."
+    )
+else()
+    # For Desktop/Web, copy assets to the runtime output directory.
+    add_custom_target(CopyAssets ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/assets"
+                "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets"
+        DEPENDS ${ASSET_FILES}
+        COMMENT "Copying assets to build directory..."
+    )
+endif()
+
 set_target_properties(CopyAssets PROPERTIES FOLDER "Utility")
+
 
 add_subdirectory(base)
 add_subdirectory(chapters)
 
-if(PLATFORM_IS_ANDROID)
-    message(STATUS "Build Mode: Android (Chapter: ${CHAPTER_TO_BUILD_FOR_ANDROID})")
-    if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/chapters/${CHAPTER_TO_BUILD_FOR_ANDROID}")
-        add_chapter(${CHAPTER_TO_BUILD_FOR_ANDROID})
-    else()
-        message(FATAL_ERROR "Chapter directory not found: ${CHAPTER_TO_BUILD_FOR_ANDROID}")
-    endif()
+if(BUILD_STANDALONE)
+    if(PLATFORM_IS_ANDROID)
+        message(STATUS "Build Mode: Standalone (Android - Building single chapter: ${STANDALONE_CHAPTER_NAME})")
+        set(CHAPTER_PATH "${CMAKE_SOURCE_DIR}/chapters/${STANDALONE_CHAPTER_NAME}")
 
-elseif(BUILD_STANDALONE)
-    message(STATUS "Build Mode: Standalone (Generating all chapter targets)")
-    file(GLOB CHAPTER_DIRS LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/chapters/*")
-    foreach(DIR ${CHAPTER_DIRS})
-        if(IS_DIRECTORY ${DIR})
-            get_filename_component(CHAPTER_NAME ${DIR} NAME)
-            if(EXISTS "${DIR}/main.cpp")
-                message(STATUS "Found chapter, creating target: ${CHAPTER_NAME}")
-                add_chapter(${DIR})
-            endif()
+        if(IS_DIRECTORY "${CHAPTER_PATH}" AND EXISTS "${CHAPTER_PATH}/main.cpp")
+            message(STATUS "Found chapter, creating Android target for: ${STANDALONE_CHAPTER_NAME}")
+            add_chapter("${CHAPTER_PATH}")
+        else()
+            message(FATAL_ERROR "The specified standalone chapter '${STANDALONE_CHAPTER_NAME}' was not found or is missing a main.cpp file.")
         endif()
-    endforeach()
-else() # Bundled Host Application Mode (Default for Desktop/Web)
+    else()
+        message(STATUS "Build Mode: Standalone (Desktop/Web - Generating all chapter targets)")
+        file(GLOB CHAPTER_DIRS LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/chapters/*")
+        foreach(DIR ${CHAPTER_DIRS})
+            if(IS_DIRECTORY ${DIR})
+                get_filename_component(CHAPTER_NAME ${DIR} NAME)
+                if(EXISTS "${DIR}/main.cpp")
+                    message(STATUS "Found chapter, creating target: ${CHAPTER_NAME}")
+                    add_chapter(${DIR})
+                endif()
+            endif()
+        endforeach()
+    endif()
+else()
+    # BUNDLED MODE
     message(STATUS "Build Mode: Bundled Host Application")
-
-    # Glob sources for all chapters
     file(GLOB_RECURSE ALL_CHAPTER_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_SOURCE_DIR}/chapters/*/Chapter*.cpp"
     )
 
-    add_executable(OpenGLCourseApp
-        bundledApp/main.cpp
-        bundledApp/BundledApp.cpp
-        ${ALL_CHAPTER_SOURCES}
-    )
-    target_link_libraries(OpenGLCourseApp PRIVATE base)
-    add_dependencies(OpenGLCourseApp CopyAssets)
-
-    target_include_directories(OpenGLCourseApp PRIVATE
-        "bundledApp"
-        "chapters"
-        "base"
-    )
-    set_target_properties(OpenGLCourseApp PROPERTIES FOLDER "Course Projects")
-
-    if(PLATFORM_IS_EMSCRIPTEN)
-        set(ASSETS_SOURCE_PATH "${CMAKE_SOURCE_DIR}/assets")
-        set_target_properties(OpenGLCourseApp PROPERTIES SUFFIX ".html")
-        target_link_options(OpenGLCourseApp PRIVATE
+    # Conditionally create a SHARED LIBRARY for Android or an EXECUTABLE for others.
+    if(PLATFORM_IS_ANDROID)
+        add_library(main SHARED
+            bundledApp/main.cpp
+            bundledApp/BundledApp.cpp
+            ${ALL_CHAPTER_SOURCES}
+        )
+        # For Android, we don't want a "lib" prefix or a debug postfix on the .so file
+        set_target_properties(main PROPERTIES 
+            PREFIX ""
+            DEBUG_POSTFIX ""
+        )
+    else()
+        add_executable(main
+            bundledApp/main.cpp
+            bundledApp/BundledApp.cpp
+            ${ALL_CHAPTER_SOURCES}
+        )
+        add_dependencies(main CopyAssets)
+        target_link_libraries(main PRIVATE base)
+        target_include_directories(main PRIVATE
+            "bundledApp"
+            "chapters"
+            "base"
+        )
+        set_target_properties(main PROPERTIES FOLDER "Course Projects")
+        
+        if(PLATFORM_IS_EMSCRIPTEN)
+            set(ASSETS_SOURCE_PATH "${CMAKE_SOURCE_DIR}/assets")
+            set_target_properties(main PROPERTIES SUFFIX ".html")
+            target_link_options(main PRIVATE
             "SHELL:-s FORCE_FILESYSTEM=1"
             "SHELL:-s FULL_ES3"
             "SHELL:-s MIN_WEBGL_VERSION=2"
@@ -340,7 +382,8 @@ else() # Bundled Host Application Mode (Default for Desktop/Web)
             "SHELL:-s USE_SDL=3"
             "SHELL:--use-preload-plugins"
             "SHELL:--preload-file ${ASSETS_SOURCE_PATH}@/assets"
-        )
+            )
+        endif()
     endif()
 endif()
 

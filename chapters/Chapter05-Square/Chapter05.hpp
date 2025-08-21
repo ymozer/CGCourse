@@ -6,7 +6,7 @@
 class Chapter05_Application : public ChapterBase
 {
 public:
-#ifdef BUILD_STANDALONE
+#if defined(BUILD_STANDALONE)
     Chapter05_Application(std::string title, int width, int height);
 #else
     Chapter05_Application();

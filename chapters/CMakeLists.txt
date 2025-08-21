@@ -1,10 +1,8 @@
 function(add_chapter CHAPTER_PATH)
     get_filename_component(CHAPTER_NAME ${CHAPTER_PATH} NAME)
-
-    if(NOT EXISTS "${CHAPTER_PATH}/main.cpp")
-        message(WARNING "Skipping standalone build for ${CHAPTER_NAME}: missing main.cpp")
-        return()
-    endif()
+    message(STATUS "Adding chapter: ${CHAPTER_NAME}")
+    message(STATUS "Chapter sources: ${CHAPTER_SOURCES}")
+    message(STATUS "Chapter path: ${CHAPTER_PATH}")
 
     file(GLOB CHAPTER_SOURCES CONFIGURE_DEPENDS 
         "${CHAPTER_PATH}/*.cpp"
@@ -18,6 +16,12 @@ function(add_chapter CHAPTER_PATH)
             FOLDER "Course Projects/Chapters (Android)"
         )
     else()
+        # Standalone builds (Desktop, Web) require a main.cpp entry point.
+        if(NOT EXISTS "${CHAPTER_PATH}/main.cpp")
+            message(WARNING "Skipping standalone build for ${CHAPTER_NAME}: missing main.cpp")
+            return()
+        endif()
+        
         add_executable(${CHAPTER_NAME} ${CHAPTER_SOURCES})
         target_link_libraries(${CHAPTER_NAME} PRIVATE base)
         add_dependencies(${CHAPTER_NAME} CopyAssets)

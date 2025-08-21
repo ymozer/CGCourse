@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef BUILD_STANDALONE
+#if defined(BUILD_STANDALONE)
     // In Standalone mode, a Chapter IS the Application.
     #include "Application.hpp"
     using ChapterBase = Base::Application;

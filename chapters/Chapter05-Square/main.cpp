@@ -1,3 +1,4 @@
+#include "Chapter05.hpp"
 #include "Application.hpp"
 #include "Log.hpp"
 #include "Shader.hpp"
@@ -13,7 +14,11 @@ int main(int argc, char *argv[])
 
     try
     {
-        auto app = std::make_unique<Chapter05_Application>();
+        auto app = std::make_unique<Chapter05_Application>(
+            "Chapter 05 - Square",
+            1280,  // Width
+            720    // Height
+        );
         app->run();
     }
     catch (const std::exception &e)
