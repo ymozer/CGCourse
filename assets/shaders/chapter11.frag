@@ -1,6 +1,5 @@
 out vec4 FragColor;
-
-in vec2 v_TexCoord; // Renamed from TexCoord for clarity (v_ for varying/in)
+in vec2 v_TexCoord;
 
 uniform sampler2D u_Texture;
 uniform vec4 u_TintColor;

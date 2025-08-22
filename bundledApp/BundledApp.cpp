@@ -9,6 +9,9 @@
 #include "Chapter08-Textures/Chapter08.hpp"
 #include "Chapter09-Transformations/Chapter09.hpp"
 #include "Chapter10-TransformationsCube/Chapter10.hpp"
+#include "Chapter11-Camera/Chapter11.hpp"
+#include "Chapter12-FaceCulling/Chapter12.hpp"
+#include "Chapter13-LightingPhong/Chapter13.hpp"
 
 
 void BundledApp::setup()
@@ -23,6 +26,9 @@ void BundledApp::setup()
     m_AvailableChapters.push_back({"Chapter 8: Textures", []() { return std::make_unique<Chapter08_Application>(); }});
     m_AvailableChapters.push_back({"Chapter 9: Transformations", []() { return std::make_unique<Chapter09_Application>(); }});
     m_AvailableChapters.push_back({"Chapter 10: Transform Cube", []() { return std::make_unique<Chapter10_Application>(); }});
+    m_AvailableChapters.push_back({"Chapter 11: Camera", []() { return std::make_unique<Chapter11_Application>(); }});
+    m_AvailableChapters.push_back({"Chapter 12: Face Culling", []() { return std::make_unique<Chapter12_Application>(); }});
+    m_AvailableChapters.push_back({"Chapter 13: Lighting & Phong Shading", []() { return std::make_unique<Chapter13_Application>(); }});
 
     // ... add all other chapters
 
