@@ -3,6 +3,7 @@
 #include "ChapterPreamble.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
+#include <memory>
 
 class Chapter08_Application : public ChapterBase
 {

@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <glm/gtc/type_ptr.hpp>
 
+
 #ifdef BUILD_STANDALONE
 Chapter07_Application::Chapter07_Application(std::string title, int width, int height)
     : ChapterBase(title, width, height) // Calls Base::Application constructor

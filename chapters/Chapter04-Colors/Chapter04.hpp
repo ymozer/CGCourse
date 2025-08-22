@@ -2,6 +2,8 @@
 
 #include "ChapterPreamble.hpp"
 #include "Shader.hpp"
+#include <memory>
+
 
 class Chapter04_Application : public ChapterBase
 {
