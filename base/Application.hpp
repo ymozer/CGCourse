@@ -147,6 +147,7 @@ namespace Base
         int m_ViewportHeight = 0;
         int m_MsaaSamples = 4;
         int m_SelectedMsaaIndex = 0;
+        float m_ViewportAspectRatio = 1.0f;
         std::vector<int> m_MsaaSampleOptions;
         std::vector<const char*> m_MsaaSampleLabels;
 

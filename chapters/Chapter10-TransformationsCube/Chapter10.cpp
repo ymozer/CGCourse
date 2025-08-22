@@ -177,7 +177,6 @@ void Chapter10_Application::renderChapterUI()
         ImGui::Text("This matrix represents the cube's transformation in the world space.");
         ImGui::Text("It is calculated from the position, rotation, and scale values you set.");
         ImGui::Text("You can copy this matrix to use in other applications or shaders.");
-        // ImGui stores matrices in column-major order, so we can pass the pointer directly.
         const float *matrix = glm::value_ptr(m_ModelMatrix);
         ImGui::InputFloat4("##Row1", (float *)&matrix[0], "%.2f", ImGuiInputTextFlags_ReadOnly);
         ImGui::InputFloat4("##Row2", (float *)&matrix[4], "%.2f", ImGuiInputTextFlags_ReadOnly);
@@ -190,11 +189,10 @@ void Chapter10_Application::renderChapterUI()
 
 void Chapter10_Application::handleInput(float deltaTime)
 {
-    // Handle input events here if needed.
+
 }
 void Chapter10_Application::update(float deltaTime)
 {
-    // Model matrix calculation is unchanged. It works for any mesh.
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, m_Position);
     model = glm::rotate(model, glm::radians(m_RotationEuler.y), glm::vec3(0.0f, 1.0f, 0.0f));

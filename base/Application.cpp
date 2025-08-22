@@ -187,6 +187,10 @@ namespace Base
         m_PerfCounterFreq = SDL_GetPerformanceFrequency();
         m_LastFrameTimeCounter = SDL_GetPerformanceCounter();
 
+        GLint maxSize = 0;
+        glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxSize); //mac:16384
+        LOG_INFO("Max renderbuffer size: {}", maxSize);
+
 #if PLATFORM_DESKTOP
         { // MSAA setup
             GLint maxSamples;
@@ -399,20 +403,18 @@ namespace Base
         beginImGuiFrame();
         renderUI();
 
-// FIX: Change render path for Emscripten to avoid using multisampling
-#if !PLATFORM_EMSCRIPTEN
-        // --- MSAA Render Path ---
-        glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID); // Render to the multisampled FBO
+#if PLATFORM_DESKTOP
+        glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID);
 #else
-        // --- Non-MSAA Render Path (Emscripten) ---
-        glBindFramebuffer(GL_FRAMEBUFFER, m_FboID); // Render directly to the final FBO
+        glBindFramebuffer(GL_FRAMEBUFFER, m_FboID);
 #endif
+        glDisable(GL_SCISSOR_TEST);
         glViewport(0, 0, m_ViewportWidth, m_ViewportHeight);
         glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         render();
 
-#if !PLATFORM_EMSCRIPTEN
+#if PLATFORM_DEKSTOP
         // --- Blit from multisampled FBO to the final FBO for display ---
         glBindFramebuffer(GL_READ_FRAMEBUFFER, m_MsFboID);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FboID);
@@ -420,7 +422,6 @@ namespace Base
                           0, 0, m_ViewportWidth, m_ViewportHeight,
                           GL_COLOR_BUFFER_BIT, GL_LINEAR);
 #endif
-        // --- End of Render Path Change ---
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, m_Width, m_Height);
@@ -555,10 +556,6 @@ namespace Base
             io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
         }
         ImGui::NewFrame();
-
-        ImGuiViewport *viewport = ImGui::GetMainViewport();
-        viewport->WorkPos = ImVec2((float)m_WorkArea.x, (float)m_WorkArea.y);
-        viewport->WorkSize = ImVec2((float)m_WorkArea.w, (float)m_WorkArea.h);
     }
 
     void Application::endImGuiFrame()
@@ -585,13 +582,15 @@ namespace Base
         ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
         ImGuiViewport *main_viewport = ImGui::GetMainViewport();
 
-        // Set the main dockspace to fill the work area defined in the viewport
-        ImGui::SetNextWindowPos(ImVec2((float)m_RenderArea.x, (float)m_RenderArea.y));
-        ImGui::SetNextWindowSize(ImVec2((float)m_RenderArea.w, (float)m_RenderArea.h));
+        ImGuiIO &io = ImGui::GetIO();
+
+        ImGui::SetNextWindowPos(main_viewport->WorkPos);
+        ImGui::SetNextWindowSize(main_viewport->WorkSize);
         ImGui::SetNextWindowViewport(main_viewport->ID);
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
+
         window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
         window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
@@ -604,7 +603,6 @@ namespace Base
             ImGui::PopStyleVar();
             ImGui::PopStyleVar(2);
 
-            ImGuiIO &io = ImGui::GetIO();
             if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
             {
                 ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
@@ -659,9 +657,16 @@ namespace Base
                 }
 
                 ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+                float displayScaleX = io.DisplayFramebufferScale.x;
+                float displayScaleY = io.DisplayFramebufferScale.y;
 
-                int targetWidth = static_cast<int>(viewportPanelSize.x * m_RenderScale);
-                int targetHeight = static_cast<int>(viewportPanelSize.y * m_RenderScale);
+                if (viewportPanelSize.y > 0)
+                {
+                    m_ViewportAspectRatio = viewportPanelSize.x / viewportPanelSize.y;
+                }
+
+                int targetWidth = static_cast<int>(viewportPanelSize.x * displayScaleX * m_RenderScale);
+                int targetHeight = static_cast<int>(viewportPanelSize.y * displayScaleY * m_RenderScale);
 
                 if (m_ViewportWidth != targetWidth || m_ViewportHeight != targetHeight)
                 {
@@ -669,12 +674,12 @@ namespace Base
                 }
 
                 Camera *activeCamera = getActiveCamera();
-                if (activeCamera && viewportPanelSize.x > 0 && viewportPanelSize.y > 0)
+                if (activeCamera && m_ViewportWidth > 0 && m_ViewportHeight > 0)
                 {
                     activeCamera->setProjection(
                         activeCamera->getFov(),
-                        viewportPanelSize.x / viewportPanelSize.y,
-                        0.1f, // You might want to get near/far from the camera too
+                        static_cast<float>(m_ViewportWidth) / static_cast<float>(m_ViewportHeight),
+                        0.1f,
                         100.0f);
                 }
                 ImGui::Image((ImTextureID)(intptr_t)m_ColorAttachmentID, viewportPanelSize, ImVec2(0, 1), ImVec2(1, 0));
@@ -798,7 +803,6 @@ namespace Base
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorAttachmentID, 0);
 
 #if PLATFORM_EMSCRIPTEN
-        // FIX: Emscripten needs its own depth buffer attached to the main FBO
         glGenRenderbuffers(1, &m_MsDepthAttachmentID); // Re-use this ID
         glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
