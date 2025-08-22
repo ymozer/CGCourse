@@ -414,7 +414,7 @@ namespace Base
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         render();
 
-#if PLATFORM_DEKSTOP
+#if PLATFORM_DESKTOP
         // --- Blit from multisampled FBO to the final FBO for display ---
         glBindFramebuffer(GL_READ_FRAMEBUFFER, m_MsFboID);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FboID);
