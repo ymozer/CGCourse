@@ -5,13 +5,13 @@ plugins {
 buildDir = '../../../build/android'
 
 android {
-    namespace "com.adu.muh.OpenGLCourse"
+    namespace "org.libsdl.app"
     compileSdkVersion 36
     ndkVersion "28.2.13676358"
     ndkPath "/Users/metin/Libraries/AndroidNDK/AndroidNDK13676358.app/Contents/NDK"
 
     defaultConfig {
-        applicationId "com.adu.muh.OpenGLCourse"
+        applicationId "org.libsdl.app"
         minSdkVersion 21
         targetSdkVersion 35
         versionCode 1

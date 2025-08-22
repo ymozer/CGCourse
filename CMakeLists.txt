@@ -353,7 +353,6 @@ else()
         )
         # For Android, we don't want a "lib" prefix or a debug postfix on the .so file
         set_target_properties(main PROPERTIES 
-            PREFIX ""
             DEBUG_POSTFIX ""
         )
     else()
@@ -362,6 +361,7 @@ else()
             bundledApp/BundledApp.cpp
             ${ALL_CHAPTER_SOURCES}
         )
+    endif()
         add_dependencies(main CopyAssets)
         target_link_libraries(main PRIVATE base)
         target_include_directories(main PRIVATE
@@ -384,8 +384,8 @@ else()
             "SHELL:--preload-file ${ASSETS_SOURCE_PATH}@/assets"
             )
         endif()
-    endif()
 endif()
+
 
 set(CPACK_COMPONENTS_ALL Applications Development)
 include(CPack)
