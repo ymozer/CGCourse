@@ -766,54 +766,54 @@ namespace Base
         ImGui::End();
     }
 
-    void Application::createFramebuffer()
-    {
-        m_ViewportWidth = m_RenderArea.w > 0 ? m_RenderArea.w : 1;
-        m_ViewportHeight = m_RenderArea.h > 0 ? m_RenderArea.h : 1;
+   void Application::createFramebuffer()
+{
+    m_ViewportWidth = m_RenderArea.w > 0 ? m_RenderArea.w : 1;
+    m_ViewportHeight = m_RenderArea.h > 0 ? m_RenderArea.h : 1;
 
 #if PLATFORM_DESKTOP
-        // --- Standard MSAA Path ---
-        glGenFramebuffers(1, &m_MsFboID);
-        glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID);
+    glGenFramebuffers(1, &m_MsFboID);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID);
 
-        glGenTextures(1, &m_MsColorAttachmentID);
-        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID);
-        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_MsaaSamples, GL_RGBA, m_ViewportWidth, m_ViewportHeight, GL_TRUE);
-        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID, 0);
+    glGenTextures(1, &m_MsColorAttachmentID);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_MsaaSamples, GL_RGBA, m_ViewportWidth, m_ViewportHeight, GL_TRUE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID, 0);
 
-        glGenRenderbuffers(1, &m_MsDepthAttachmentID);
-        glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
-        glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_MsaaSamples, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_MsDepthAttachmentID);
+    glGenRenderbuffers(1, &m_MsDepthAttachmentID);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_MsaaSamples, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_MsDepthAttachmentID);
 
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            LOG_ERROR("MSAA Framebuffer is not complete!");
-#endif
-        // --- Final (Resolve) Framebuffer, used by all platforms ---
-        glGenFramebuffers(1, &m_FboID);
-        glBindFramebuffer(GL_FRAMEBUFFER, m_FboID);
-
-        glGenTextures(1, &m_ColorAttachmentID);
-        glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_ViewportWidth, m_ViewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorAttachmentID, 0);
-
-#if PLATFORM_EMSCRIPTEN
-        glGenRenderbuffers(1, &m_MsDepthAttachmentID); // Re-use this ID
-        glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_MsDepthAttachmentID);
-#endif
-
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            LOG_ERROR("Resolve Framebuffer is not complete!");
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        LOG_ERROR("MSAA Framebuffer is not complete!");
     }
+#endif
+    glGenFramebuffers(1, &m_FboID);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_FboID);
+
+    glGenTextures(1, &m_ColorAttachmentID);
+    glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_ViewportWidth, m_ViewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorAttachmentID, 0);
+
+#if !PLATFORM_DESKTOP
+    glGenRenderbuffers(1, &m_MsDepthAttachmentID);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_MsDepthAttachmentID);
+#endif
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        LOG_ERROR("Final Framebuffer (FBO ID: {}) is not complete!", m_FboID);
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 
     void Application::resizeFramebuffer(int width, int height)
     {
