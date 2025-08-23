@@ -34,31 +34,26 @@ void Chapter12_Application::setup()
     m_Texture = std::make_unique<Base::Texture>();
     m_Texture->loadFromFile("images/uv.png");
 
+    auto &app = Base::Application::getInstance();
+
     m_Camera.setPosition({0.0f, 0.0f, 3.0f});
     m_Camera.lookAt({0.0f, 0.0f, 0.0f});
-    m_Camera.setProjection(45.0f, getViewportAspectRatio(), 0.1f, 100.0f);
+    m_Camera.setProjection(45.0f, app.getViewportAspectRatio(), 0.1f, 100.0f);
 
-    subscribeToMouseButtons([this](Base::MouseButtonPressedEvent &e)
-                            {
-            if (isViewportHovered() && e.button == SDL_BUTTON_LEFT) {
-                ImGui::ClearActiveID();
-
-                ImGui::SetWindowFocus("Viewport");
-                Base::Input::Get().SetRelativeMouseMode(true);
-                SDL_GetRelativeMouseState(nullptr, nullptr);
-                e.handled = true;
-            } });
-
-    subscribeToKeys([this](Base::KeyPressedEvent &e)
-                    {
-            if (e.key == SDLK_ESCAPE && !e.isRepeat) {
-                Base::Input::Get().SetRelativeMouseMode(false);
-                e.handled = true;
-            } });
+    m_keyPressSub = app.getEventBus().subscribe<Base::KeyPressedEvent>([this](Base::KeyPressedEvent &e)
+    {
+        if (e.key == SDLK_ESCAPE && !e.isRepeat) {
+            Base::Input::Get().SetRelativeMouseMode(false);
+            e.handled = true;
+        }
+    });
 }
 
 void Chapter12_Application::shutdown()
 {
+    auto &app = Base::Application::getInstance();
+    app.getEventBus().unsubscribe(m_mouseButtonSub);
+    app.getEventBus().unsubscribe(m_keyPressSub);
     glDeleteVertexArrays(1, &m_VaoID);
     glDeleteBuffers(1, &m_VboID);
     glDeleteBuffers(1, &m_EboID);
@@ -69,7 +64,7 @@ void Chapter12_Application::shutdown()
     m_GuideShader.reset();
 }
 
-CameraInput gatherInput()
+static CameraInput gatherInput()
 {
     auto &input = Base::Input::Get();
     CameraInput frameInput; // A temporary, local struct

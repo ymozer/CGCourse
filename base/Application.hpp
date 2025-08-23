@@ -32,16 +32,8 @@ namespace Base
         static Application& getInstance() { return *s_Instance; }
 
         void run();
+        
         float getViewportAspectRatio() const;
-
-    protected:
-        virtual void setup() = 0;
-        virtual void shutdown() = 0;
-        virtual void update(float deltaTime) = 0;
-        virtual void handleInput(float deltaTime) = 0;
-        virtual void render() = 0;
-        virtual void renderChapterUI() {}
-
         SDL_Window *getWindow() const { return appContext.window; }
         int getWidth() const { return m_Width; }
         int getHeight() const { return m_Height; }
@@ -80,6 +72,16 @@ namespace Base
             subscribeToEvent(m_MouseButtonSub, std::move(handler));
         }
 
+
+    protected:
+        virtual void setup() = 0;
+        virtual void shutdown() = 0;
+        virtual void update(float deltaTime) = 0;
+        virtual void handleInput(float deltaTime) = 0;
+        virtual void render() = 0;
+        virtual void renderChapterUI() {}
+
+        
     private:
         void init();
         void cleanup();

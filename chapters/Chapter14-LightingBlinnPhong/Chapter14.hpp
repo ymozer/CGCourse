@@ -8,13 +8,13 @@
 
 #include <memory>
 
-class Chapter12_Application : public ChapterBase
+class Chapter14_Application : public ChapterBase
 {
 public:
 #ifdef BUILD_STANDALONE
-    Chapter12_Application(std::string title, int width, int height);
+    Chapter14_Application(std::string title, int width, int height);
 #else
-    Chapter12_Application();
+    Chapter14_Application();
 #endif
 
 protected:
@@ -24,12 +24,12 @@ protected:
     void renderChapterUI() override;
     void update(float deltaTime) override;
     void handleInput(float deltaTime) override;
-    Camera *getActiveCamera() { return &m_Camera; }
+    Camera *getActiveCamera()  { return &m_Camera; }
 
 private:
+
     Base::SubscriptionHandle m_mouseButtonSub;
     Base::SubscriptionHandle m_keyPressSub;
-    
     // Cube Objects
     std::unique_ptr<Base::Shader> m_Shader;
     std::unique_ptr<Base::Texture> m_Texture;
@@ -45,11 +45,17 @@ private:
     GLuint m_GuideVaoID = 0, m_GuideVboID = 0;
     bool m_ShowCoordinateGuide = true;
 
+    // Light Cube Objects
+    std::unique_ptr<Base::Shader> m_LightCubeShader;
+    GLuint m_LightCubeVaoID = 0;
+
     // Camera Objects
     Camera m_Camera;
 
     // Scene Objects
     float m_ClearColor[4] = {0.1f, 0.1f, 0.1f, 1.0f};
+    glm::vec3 m_LightPos = glm::vec3(1.2f, 1.0f, 2.0f);
+    float m_LightColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
     // Face Culling Settings
     bool m_FaceCullingEnabled = true;
@@ -59,5 +65,6 @@ private:
 
     void setupCube();
     void setupCoordinateGuide();
+    void setupLightCube();
     void drawMouseCapturePopup();
 };

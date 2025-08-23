@@ -29,31 +29,39 @@ void Chapter13_Application::setup()
         "shaders/chapter13.frag");
 
     setupCube();
+    setupLightCube();
     setupCoordinateGuide();
 
     m_Texture = std::make_unique<Base::Texture>();
     m_Texture->loadFromFile("images/uv.png");
 
+    auto& app = Base::Application::getInstance();
     m_Camera.setPosition({0.0f, 0.0f, 3.0f});
     m_Camera.lookAt({0.0f, 0.0f, 0.0f});
-    m_Camera.setProjection(45.0f, getViewportAspectRatio(), 0.1f, 100.0f);
+    m_Camera.setProjection(45.0f, app.getViewportAspectRatio(), 0.1f, 100.0f);
 
-    subscribeToMouseButtons([this](Base::MouseButtonPressedEvent &e)
-                            {
-            if (isViewportHovered() && e.button == SDL_BUTTON_LEFT) {
-                e.handled = true;
-            } });
+    m_mouseButtonSub = app.getEventBus().subscribe<Base::MouseButtonPressedEvent>([this, &app](Base::MouseButtonPressedEvent &e)
+    {
+        // Use the host app to check UI state
+        if (app.isViewportHovered() && e.button == SDL_BUTTON_LEFT) {
+            e.handled = true;
+        }
+    });
 
-    subscribeToKeys([this](Base::KeyPressedEvent &e)
-                    {
-            if (e.key == SDLK_ESCAPE && !e.isRepeat) {
-                Base::Input::Get().SetRelativeMouseMode(false);
-                e.handled = true;
-            } });
+    m_keyPressSub = app.getEventBus().subscribe<Base::KeyPressedEvent>([this](Base::KeyPressedEvent &e)
+    {
+        if (e.key == SDLK_ESCAPE && !e.isRepeat) {
+            Base::Input::Get().SetRelativeMouseMode(false);
+            e.handled = true;
+        }
+    });
 }
 
 void Chapter13_Application::shutdown()
 {
+    auto& app = Base::Application::getInstance();
+    app.getEventBus().unsubscribe(m_mouseButtonSub);
+    app.getEventBus().unsubscribe(m_keyPressSub);
     glDeleteVertexArrays(1, &m_VaoID);
     glDeleteBuffers(1, &m_VboID);
     glDeleteBuffers(1, &m_EboID);
@@ -64,7 +72,7 @@ void Chapter13_Application::shutdown()
     m_GuideShader.reset();
 }
 
-CameraInput gatherInput()
+static CameraInput gatherInput()
 {
     auto &input = Base::Input::Get();
     CameraInput frameInput; // A temporary, local struct
@@ -107,7 +115,6 @@ void Chapter13_Application::render()
         glDisable(GL_CULL_FACE);
     }
 
-    // Depth Testing
     glEnable(GL_DEPTH_TEST);
 
     glClearColor(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]);
@@ -129,6 +136,20 @@ void Chapter13_Application::render()
     m_Texture->bind(0);
     glBindVertexArray(m_VaoID);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    m_LightCubeShader->use();
+    glm::mat4 lightModel = glm::mat4(1.0f);
+    lightModel = glm::translate(lightModel, m_LightPos);
+    lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+
+    m_LightCubeShader->setMat4("model", lightModel);
+    m_LightCubeShader->setMat4("view", view);
+    m_LightCubeShader->setMat4("projection", projection);
+    m_LightCubeShader->setVec4("u_ObjectColor", glm::make_vec4(m_LightColor));
+
+    glBindVertexArray(m_LightCubeVaoID);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
 
     if (m_ShowCoordinateGuide)
     {
@@ -342,6 +363,24 @@ void Chapter13_Application::setupCube()
     glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
+void Chapter13_Application::setupLightCube()
+{
+    m_LightCubeShader = std::make_unique<Base::Shader>();
+    m_LightCubeShader->loadFromFile("shaders/light_obj.vert", "shaders/light_obj.frag");
+    glGenVertexArrays(1, &m_LightCubeVaoID);
+    glBindVertexArray(m_LightCubeVaoID);
+
+    // Reuse the VBO and EBO from the main cube
+    glBindBuffer(GL_ARRAY_BUFFER, m_VboID);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EboID);
+
+    const GLsizei stride = 8 * sizeof(float);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
+    glEnableVertexAttribArray(0);
+
     glBindVertexArray(0);
 }
 

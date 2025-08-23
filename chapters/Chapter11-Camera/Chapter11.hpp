@@ -4,6 +4,7 @@
 #include "Shader.hpp"
 #include "Texture.hpp"
 #include "Camera.hpp"
+#include "EventBus.hpp"
 
 #include <memory>
 
@@ -23,9 +24,13 @@ protected:
     void renderChapterUI() override;
     void update(float deltaTime) override;
     void handleInput(float deltaTime) override;
-    Camera *getActiveCamera() override { return &m_Camera; }
+    Camera *getActiveCamera() { return &m_Camera; }
 
 private:
+    // Event Bus Subscriptions
+    Base::SubscriptionHandle m_mouseButtonSub;
+    Base::SubscriptionHandle m_keyPressSub;
+    
     // Cube Objects
     std::unique_ptr<Base::Shader> m_Shader;
     std::unique_ptr<Base::Texture> m_Texture;

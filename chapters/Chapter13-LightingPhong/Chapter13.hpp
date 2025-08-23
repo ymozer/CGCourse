@@ -4,6 +4,7 @@
 #include "Shader.hpp"
 #include "Texture.hpp"
 #include "Camera.hpp"
+#include "EventBus.hpp"
 
 #include <memory>
 
@@ -23,9 +24,12 @@ protected:
     void renderChapterUI() override;
     void update(float deltaTime) override;
     void handleInput(float deltaTime) override;
-    Camera *getActiveCamera() override { return &m_Camera; }
+    Camera *getActiveCamera() { return &m_Camera; }
 
 private:
+    Base::SubscriptionHandle m_mouseButtonSub;
+    Base::SubscriptionHandle m_keyPressSub;
+    
     // Cube Objects
     std::unique_ptr<Base::Shader> m_Shader;
     std::unique_ptr<Base::Texture> m_Texture;
@@ -40,6 +44,10 @@ private:
     std::unique_ptr<Base::Shader> m_GuideShader;
     GLuint m_GuideVaoID = 0, m_GuideVboID = 0;
     bool m_ShowCoordinateGuide = true;
+
+    // Light Cube Objects
+    std::unique_ptr<Base::Shader> m_LightCubeShader;
+    GLuint m_LightCubeVaoID = 0;
 
     // Camera Objects
     Camera m_Camera;
@@ -56,6 +64,7 @@ private:
 
 
     void setupCube();
+    void setupLightCube(); 
     void setupCoordinateGuide();
     void drawMouseCapturePopup();
 };
