@@ -6,6 +6,12 @@
 #include <imgui.h>
 #include <glm/gtc/type_ptr.hpp>
 
+struct CameraMatrices
+{
+    glm::mat4 view;
+    glm::mat4 projection;
+};
+
 #ifdef BUILD_STANDALONE
 Chapter11_Application::Chapter11_Application(std::string title, int width, int height)
     : ChapterBase(title, width, height) // Calls Base::Application constructor
@@ -39,6 +45,12 @@ void Chapter11_Application::setup()
     m_Camera.lookAt({0.0f, 0.0f, 0.0f});
     m_Camera.setProjection(45.0f, app.getViewportAspectRatio(), 0.1f, 100.0f);
 
+    glGenBuffers(1, &m_CameraUboID);
+    glBindBuffer(GL_UNIFORM_BUFFER, m_CameraUboID);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(CameraMatrices), NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_CameraUboID);
+
     m_mouseButtonSub = app.getEventBus().subscribe<Base::MouseButtonPressedEvent>([this, &app](Base::MouseButtonPressedEvent &e)
                             {
             if (app.isViewportHovered() && e.button == SDL_BUTTON_RIGHT)
@@ -67,6 +79,9 @@ void Chapter11_Application::shutdown()
     glDeleteBuffers(1, &m_EboID);
     glDeleteVertexArrays(1, &m_GuideVaoID);
     glDeleteBuffers(1, &m_GuideVboID);
+    glDeleteBuffers(1, &m_CameraUboID);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, 0);
+
     m_Shader.reset();
     m_Texture.reset();
     m_GuideShader.reset();
@@ -109,13 +124,16 @@ void Chapter11_Application::render()
     glClearColor(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::mat4 view = m_Camera.getViewMatrix();
-    glm::mat4 projection = m_Camera.getProjectionMatrix();
+    CameraMatrices camMatrices;
+    camMatrices.view = m_Camera.getViewMatrix();
+    camMatrices.projection = m_Camera.getProjectionMatrix();
+
+    glBindBuffer(GL_UNIFORM_BUFFER, m_CameraUboID);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(CameraMatrices), &camMatrices);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     m_Shader->use();
     m_Shader->setMat4("model", m_ModelMatrix);
-    m_Shader->setMat4("view", view);
-    m_Shader->setMat4("projection", projection);
     m_Shader->setInt("u_Texture", 0);
     m_Shader->setVec4("u_TintColor", glm::make_vec4(m_TintColor));
     m_Texture->bind(0);
@@ -126,8 +144,6 @@ void Chapter11_Application::render()
     {
         m_GuideShader->use();
         m_GuideShader->setMat4("model", glm::mat4(1.0f));
-        m_GuideShader->setMat4("view", view);
-        m_GuideShader->setMat4("projection", projection);
         glLineWidth(2.5f);
         glBindVertexArray(m_GuideVaoID);
         glDrawArrays(GL_LINES, 0, 6);
@@ -300,6 +316,8 @@ void Chapter11_Application::setupCoordinateGuide()
 {
     m_GuideShader = std::make_unique<Base::Shader>();
     m_GuideShader->loadFromFile("shaders/guideMVP.vert", "shaders/guide.frag");
+    unsigned int guide_UBO_Index = glGetUniformBlockIndex(m_GuideShader->getProgramID(), "CameraUBO");
+    glUniformBlockBinding(m_GuideShader->getProgramID(), guide_UBO_Index, 0);
     float guideVertices[] = {0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f};
     glGenVertexArrays(1, &m_GuideVaoID);
     glGenBuffers(1, &m_GuideVboID);

@@ -7,6 +7,12 @@
 #include <imgui_internal.h>
 #include <glm/gtc/type_ptr.hpp>
 
+struct CameraMatrices
+{
+    glm::mat4 view;
+    glm::mat4 projection;
+};
+
 #ifdef BUILD_STANDALONE
 Chapter12_Application::Chapter12_Application(std::string title, int width, int height)
     : ChapterBase(title, width, height) // Calls Base::Application constructor
@@ -27,6 +33,8 @@ void Chapter12_Application::setup()
     m_Shader->loadFromFile(
         "shaders/chapter12.vert",
         "shaders/chapter12.frag");
+    unsigned int chapter12_UBO_Index = glGetUniformBlockIndex(m_Shader->getProgramID(), "CameraUBO");
+    glUniformBlockBinding(m_Shader->getProgramID(), chapter12_UBO_Index, 0);
 
     setupCube();
     setupCoordinateGuide();
@@ -40,6 +48,12 @@ void Chapter12_Application::setup()
     m_Camera.lookAt({0.0f, 0.0f, 0.0f});
     m_Camera.setProjection(45.0f, app.getViewportAspectRatio(), 0.1f, 100.0f);
 
+    glGenBuffers(1, &m_CameraUboID);
+    glBindBuffer(GL_UNIFORM_BUFFER, m_CameraUboID);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(CameraMatrices), NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_CameraUboID);
+
     m_keyPressSub = app.getEventBus().subscribe<Base::KeyPressedEvent>([this](Base::KeyPressedEvent &e)
     {
         if (e.key == SDLK_ESCAPE && !e.isRepeat) {
@@ -52,16 +66,21 @@ void Chapter12_Application::setup()
 void Chapter12_Application::shutdown()
 {
     auto &app = Base::Application::getInstance();
-    app.getEventBus().unsubscribe(m_mouseButtonSub);
+    //app.getEventBus().unsubscribe(m_mouseButtonSub);
     app.getEventBus().unsubscribe(m_keyPressSub);
     glDeleteVertexArrays(1, &m_VaoID);
     glDeleteBuffers(1, &m_VboID);
     glDeleteBuffers(1, &m_EboID);
     glDeleteVertexArrays(1, &m_GuideVaoID);
     glDeleteBuffers(1, &m_GuideVboID);
+    glDeleteBuffers(1, &m_CameraUboID);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, 0);
+    
     m_Shader.reset();
     m_Texture.reset();
     m_GuideShader.reset();
+    glDisable(GL_CULL_FACE);
+    
 }
 
 static CameraInput gatherInput()
@@ -113,14 +132,18 @@ void Chapter12_Application::render()
     glClearColor(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::mat4 view = m_Camera.getViewMatrix();
-    glm::mat4 projection = m_Camera.getProjectionMatrix();
+
+    CameraMatrices camData;
+    camData.view = m_Camera.getViewMatrix();
+    camData.projection = m_Camera.getProjectionMatrix();
+
+    glBindBuffer(GL_UNIFORM_BUFFER, m_CameraUboID);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(CameraMatrices), &camData);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // --- Draw the Cube ---
     m_Shader->use();
     m_Shader->setMat4("model", m_ModelMatrix);
-    m_Shader->setMat4("view", view);
-    m_Shader->setMat4("projection", projection);
     m_Shader->setInt("u_Texture", 0);
     m_Shader->setVec4("u_TintColor", glm::make_vec4(m_TintColor));
     m_Texture->bind(0);
@@ -131,8 +154,7 @@ void Chapter12_Application::render()
     {
         m_GuideShader->use();
         m_GuideShader->setMat4("model", glm::mat4(1.0f));
-        m_GuideShader->setMat4("view", view);
-        m_GuideShader->setMat4("projection", projection);
+
         glLineWidth(2.5f); // deprecated in modern opengl (which version? 3.3?)
         glBindVertexArray(m_GuideVaoID);
         glDrawArrays(GL_LINES, 0, 6);
@@ -326,6 +348,8 @@ void Chapter12_Application::setupCoordinateGuide()
 {
     m_GuideShader = std::make_unique<Base::Shader>();
     m_GuideShader->loadFromFile("shaders/guideMVP.vert", "shaders/guide.frag");
+    unsigned int guide_UBO_Index = glGetUniformBlockIndex(m_GuideShader->getProgramID(), "CameraUBO");
+    glUniformBlockBinding(m_GuideShader->getProgramID(), guide_UBO_Index, 0);
     float guideVertices[] = {0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f};
     glGenVertexArrays(1, &m_GuideVaoID);
     glGenBuffers(1, &m_GuideVboID);

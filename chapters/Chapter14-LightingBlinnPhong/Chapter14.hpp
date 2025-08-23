@@ -24,8 +24,11 @@ protected:
     void renderChapterUI() override;
     void update(float deltaTime) override;
     void handleInput(float deltaTime) override;
+#ifdef BUILD_STANDALONE
+    Camera *getActiveCamera() override { return &m_Camera; }
+#else
     Camera *getActiveCamera()  { return &m_Camera; }
-
+#endif 
 private:
 
     Base::SubscriptionHandle m_mouseButtonSub;
@@ -33,6 +36,7 @@ private:
     // Cube Objects
     std::unique_ptr<Base::Shader> m_Shader;
     std::unique_ptr<Base::Texture> m_Texture;
+    bool m_UseTexture = true;
     GLuint m_VaoID = 0, m_VboID = 0, m_EboID = 0;
     glm::vec3 m_Position = glm::vec3(0.0f);
     glm::vec3 m_RotationEuler = glm::vec3(0.0f);
@@ -51,6 +55,7 @@ private:
 
     // Camera Objects
     Camera m_Camera;
+    GLuint m_CameraUboID;
 
     // Scene Objects
     float m_ClearColor[4] = {0.1f, 0.1f, 0.1f, 1.0f};
@@ -62,9 +67,17 @@ private:
     int m_CullFaceMode = 0;     // 0 for GL_BACK, 1 for GL_FRONT
     int m_WindingOrderMode = 0; // 0 for GL_CCW, 1 for GL_CW
 
-
+    void setupShaders();
+    void setupGeometry();
+    void setupCamera();
+    void setupEventListeners();
     void setupCube();
     void setupCoordinateGuide();
     void setupLightCube();
     void drawMouseCapturePopup();
+    void drawSceneSettingsUI();
+    void drawLightSettingsUI();
+    void drawCubeTransformUI();
+    void drawCameraSettingsUI();
+    void drawCullingSettingsUI();
 };

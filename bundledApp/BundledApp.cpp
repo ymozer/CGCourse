@@ -12,7 +12,7 @@
 #include "Chapter11-Camera/Chapter11.hpp"
 #include "Chapter12-FaceCulling/Chapter12.hpp"
 #include "Chapter13-LightingPhong/Chapter13.hpp"
-
+#include "Chapter14-LightingBlinnPhong/Chapter14.hpp"
 
 void BundledApp::setup()
 {
@@ -29,6 +29,7 @@ void BundledApp::setup()
     m_AvailableChapters.push_back({"Chapter 11: Camera", []() { return std::make_unique<Chapter11_Application>(); }});
     m_AvailableChapters.push_back({"Chapter 12: Face Culling", []() { return std::make_unique<Chapter12_Application>(); }});
     m_AvailableChapters.push_back({"Chapter 13: Lighting & Phong Shading", []() { return std::make_unique<Chapter13_Application>(); }});
+    m_AvailableChapters.push_back({"Chapter 14: Lighting & Blinn-Phong Shading", []() { return std::make_unique<Chapter14_Application>(); }});
 
     // ... add all other chapters
 

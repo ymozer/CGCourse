@@ -48,6 +48,7 @@ private:
 
     // Camera Objects
     Camera m_Camera;
+    GLuint m_CameraUboID = 0;
 
     // Scene Objects
     float m_ClearColor[4] = {0.1f, 0.1f, 0.1f, 1.0f};

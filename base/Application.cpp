@@ -612,18 +612,16 @@ namespace Base
                 {
                     first_time = false;
 
-                    ImGui::DockBuilderRemoveNode(dockspace_id); // Clear out existing layout
+                    ImGui::DockBuilderRemoveNode(dockspace_id);
                     ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
                     ImGui::DockBuilderSetNodeSize(dockspace_id, main_viewport->WorkSize);
 
-                    // Split the dockspace into two columns: left for the viewport, right for controls
                     ImGuiID dock_main_id = dockspace_id;
                     ImGuiID dock_right_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.25f, nullptr, &dock_main_id);
 
-                    // Dock windows
                     ImGui::DockBuilderDockWindow("Viewport", dock_main_id);
                     ImGui::DockBuilderDockWindow("Debug Info", dock_right_id);
-                    ImGui::DockBuilderDockWindow("Settings", dock_right_id); // Assuming your chapter UI is in a "Settings" window
+                    ImGui::DockBuilderDockWindow("Settings", dock_right_id);
 
                     ImGui::DockBuilderFinish(dockspace_id);
                 }
@@ -633,11 +631,9 @@ namespace Base
             if (show_borders)
             {
                 ImDrawList *draw_list = ImGui::GetForegroundDrawList();
-                // Green for safe UI Work Area
                 ImVec2 work_min = ImVec2((float)m_WorkArea.x, (float)m_WorkArea.y);
                 ImVec2 work_max = ImVec2(work_min.x + m_WorkArea.w, work_min.y + m_WorkArea.h);
                 draw_list->AddRect(work_min, work_max, IM_COL32(0, 255, 0, 255), 0.0f, 0, 5.0f);
-                // Blue for full Render Area
                 ImVec2 render_min = ImVec2((float)m_RenderArea.x, (float)m_RenderArea.y);
                 ImVec2 render_max = ImVec2(render_min.x + m_RenderArea.w, render_min.y + m_RenderArea.h);
                 draw_list->AddRect(render_min, render_max, IM_COL32(0, 0, 255, 255), 0.0f, 0, 2.0f);
@@ -689,7 +685,6 @@ namespace Base
 
             ImGui::Begin("Debug Info");
             {
-                // want to capture keyboard & mosue
                 ImGui::Text("ImGui Wants Capture: %s", ImGui::GetIO().WantCaptureKeyboard ? "Yes" : "No");
                 ImGui::Text("ImGui Wants Mouse Capture: %s", ImGui::GetIO().WantCaptureMouse ? "Yes" : "No");
                 ImGui::Text("Viewport Hovered: %s", is_viewport_hovered ? "Yes" : "No");
@@ -745,7 +740,6 @@ namespace Base
                     }
                 }
 #else
-                // FIX: Disable the MSAA combo box on Emscripten as it's not supported.
                 ImGui::Text("MSAA: Off (Not supported on Web)");
 #endif
 
@@ -757,7 +751,6 @@ namespace Base
                                       "> 1.0 = Supersampling (slower, sharper)");
                 }
 
-                // Add a read-only text field to show the resulting framebuffer size.
                 ImGui::Text("Framebuffer Size: %d x %d", m_ViewportWidth, m_ViewportHeight);
             }
             ImGui::End();
@@ -824,19 +817,16 @@ namespace Base
         m_ViewportHeight = height;
 
 #if PLATFORM_DESKTOP
-        // --- Resize MSAA attachments ---
         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID);
         glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_MsaaSamples, GL_RGBA, width, height, GL_TRUE);
 
         glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
         glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_MsaaSamples, GL_DEPTH24_STENCIL8, width, height);
 #else
-        // FIX: Resize Emscripten's single depth buffer
         glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 #endif
 
-        // --- Resize final color attachment (used by all) ---
         glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
@@ -845,20 +835,14 @@ namespace Base
 
     void Application::cleanupFramebuffer()
     {
-        // FIX: Conditionally clean up MSAA-specific resources
 #if !PLATFORM_EMSCRIPTEN
         glDeleteFramebuffers(1, &m_MsFboID);
         glDeleteTextures(1, &m_MsColorAttachmentID);
 #endif
-        // m_MsDepthAttachmentID is used by both paths (MSAA depth / Emscripten depth), so it's always deleted.
         glDeleteRenderbuffers(1, &m_MsDepthAttachmentID);
 
-        // --- Clean up common resources ---
         glDeleteFramebuffers(1, &m_FboID);
         glDeleteTextures(1, &m_ColorAttachmentID);
-
-        // This is a bug in the original code, as m_DepthAttachmentID is never created.
-        // glDeleteRenderbuffers(1, &m_DepthAttachmentID);
     }
 
     float Application::getViewportAspectRatio() const

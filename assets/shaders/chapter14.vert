@@ -6,9 +6,12 @@ out vec3 v_FragPos;
 out vec3 v_Normal;
 out vec2 v_TexCoord;
 
+layout (std140) uniform CameraUBO {
+    mat4 view;
+    mat4 projection;
+};
 uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+
 uniform mat3 u_NormalMatrix;
 
 void main()
