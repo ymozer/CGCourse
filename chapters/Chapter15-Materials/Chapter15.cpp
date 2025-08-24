@@ -1,4 +1,3 @@
-
 #include "Chapter15.hpp"
 #include "Log.hpp"
 #include "Input.hpp"
@@ -7,6 +6,19 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <glm/gtc/type_ptr.hpp>
+
+struct Vertex
+{
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 texCoord;
+};
+
+struct CameraMatrices
+{
+    glm::mat4 view;
+    glm::mat4 projection;
+};
 
 #ifdef BUILD_STANDALONE
 Chapter15_Application::Chapter15_Application(std::string title, int width, int height)
@@ -22,33 +34,74 @@ Chapter15_Application::Chapter15_Application()
 }
 #endif
 
+// The main setup function now delegates to helpers, just like Chapter 14
 void Chapter15_Application::setup()
 {
     m_MaterialPresets = g_MaterialPresets;
-    m_Shader = std::make_unique<Base::Shader>();
-    m_Shader->loadFromFile(
-        "shaders/chapter15.vert",
-        "shaders/chapter15.frag");
+    setupShaders();
+    setupGeometry();
+    setupCamera();
+    setupEventListeners();
+}
 
+void Chapter15_Application::setupShaders()
+{
+    // Main object shader
+    m_Shader = std::make_unique<Base::Shader>();
+    m_Shader->loadFromFile("shaders/chapter15.vert", "shaders/chapter15.frag");
+    unsigned int mainShader_UBO_Index = glGetUniformBlockIndex(m_Shader->getProgramID(), "CameraUBO");
+    glUniformBlockBinding(m_Shader->getProgramID(), mainShader_UBO_Index, 0);
+
+    // Light cube shader
+    m_LightCubeShader = std::make_unique<Base::Shader>();
+    m_LightCubeShader->loadFromFile("shaders/light_obj.vert", "shaders/light_obj.frag");
+    unsigned int lightCube_UBO_Index = glGetUniformBlockIndex(m_LightCubeShader->getProgramID(), "CameraUBO");
+    glUniformBlockBinding(m_LightCubeShader->getProgramID(), lightCube_UBO_Index, 0);
+
+    // Coordinate guide shader
+    m_GuideShader = std::make_unique<Base::Shader>();
+    m_GuideShader->loadFromFile("shaders/guideMVP.vert", "shaders/guide.frag");
+    unsigned int guide_UBO_Index = glGetUniformBlockIndex(m_GuideShader->getProgramID(), "CameraUBO");
+    glUniformBlockBinding(m_GuideShader->getProgramID(), guide_UBO_Index, 0);
+}
+
+void Chapter15_Application::setupGeometry()
+{
     setupCube();
     setupLightCube();
     setupCoordinateGuide();
 
     m_Texture = std::make_unique<Base::Texture>();
     m_Texture->loadFromFile("images/uv.png");
+}
 
+void Chapter15_Application::setupCamera()
+{
     auto& app = Base::Application::getInstance();
 
     m_Camera.setPosition({0.0f, 0.0f, 3.0f});
     m_Camera.lookAt({0.0f, 0.0f, 0.0f});
     m_Camera.setProjection(45.0f, app.getViewportAspectRatio(), 0.1f, 100.0f);
 
+    // Create and configure the Uniform Buffer Object
+    glGenBuffers(1, &m_CameraUboID);
+    glBindBuffer(GL_UNIFORM_BUFFER, m_CameraUboID);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(CameraMatrices), NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    // Bind the UBO to the global binding point 0
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_CameraUboID);
+}
+
+void Chapter15_Application::setupEventListeners()
+{
+    auto& app = Base::Application::getInstance();
     m_mouseButtonSub = app.getEventBus().subscribe<Base::MouseButtonPressedEvent>([this, &app](Base::MouseButtonPressedEvent &e)
-                            {
-            if (app.isViewportHovered() && e.button == SDL_BUTTON_LEFT) {
-                e.handled = true;
-            }
-        });
+    {
+        if (app.isViewportHovered() && e.button == SDL_BUTTON_LEFT) {
+            e.handled = true;
+        }
+    });
 
     m_keyPressSub = app.getEventBus().subscribe<Base::KeyPressedEvent>([this](Base::KeyPressedEvent &e)
     {
@@ -59,39 +112,46 @@ void Chapter15_Application::setup()
     });
 }
 
+// shutdown now correctly cleans up all resources and resets OpenGL state
 void Chapter15_Application::shutdown()
 {
+    auto& app = Base::Application::getInstance();
+    app.getEventBus().unsubscribe(m_mouseButtonSub);
+    app.getEventBus().unsubscribe(m_keyPressSub);
+
     glDeleteVertexArrays(1, &m_VaoID);
     glDeleteBuffers(1, &m_VboID);
     glDeleteBuffers(1, &m_EboID);
     glDeleteVertexArrays(1, &m_GuideVaoID);
     glDeleteBuffers(1, &m_GuideVboID);
     glDeleteVertexArrays(1, &m_LightCubeVaoID);
+    
+    // Clean up the UBO and its binding
+    glDeleteBuffers(1, &m_CameraUboID);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, 0);
+
     m_Shader.reset();
     m_Texture.reset();
     m_GuideShader.reset();
     m_LightCubeShader.reset();
+
+    // Reset lingering OpenGL state
+    glDisable(GL_CULL_FACE);
 }
 
 static CameraInput gatherInput()
 {
     auto &input = Base::Input::Get();
-    CameraInput frameInput; // A temporary, local struct
+    CameraInput frameInput;
 
     if (!ImGui::GetIO().WantCaptureKeyboard || input.IsRelativeMouseMode())
     {
-        if (input.IsKeyDown(SDL_SCANCODE_W))
-            frameInput.moveForward += 1.0f;
-        if (input.IsKeyDown(SDL_SCANCODE_S))
-            frameInput.moveForward -= 1.0f;
-        if (input.IsKeyDown(SDL_SCANCODE_A))
-            frameInput.moveRight -= 1.0f;
-        if (input.IsKeyDown(SDL_SCANCODE_D))
-            frameInput.moveRight += 1.0f;
-        if (input.IsKeyDown(SDL_SCANCODE_SPACE))
-            frameInput.moveUp += 1.0f;
-        if (input.IsKeyDown(SDL_SCANCODE_LCTRL))
-            frameInput.moveUp -= 1.0f;
+        if (input.IsKeyDown(SDL_SCANCODE_W)) frameInput.moveForward += 1.0f;
+        if (input.IsKeyDown(SDL_SCANCODE_S)) frameInput.moveForward -= 1.0f;
+        if (input.IsKeyDown(SDL_SCANCODE_A)) frameInput.moveRight -= 1.0f;
+        if (input.IsKeyDown(SDL_SCANCODE_D)) frameInput.moveRight += 1.0f;
+        if (input.IsKeyDown(SDL_SCANCODE_SPACE)) frameInput.moveUp += 1.0f;
+        if (input.IsKeyDown(SDL_SCANCODE_LCTRL)) frameInput.moveUp -= 1.0f;
     }
 
     if (input.IsRelativeMouseMode())
@@ -102,6 +162,8 @@ static CameraInput gatherInput()
     }
     return frameInput;
 }
+
+// render is now much cleaner
 void Chapter15_Application::render()
 {
     if (m_FaceCullingEnabled)
@@ -120,31 +182,28 @@ void Chapter15_Application::render()
     glClearColor(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::mat4 view = m_Camera.getViewMatrix();
-    glm::mat4 projection = m_Camera.getProjectionMatrix();
+    // === 1. Update the UBO with the latest camera data ONCE per frame ===
+    CameraMatrices camData;
+    camData.view = m_Camera.getViewMatrix();
+    camData.projection = m_Camera.getProjectionMatrix();
+    glBindBuffer(GL_UNIFORM_BUFFER, m_CameraUboID);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(CameraMatrices), &camData);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    // --- 1. Draw the Main Cube with the new Material/Light Shaders ---
     m_Shader->use();
 
-    // Set MVP struct uniforms
-    m_Shader->setMat4("u_Mvp.model", m_ModelMatrix);
-    m_Shader->setMat4("u_Mvp.view", view);
-    m_Shader->setMat4("u_Mvp.projection", projection);
-
-    // Set other top-level uniforms
+    m_Shader->setMat4("model", m_ModelMatrix);
     m_Shader->setMat3("u_NormalMatrix", glm::transpose(glm::inverse(glm::mat3(m_ModelMatrix))));
     m_Shader->setVec3("u_ViewPos", m_Camera.getPosition());
     m_Shader->setInt("u_Texture", 0);
     m_Shader->setBool("u_UseTexture", m_UseTexture);
     m_Shader->setVec4("u_TintColor", glm::make_vec4(m_TintColor));
 
-    // Light struct
     m_Shader->setVec3("light.position", m_Light.Position);
     m_Shader->setVec3("light.ambient", m_Light.Ambient);
     m_Shader->setVec3("light.diffuse", m_Light.Diffuse);
     m_Shader->setVec3("light.specular", m_Light.Specular);
 
-    // Materials
     const auto &currentMaterial = m_MaterialPresets[m_CurrentMaterialIndex];
     m_Shader->setVec3("material.ambient", currentMaterial.Ambient);
     m_Shader->setVec3("material.diffuse", currentMaterial.Diffuse);
@@ -155,31 +214,23 @@ void Chapter15_Application::render()
     glBindVertexArray(m_VaoID);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    // Light Cube
     m_LightCubeShader->use();
     glm::mat4 lightModel = glm::mat4(1.0f);
     lightModel = glm::translate(lightModel, m_Light.Position);
     lightModel = glm::scale(lightModel, glm::vec3(0.2f));
 
     m_LightCubeShader->setMat4("model", lightModel);
-    m_LightCubeShader->setMat4("view", view);
-    m_LightCubeShader->setMat4("projection", projection);
     m_LightCubeShader->setVec4("u_ObjectColor", glm::vec4(m_Light.Diffuse, 1.0f));
 
     glBindVertexArray(m_LightCubeVaoID);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    // --- 3. Draw the Coordinate Guide (unchanged) ---
     if (m_ShowCoordinateGuide)
     {
         m_GuideShader->use();
         m_GuideShader->setMat4("model", glm::mat4(1.0f));
-        m_GuideShader->setMat4("view", view);
-        m_GuideShader->setMat4("projection", projection);
-        glLineWidth(2.5f);
         glBindVertexArray(m_GuideVaoID);
         glDrawArrays(GL_LINES, 0, 6);
-        glLineWidth(1.0f);
     }
 
     glBindVertexArray(0);
@@ -208,7 +259,6 @@ void Chapter15_Application::renderChapterUI()
     if (ImGui::CollapsingHeader("Material Settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Checkbox("Use Texture", &m_UseTexture);
-        //TODO: add runtime texture switching
         ImGui::Separator();
 
         if (ImGui::BeginCombo("Preset", m_MaterialPresets[m_CurrentMaterialIndex].Name))
@@ -258,35 +308,19 @@ void Chapter15_Application::renderChapterUI()
 
         int currentMode = static_cast<int>(m_Camera.getMode());
 
-        if (ImGui::RadioButton("FPS", &currentMode, static_cast<int>(CameraMode::FPS)))
-        {
-            m_Camera.setMode(CameraMode::FPS);
-        }
+        if (ImGui::RadioButton("FPS", &currentMode, static_cast<int>(CameraMode::FPS))) { m_Camera.setMode(CameraMode::FPS); }
         ImGui::SameLine();
-        if (ImGui::RadioButton("Fly", &currentMode, static_cast<int>(CameraMode::FLY)))
-        {
-            m_Camera.setMode(CameraMode::FLY);
-        }
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::SetTooltip("FPS: Horizontal movement is locked to the XZ plane.\n"
-                              "Fly: Full 6 degrees of freedom movement.");
-        }
+        if (ImGui::RadioButton("Fly", &currentMode, static_cast<int>(CameraMode::FLY))) { m_Camera.setMode(CameraMode::FLY); }
+        
         float speed = m_Camera.getMovementSpeed();
-        if (ImGui::DragFloat("Speed", &speed, 0.1f, 0.1f, 100.0f))
-        {
-            m_Camera.setMovementSpeed(speed);
-        }
+        if (ImGui::DragFloat("Speed", &speed, 0.1f, 0.1f, 100.0f)) { m_Camera.setMovementSpeed(speed); }
+        
         float sensitivity = m_Camera.getMouseSensitivity();
-        if (ImGui::DragFloat("Sensitivity", &sensitivity, 0.01f, 0.01f, 1.0f))
-        {
-            m_Camera.setMouseSensitivity(sensitivity);
-        }
+        if (ImGui::DragFloat("Sensitivity", &sensitivity, 0.01f, 0.01f, 1.0f)) { m_Camera.setMouseSensitivity(sensitivity); }
+        
         float fov = m_Camera.getFov();
-        if (ImGui::SliderFloat("Field of View", &fov, 1.0f, 120.0f))
-        {
-            m_Camera.setFov(fov);
-        }
+        if (ImGui::SliderFloat("Field of View", &fov, 1.0f, 120.0f)) { m_Camera.setFov(fov); }
+        
         glm::vec3 camPos = m_Camera.getPosition();
         ImGui::InputFloat3("Position (Read-Only)", &camPos.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
     }
@@ -294,33 +328,22 @@ void Chapter15_Application::renderChapterUI()
     if (ImGui::CollapsingHeader("Culling Settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Checkbox("Enable Face Culling", &m_FaceCullingEnabled);
-
         ImGui::BeginDisabled(!m_FaceCullingEnabled);
-        {
-            ImGui::SeparatorText("Face to Cull");
-            ImGui::RadioButton("Back", &m_CullFaceMode, 0);
-            ImGui::SameLine();
-            ImGui::RadioButton("Front", &m_CullFaceMode, 1);
-
-            ImGui::SeparatorText("Front Face Winding Order");
-            ImGui::RadioButton("Counter-Clockwise (CCW)", &m_WindingOrderMode, 0);
-            ImGui::SameLine();
-            ImGui::RadioButton("Clockwise (CW)", &m_WindingOrderMode, 1);
-
-            ImGui::TextWrapped("NOTE: The cube's vertices are defined in CCW order. "
-                               "Culling BACK faces with CCW winding is the standard setting.");
-        }
+        ImGui::SeparatorText("Face to Cull");
+        ImGui::RadioButton("Back", &m_CullFaceMode, 0); ImGui::SameLine();
+        ImGui::RadioButton("Front", &m_CullFaceMode, 1);
+        ImGui::SeparatorText("Front Face Winding Order");
+        ImGui::RadioButton("Counter-Clockwise (CCW)", &m_WindingOrderMode, 0); ImGui::SameLine();
+        ImGui::RadioButton("Clockwise (CW)", &m_WindingOrderMode, 1);
         ImGui::EndDisabled();
     }
 
     ImGui::End();
-
     drawMouseCapturePopup();
 }
 
-void Chapter15_Application::handleInput(float deltaTime)
-{
-}
+void Chapter15_Application::handleInput(float deltaTime) {}
+
 void Chapter15_Application::update(float deltaTime)
 {
     CameraInput currentFrameInput = gatherInput();
@@ -335,59 +358,41 @@ void Chapter15_Application::update(float deltaTime)
     m_ModelMatrix = model;
 }
 
+// setupCube now uses the Vertex struct for better readability and safety
 void Chapter15_Application::setupCube()
 {
-    //clang-format off
-    float vertices[] = {
+    Vertex vertices[] = {
         // positions          // normals           // texture Coords
-        // Front Face (+Z) - Normal (0, 0, 1)
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // 0
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  // 1
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,   // 2
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  // 3
-
-        // Back Face (-Z) - Normal (0, 0, -1)
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, // 4
-        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,  // 5
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,   // 6
-        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,  // 7
-
-        // Left Face (-X) - Normal (-1, 0, 0)
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, // 8
-        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,  // 9
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,   // 10
-        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // 11
-
-        // Right Face (+X) - Normal (1, 0, 0)
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  // 12
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, // 13
-        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // 14
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,   // 15
-
-        // Top Face (+Y) - Normal (0, 1, 0)
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,  // 16
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // 17
-        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,  // 18
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, // 19
-
-        // Bottom Face (-Y) - Normal (0, -1, 0)
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, // 20
-        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,  // 21
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,   // 22
-        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f   // 23
+        {{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+        {{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},
+        {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}},
+        {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+        {{-0.5f, -0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+        {{-0.5f, 0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},
+        {{-0.5f, 0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
+        {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},
+        {{0.5f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
+        {{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
+        {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},
+        {{-0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}}
     };
 
-    // Index pattern 0, 1, 2 and 2, 3, 0 is CCW for the vertex order above.
     unsigned int indices[] = {
-        0, 1, 2, 2, 3, 0,       // Front
-        5, 4, 7, 7, 6, 5,       // Back  (Note: Flipped order 5,4,7 to be CCW from outside)
-        8, 9, 10, 10, 11, 8,    // Left
-        12, 13, 14, 14, 15, 12, // Right
-        16, 17, 18, 18, 19, 16, // Top
-        20, 21, 22, 22, 23, 20  // Bottom (Note: Flipped order to be CCW from outside)
+        0, 1, 2, 2, 3, 0, 5, 4, 7, 7, 6, 5, 8, 9, 10, 10, 11, 8,
+        12, 13, 14, 14, 15, 12, 16, 17, 18, 18, 19, 16, 20, 21, 22, 22, 23, 20
     };
-    //
-    //clang-format on
 
     glGenVertexArrays(1, &m_VaoID);
     glGenBuffers(1, &m_VboID);
@@ -401,95 +406,67 @@ void Chapter15_Application::setupCube()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EboID);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    const GLsizei stride = 8 * sizeof(float);
-
-    // layout (location = 0) in vec3 aPos;
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void *)0);
+    const GLsizei stride = sizeof(Vertex);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex, position));
     glEnableVertexAttribArray(0);
-
-    // layout (location = 1) in vec3 aNormal;
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex, normal));
     glEnableVertexAttribArray(1);
-
-    // layout (location = 2) in vec2 aTexCoord;
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void *)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex, texCoord));
     glEnableVertexAttribArray(2);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 
 void Chapter15_Application::setupLightCube()
 {
-    m_LightCubeShader = std::make_unique<Base::Shader>();
-    m_LightCubeShader->loadFromFile("shaders/light_obj.vert", "shaders/light_obj.frag");
     glGenVertexArrays(1, &m_LightCubeVaoID);
     glBindVertexArray(m_LightCubeVaoID);
-
-    // Reuse the VBO and EBO from the main cube
     glBindBuffer(GL_ARRAY_BUFFER, m_VboID);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EboID);
-
-    const GLsizei stride = 8 * sizeof(float);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void *)0);
+    const GLsizei stride = sizeof(Vertex);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex, position));
     glEnableVertexAttribArray(0);
-
     glBindVertexArray(0);
 }
 
 void Chapter15_Application::setupCoordinateGuide()
 {
-    m_GuideShader = std::make_unique<Base::Shader>();
-    m_GuideShader->loadFromFile("shaders/guideMVP.vert", "shaders/guide.frag");
-    float guideVertices[] = {0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f};
+    float guideVertices[] = {
+        0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f
+    };
     glGenVertexArrays(1, &m_GuideVaoID);
     glGenBuffers(1, &m_GuideVboID);
     glBindVertexArray(m_GuideVaoID);
     glBindBuffer(GL_ARRAY_BUFFER, m_GuideVboID);
     glBufferData(GL_ARRAY_BUFFER, sizeof(guideVertices), guideVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 
 void Chapter15_Application::drawMouseCapturePopup()
 {
-    const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration |       // No title bar, borders, or resize grips
-                                   ImGuiWindowFlags_NoMove |             // Can't be dragged
-                                   ImGuiWindowFlags_AlwaysAutoResize |   // Shrink-wrap to content
-                                   ImGuiWindowFlags_NoSavedSettings |    // Don't save position in imgui.ini
-                                   ImGuiWindowFlags_NoFocusOnAppearing | // Don't steal focus
-                                   ImGuiWindowFlags_NoNav;               // Disable keyboard/gamepad navigation
-
-    const float padding = 10.0f;
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
-
-    ImVec2 work_pos = viewport->WorkPos;
-    ImVec2 work_size = viewport->WorkSize;
-    ImVec2 window_pos = ImVec2(work_pos.x + work_size.x * 0.5f, work_pos.y + work_size.y - padding);
+    const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImVec2 window_pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x * 0.5f, viewport->WorkPos.y + viewport->WorkSize.y - 10.0f);
     ImVec2 window_pivot = ImVec2(0.5f, 1.0f);
-
     ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pivot);
     ImGui::SetNextWindowBgAlpha(0.35f);
 
-    if (!Base::Input::Get().IsRelativeMouseMode())
+    if (ImGui::Begin("MouseCapturePopup", nullptr, flags))
     {
-        if (ImGui::Begin("MouseCapturePopup", nullptr, flags))
+        if (!Base::Input::Get().IsRelativeMouseMode())
         {
             ImGui::Text("Press Right-click to capture mouse");
         }
-        ImGui::End();
-        return;
-    }
-    else
-    {
-        if (ImGui::Begin("MouseCapturePopup", nullptr, flags))
+        else
         {
             ImGui::Text("Press ESC to release mouse");
         }
-        ImGui::End();
     }
+    ImGui::End();
 }

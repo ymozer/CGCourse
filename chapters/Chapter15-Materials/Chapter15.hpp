@@ -34,7 +34,11 @@ protected:
     void renderChapterUI() override;
     void update(float deltaTime) override;
     void handleInput(float deltaTime) override;
+#ifdef BUILD_STANDALONE
+    Camera *getActiveCamera() override { return &m_Camera; }
+#else
     Camera *getActiveCamera() { return &m_Camera; }
+#endif
 
 private:
     // Event Bus Subscriptions
@@ -63,6 +67,7 @@ private:
 
     // Camera Objects
     Camera m_Camera;
+    GLuint m_CameraUboID = 0;
 
     // Scene Objects
     float m_ClearColor[4] = {0.1f, 0.1f, 0.1f, 1.0f};
@@ -83,8 +88,18 @@ private:
     std::vector<Material> m_MaterialPresets;
     int m_CurrentMaterialIndex = 0;
 
+    void setupShaders();
+    void setupGeometry();
+    void setupCamera();
+    void setupEventListeners();
     void setupCube();
     void setupCoordinateGuide();
     void setupLightCube();
     void drawMouseCapturePopup();
+    void drawSceneSettingsUI();
+    void drawLightSettingsUI();
+    void drawCubeTransformUI();
+    void drawCameraSettingsUI();
+    void drawCullingSettingsUI();
+
 };
