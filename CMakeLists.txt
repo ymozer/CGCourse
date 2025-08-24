@@ -163,6 +163,43 @@ if(imgui_SOURCE_DIR)
     set_target_properties(imgui_impl_opengl3 PROPERTIES FOLDER "External Libraries/imgui")
 endif()
 
+find_package(Python3 COMPONENTS Interpreter QUIET)
+
+if(Python3_FOUND)
+    message(STATUS "Found Python interpreter: ${Python3_EXECUTABLE}")
+
+    # Check if jinja2 is installed for the found interpreter
+    execute_process(
+        COMMAND "${Python3_EXECUTABLE}" "-c" "import jinja2"
+        RESULT_VARIABLE JINJA2_CHECK_RESULT
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+
+    # If jinja2 is not found (command returns a non-zero exit code), install it
+    if(NOT JINJA2_CHECK_RESULT EQUAL 0)
+        message(STATUS "Python module 'jinja2' not found. Attempting to install it via pip.")
+        
+        execute_process(
+            COMMAND "${Python3_EXECUTABLE}" "-m" "pip" "install" "jinja2"
+            RESULT_VARIABLE JINJA2_INSTALL_RESULT
+            OUTPUT_VARIABLE JINJA2_INSTALL_OUTPUT
+            ERROR_VARIABLE JINJA2_INSTALL_OUTPUT
+        )
+
+        if(JINJA2_INSTALL_RESULT EQUAL 0)
+            message(STATUS "Successfully installed 'jinja2'.")
+        else()
+            message(FATAL_ERROR "Failed to install 'jinja2'. Please install it manually using:\n"
+                                "'${Python3_EXECUTABLE} -m pip install jinja2'\n"
+                                "Pip output:\n${JINJA2_INSTALL_OUTPUT}")
+        endif()
+    else()
+        message(STATUS "Python module 'jinja2' is already installed.")
+    endif()
+else()
+    message(FATAL_ERROR "Python 3 is required by the glad library but was not found. Please install Python 3 and ensure it is in your system's PATH.")
+endif()
 
 # GLAD (OpenGL Function Loader)
 # can do: pip install glad

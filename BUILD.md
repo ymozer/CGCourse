@@ -3,9 +3,6 @@
 ## Quick Commands
 
 ```bash
-# please install jinja2 using pip globally
-pip install jinja2 #needed for glad lib
-
 cmake -S . -B build # configure project
 cmake --build build # build project
 cmake --build build --target <target_name> # build project with target
