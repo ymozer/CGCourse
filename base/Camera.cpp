@@ -33,6 +33,11 @@ glm::vec3 Camera::getPosition() const
     return m_Position;
 }
 
+glm::vec3 Camera::getFront() const
+{
+    return m_Front;
+}
+
 CameraMode Camera::getMode() const
 {
     return m_Mode;
@@ -103,7 +108,6 @@ void Camera::update(const CameraInput &input, float deltaTime)
     m_Yaw += input.mouseDeltaX * m_MouseSensitivity;
     m_Pitch += input.mouseDeltaY * m_MouseSensitivity;
 
-    // Clamp pitch
     m_Pitch = std::clamp(m_Pitch, -89.0f, 89.0f);
 
     updateCameraVectors();
@@ -139,14 +143,11 @@ void Camera::update(const CameraInput &input, float deltaTime)
 
 void Camera::updateCameraVectors()
 {
-    // Calculate the new Front vector
     glm::vec3 front;
     front.x = cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
     front.y = sin(glm::radians(m_Pitch));
     front.z = sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
     m_Front = glm::normalize(front);
-
-    // Also re-calculate the Right and Up vector
     m_Right = glm::normalize(glm::cross(m_Front, m_WorldUp));
     m_Up = glm::normalize(glm::cross(m_Right, m_Front));
 }

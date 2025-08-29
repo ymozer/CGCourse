@@ -501,15 +501,15 @@
     },
     {
       "name": "android-arm64-v8a-debug-chapter16",
-      "displayName": "Android arm64-v8a Debug (Chapter16-LightingMapping)",
+      "displayName": "Android arm64-v8a Debug (Chapter16-SpecularMapping)",
       "inherits": "android-arm64-v8a-debug-standalone",
-      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter16-LightingMapping" }
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter16-SpecularMapping" }
     },
     {
       "name": "android-arm64-v8a-release-chapter16",
-      "displayName": "Android arm64-v8a Release (Chapter16-LightingMapping)",
+      "displayName": "Android arm64-v8a Release (Chapter16-SpecularMapping)",
       "inherits": "android-arm64-v8a-release-standalone",
-      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter16-LightingMapping" }
+      "cacheVariables": { "STANDALONE_CHAPTER_NAME": "Chapter16-SpecularMapping" }
     },
     {
       "name": "android-arm64-v8a-debug-chapter17",
@@ -1049,10 +1049,10 @@
     },
     {
       "name": "build-ch16-windows-debug",
-      "displayName": "Build Ch16 (LightingMapping)",
+      "displayName": "Build Ch16 (SpecularMapping)",
       "configurePreset": "windows-x64-debug-standalone",
       "inherits": "base-build",
-      "targets": ["Chapter16-LightingMapping"]
+      "targets": ["Chapter16-SpecularMapping"]
     },
     {
       "name": "build-ch17-windows-debug",
@@ -1343,10 +1343,10 @@
     },
     {
       "name": "build-ch16-linux-debug",
-      "displayName": "Build Ch16 (LightingMapping)",
+      "displayName": "Build Ch16 (SpecularMapping)",
       "configurePreset": "linux-x86_64-debug-standalone",
       "inherits": "base-build",
-      "targets": ["Chapter16-LightingMapping"]
+      "targets": ["Chapter16-SpecularMapping"]
     },
     {
       "name": "build-ch17-linux-debug",
@@ -1637,10 +1637,10 @@
     },
     {
       "name": "build-ch16-linux-release",
-      "displayName": "Build Ch16 (LightingMapping)",
+      "displayName": "Build Ch16 (SpecularMapping)",
       "configurePreset": "linux-x86_64-release-standalone",
       "inherits": "base-build",
-      "targets": ["Chapter16-LightingMapping"]
+      "targets": ["Chapter16-SpecularMapping"]
     },
     {
       "name": "build-ch17-linux-release",
@@ -1931,10 +1931,10 @@
     },
     {
       "name": "build-ch16-macos-debug",
-      "displayName": "Build Ch16 (LightingMapping)",
+      "displayName": "Build Ch16 (SpecularMapping)",
       "configurePreset": "macos-arm64-debug-standalone",
       "inherits": "base-build",
-      "targets": ["Chapter16-LightingMapping"]
+      "targets": ["Chapter16-SpecularMapping"]
     },
     {
       "name": "build-ch17-macos-debug",

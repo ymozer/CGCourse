@@ -1,4 +1,4 @@
-#include "Chapter17.hpp"
+#include "Chapter16.hpp"
 #include <memory>
 #include <SDL3/SDL_main.h>
 
@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 
     try
     {
-        auto app = std::make_unique<Chapter17_Application>("Chapter 17-LightCasterTypes", 1280, 720);
+        auto app = std::make_unique<Chapter16_Application>("Chapter 16-SpecularMapping", 1280, 720);
         app->run();
     }
     catch (const std::exception &e)

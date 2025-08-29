@@ -1,4 +1,4 @@
-#include "Chapter15.hpp"
+#include "Chapter17.hpp"
 #include "Log.hpp"
 #include "Input.hpp"
 #include "Application.hpp"
@@ -7,50 +7,35 @@
 #include <imgui_internal.h>
 #include <glm/gtc/type_ptr.hpp>
 
-namespace
+struct Vertex
 {
-    struct Vertex
-    {
-        glm::vec3 position;
-        glm::vec3 normal;
-        glm::vec2 texCoord;
-    };
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 texCoord;
+};
 
-    struct CameraMatrices
-    {
-        glm::mat4 view;
-        glm::mat4 projection;
-    };
-
-}
-struct Light
+struct CameraMatrices
 {
-    glm::vec3 Position;
-    glm::vec3 Ambient;
-    glm::vec3 Diffuse;
-    glm::vec3 Specular;
+    glm::mat4 view;
+    glm::mat4 projection;
 };
 
 #ifdef BUILD_STANDALONE
-Chapter15_Application::Chapter15_Application(std::string title, int width, int height)
-    : ChapterBase(title, width, height),
-      m_pLight(std::make_unique<Light>())
+Chapter17_Application::Chapter17_Application(std::string title, int width, int height)
+    : ChapterBase(title, width, height)
 {
     LOG_INFO("Chapter 15 constructed in STANDALONE mode.");
 }
 #else
-Chapter15_Application::Chapter15_Application()
-    : ChapterBase(),
-      m_pLight(std::make_unique<Light>())
+Chapter17_Application::Chapter17_Application()
+    : ChapterBase()
 {
     LOG_INFO("Chapter 15 constructed in BUNDLED mode.");
 }
 #endif
 
-Chapter15_Application::~Chapter15_Application() = default;
-
 // The main setup function now delegates to helpers, just like Chapter 14
-void Chapter15_Application::setup()
+void Chapter17_Application::setup()
 {
     m_MaterialPresets = g_MaterialPresets;
     setupShaders();
@@ -59,11 +44,11 @@ void Chapter15_Application::setup()
     setupEventListeners();
 }
 
-void Chapter15_Application::setupShaders()
+void Chapter17_Application::setupShaders()
 {
     // Main object shader
     m_Shader = std::make_unique<Base::Shader>();
-    m_Shader->loadFromFile("shaders/chapter15.vert", "shaders/chapter15.frag");
+    m_Shader->loadFromFile("shaders/Chapter17.vert", "shaders/Chapter17.frag");
     unsigned int mainShader_UBO_Index = glGetUniformBlockIndex(m_Shader->getProgramID(), "CameraUBO");
     glUniformBlockBinding(m_Shader->getProgramID(), mainShader_UBO_Index, 0);
 
@@ -80,22 +65,14 @@ void Chapter15_Application::setupShaders()
     glUniformBlockBinding(m_GuideShader->getProgramID(), guide_UBO_Index, 0);
 }
 
-void Chapter15_Application::setupGeometry()
+void Chapter17_Application::setupGeometry()
 {
-    m_pLight->Position = glm::vec3(1.2f, 1.0f, 2.0f);
-    m_pLight->Ambient = glm::vec3(0.2f);
-    m_pLight->Diffuse = glm::vec3(0.8f);
-    m_pLight->Specular = glm::vec3(1.0f);
-
     setupCube();
     setupLightCube();
     setupCoordinateGuide();
-
-    m_Texture = std::make_unique<Base::Texture>();
-    m_Texture->loadFromFile("images/uv.png");
 }
 
-void Chapter15_Application::setupCamera()
+void Chapter17_Application::setupCamera()
 {
     auto &app = Base::Application::getInstance();
 
@@ -113,7 +90,7 @@ void Chapter15_Application::setupCamera()
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_CameraUboID);
 }
 
-void Chapter15_Application::setupEventListeners()
+void Chapter17_Application::setupEventListeners()
 {
     auto &app = Base::Application::getInstance();
     m_mouseButtonSub = app.getEventBus().subscribe<Base::MouseButtonPressedEvent>([this, &app](Base::MouseButtonPressedEvent &e)
@@ -131,7 +108,7 @@ void Chapter15_Application::setupEventListeners()
 }
 
 // shutdown now correctly cleans up all resources and resets OpenGL state
-void Chapter15_Application::shutdown()
+void Chapter17_Application::shutdown()
 {
     auto &app = Base::Application::getInstance();
     app.getEventBus().unsubscribe(m_mouseButtonSub);
@@ -149,7 +126,8 @@ void Chapter15_Application::shutdown()
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, 0);
 
     m_Shader.reset();
-    m_Texture.reset();
+    m_DiffuseTexture.reset();
+    m_SpecularTexture.reset();
     m_GuideShader.reset();
     m_LightCubeShader.reset();
 
@@ -188,7 +166,7 @@ static CameraInput gatherInput()
 }
 
 // render is now much cleaner
-void Chapter15_Application::render()
+void Chapter17_Application::render()
 {
     if (m_FaceCullingEnabled)
     {
@@ -219,14 +197,33 @@ void Chapter15_Application::render()
     m_Shader->setMat4("model", m_ModelMatrix);
     m_Shader->setMat3("u_NormalMatrix", glm::transpose(glm::inverse(glm::mat3(m_ModelMatrix))));
     m_Shader->setVec3("u_ViewPos", m_Camera.getPosition());
-    m_Shader->setInt("u_Texture", 0);
+    m_Shader->setInt("u_DiffuseMap", 0);
+    m_Shader->setInt("u_SpecularMap", 1);
     m_Shader->setBool("u_UseTexture", m_UseTexture);
     m_Shader->setVec4("u_TintColor", glm::make_vec4(m_TintColor));
 
-    m_Shader->setVec3("light.position", m_pLight->Position);
-    m_Shader->setVec3("light.ambient", m_pLight->Ambient);
-    m_Shader->setVec3("light.diffuse", m_pLight->Diffuse);
-    m_Shader->setVec3("light.specular", m_pLight->Specular);
+    m_Shader->setInt("light.type", static_cast<int>(m_CurrentLightType));
+    m_Shader->setVec3("light.ambient", m_Light.Ambient);
+    m_Shader->setVec3("light.diffuse", m_Light.Diffuse);
+    m_Shader->setVec3("light.specular", m_Light.Specular);
+    m_Shader->setVec3("light.direction", m_Light.Direction);
+    if (m_CurrentLightType == LightType::Spot)
+    {
+        m_Shader->setVec3("light.position", m_Camera.getPosition());
+        m_Shader->setVec3("light.direction", m_Camera.getFront());
+    }
+    else
+    {
+        m_Shader->setVec3("light.position", m_Light.Position);
+    }
+
+    m_Shader->setFloat("light.constant", m_Light.Constant);
+    m_Shader->setFloat("light.linear", m_Light.Linear);
+    m_Shader->setFloat("light.quadratic", m_Light.Quadratic);
+
+    // Spotlight properties
+    m_Shader->setFloat("light.cutOff", glm::cos(glm::radians(m_Light.CutOff)));
+    m_Shader->setFloat("light.outerCutOff", glm::cos(glm::radians(m_Light.OuterCutOff)));
 
     const auto &currentMaterial = m_MaterialPresets[m_CurrentMaterialIndex];
     m_Shader->setVec3("material.ambient", currentMaterial.Ambient);
@@ -234,19 +231,9 @@ void Chapter15_Application::render()
     m_Shader->setVec3("material.specular", currentMaterial.Specular);
     m_Shader->setFloat("material.shininess", currentMaterial.Shininess);
 
-    m_Texture->bind(0);
+    m_DiffuseTexture->bind(0);
+    m_SpecularTexture->bind(1);
     glBindVertexArray(m_VaoID);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-    m_LightCubeShader->use();
-    glm::mat4 lightModel = glm::mat4(1.0f);
-    lightModel = glm::translate(lightModel, m_pLight->Position);
-    lightModel = glm::scale(lightModel, glm::vec3(0.2f));
-
-    m_LightCubeShader->setMat4("model", lightModel);
-    m_LightCubeShader->setVec4("u_ObjectColor", glm::vec4(m_pLight->Diffuse, 1.0f));
-
-    glBindVertexArray(m_LightCubeVaoID);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
     if (m_ShowCoordinateGuide)
@@ -257,32 +244,77 @@ void Chapter15_Application::render()
         glDrawArrays(GL_LINES, 0, 6);
     }
 
+    if (m_CurrentLightType != LightType::Directional)
+    {
+        m_LightCubeShader->use();
+        glm::mat4 lightModel = glm::mat4(1.0f);
+        glm::vec3 lightCubePos = (m_CurrentLightType == LightType::Spot) ? m_Camera.getPosition() : m_Light.Position;
+        lightModel = glm::translate(lightModel, lightCubePos);
+        lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+
+        m_LightCubeShader->setMat4("model", lightModel);
+        m_LightCubeShader->setVec4("u_ObjectColor", glm::vec4(m_Light.Diffuse, 1.0f));
+
+        glBindVertexArray(m_LightCubeVaoID);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    }
+
     glBindVertexArray(0);
 }
 
-void Chapter15_Application::drawSceneSettingsUI()
+void Chapter17_Application::renderChapterUI()
 {
-    ImGui::Begin("Scene Settings");
-    ImGui::ColorEdit3("Background Color", m_ClearColor);
-    ImGui::Checkbox("Show Coordinate Guide", &m_ShowCoordinateGuide);
-    ImGui::End();
-}
+    ImGui::Begin("Settings");
 
-void Chapter15_Application::drawLightSettingsUI()
-{
+    if (ImGui::CollapsingHeader("Scene"))
+    {
+        ImGui::ColorEdit3("Background Color", m_ClearColor);
+        ImGui::Checkbox("Show Coordinate Guide", &m_ShowCoordinateGuide);
+    }
+
     if (ImGui::CollapsingHeader("Light Settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImGui::DragFloat3("Position##light", &m_pLight->Position.x, 0.01f);
+        ImGui::SeparatorText("Light Type");
+        ImGui::RadioButton("Directional", (int *)&m_CurrentLightType, 0);
+        ImGui::SameLine();
+        ImGui::RadioButton("Point", (int *)&m_CurrentLightType, 1);
+        ImGui::SameLine();
+        ImGui::RadioButton("Spotlight", (int *)&m_CurrentLightType, 2);
+
+        ImGui::Separator();
+
+        if (m_CurrentLightType == LightType::Directional)
+        {
+            ImGui::DragFloat3("Direction##light", &m_Light.Direction.x, 0.01f, -1.0f, 1.0f);
+        }
+
+        if (m_CurrentLightType == LightType::Point)
+        {
+            ImGui::DragFloat3("Position##light", &m_Light.Position.x, 0.01f);
+        }
+
+        // Spotlight uses the camera's position, so we don't show a position editor for it.
+        if (m_CurrentLightType == LightType::Spot)
+        {
+            ImGui::Text("Spotlight is attached to the camera (Flashlight).");
+            ImGui::SliderFloat("Inner CutOff Angle", &m_Light.CutOff, 0.0f, m_Light.OuterCutOff);
+            ImGui::SliderFloat("Outer CutOff Angle", &m_Light.OuterCutOff, m_Light.CutOff, 90.0f);
+        }
+
+        if (m_CurrentLightType == LightType::Point || m_CurrentLightType == LightType::Spot)
+        {
+            ImGui::SeparatorText("Attenuation");
+            ImGui::DragFloat("Constant", &m_Light.Constant, 0.01f, 0.0f, 5.0f);
+            ImGui::DragFloat("Linear", &m_Light.Linear, 0.001f, 0.0f, 1.0f);
+            ImGui::DragFloat("Quadratic", &m_Light.Quadratic, 0.0001f, 0.0f, 0.2f, "%.4f");
+        }
 
         ImGui::SeparatorText("Colors");
-        ImGui::ColorEdit3("Ambient##light", &m_pLight->Ambient.x);
-        ImGui::ColorEdit3("Diffuse##light", &m_pLight->Diffuse.x);
-        ImGui::ColorEdit3("Specular##light", &m_pLight->Specular.x);
+        ImGui::ColorEdit3("Ambient##light", &m_Light.Ambient.x);
+        ImGui::ColorEdit3("Diffuse##light", &m_Light.Diffuse.x);
+        ImGui::ColorEdit3("Specular##light", &m_Light.Specular.x);
     }
-}
 
-void Chapter15_Application::drawMaterialSettingsUI()
-{
     if (ImGui::CollapsingHeader("Material Settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Checkbox("Use Texture", &m_UseTexture);
@@ -311,10 +343,7 @@ void Chapter15_Application::drawMaterialSettingsUI()
         ImGui::ColorEdit3("Specular##material", &currentMaterial.Specular.x);
         ImGui::DragFloat("Shininess##material", &currentMaterial.Shininess, 0.1f, 0.0f, 256.0f);
     }
-}
 
-void Chapter15_Application::drawCubeTransformUI()
-{
     if (ImGui::CollapsingHeader("Cube Transformation", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::DragFloat3("Position##cube", &m_Position.x, 0.01f);
@@ -328,10 +357,7 @@ void Chapter15_Application::drawCubeTransformUI()
             m_Scale = glm::vec3(1.0f);
         }
     }
-}
 
-void Chapter15_Application::drawCameraSettingsUI()
-{
     if (ImGui::CollapsingHeader("Camera Settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::TextWrapped("Use WASD + Space/LCTRL to move the camera.\n"
@@ -372,10 +398,7 @@ void Chapter15_Application::drawCameraSettingsUI()
         glm::vec3 camPos = m_Camera.getPosition();
         ImGui::InputFloat3("Position (Read-Only)", &camPos.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
     }
-}
 
-void Chapter15_Application::drawCullingSettingsUI()
-{
     if (ImGui::CollapsingHeader("Culling Settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Checkbox("Enable Face Culling", &m_FaceCullingEnabled);
@@ -390,24 +413,14 @@ void Chapter15_Application::drawCullingSettingsUI()
         ImGui::RadioButton("Clockwise (CW)", &m_WindingOrderMode, 1);
         ImGui::EndDisabled();
     }
-}
 
-void Chapter15_Application::renderChapterUI()
-{
-    ImGui::Begin("Settings");
-    drawSceneSettingsUI();
-    drawLightSettingsUI();
-    drawMaterialSettingsUI();
-    drawCubeTransformUI();
-    drawCameraSettingsUI();
-    drawCullingSettingsUI();
     ImGui::End();
     drawMouseCapturePopup();
 }
 
-void Chapter15_Application::handleInput(float deltaTime) {}
+void Chapter17_Application::handleInput(float deltaTime) {}
 
-void Chapter15_Application::update(float deltaTime)
+void Chapter17_Application::update(float deltaTime)
 {
     CameraInput currentFrameInput = gatherInput();
     m_Camera.update(currentFrameInput, deltaTime);
@@ -422,34 +435,52 @@ void Chapter15_Application::update(float deltaTime)
 }
 
 // setupCube now uses the Vertex struct for better readability and safety
-void Chapter15_Application::setupCube()
+void Chapter17_Application::setupCube()
 {
+    m_DiffuseTexture = std::make_unique<Base::Texture>();
+    m_DiffuseTexture->loadFromFile("images/cube_DefaultMaterial_Diffuse.png");
+
+    m_SpecularTexture = std::make_unique<Base::Texture>();
+    m_SpecularTexture->loadFromFile("images/cube_DefaultMaterial_SpecularGlossiness.png");
+
     Vertex vertices[] = {
-        // positions          // normals           // texture Coords
-        {{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-        {{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},
-        {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-        {{-0.5f, -0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-        {{-0.5f, 0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},
-        {{-0.5f, 0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
-        {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},
-        {{0.5f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
-        {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
-        {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},
-        {{-0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}}};
+        // positions          // normals           // texture Coords (U, V)
+
+        // Front Face (+Z)
+        {{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.00f, 0.375f}}, // Bottom-left
+        {{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.25f, 0.375f}},  // Bottom-right
+        {{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.25f, 0.625f}},   // Top-right
+        {{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.00f, 0.625f}},  // Top-left
+
+        // Back Face (-Z)
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.75f, 0.375f}}, // Bottom-left
+        {{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.50f, 0.375f}},  // Bottom-right
+        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.50f, 0.625f}},   // Top-right
+        {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.75f, 0.625f}},  // Top-left
+
+        // Left Face (-X)
+        {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.75f, 0.375f}}, // Bottom-left
+        {{-0.5f, -0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.00f, 0.375f}},  // Bottom-right
+        {{-0.5f, 0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.00f, 0.625f}},   // Top-right
+        {{-0.5f, 0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.75f, 0.625f}},  // Top-left
+
+        // Right Face (+X)
+        {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.25f, 0.375f}},  // Bottom-left
+        {{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.50f, 0.375f}}, // Bottom-right
+        {{0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.50f, 0.625f}},  // Top-right
+        {{0.5f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.25f, 0.625f}},   // Top-left
+
+        // Top Face (+Y) - Rotated 90 degrees CLOCKWISE
+        {{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.25f, 0.875f}},
+        {{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.25f, 0.625f}},
+        {{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.50f, 0.625f}},
+        {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.50f, 0.875f}},
+
+        // Bottom Face (-Y) - Rotated 90 degrees COUNTER-CLOCKWISE
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.25f, 0.125f}},
+        {{0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.25f, 0.375f}},
+        {{0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {0.50f, 0.375f}},
+        {{-0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {0.50f, 0.125f}}};
 
     unsigned int indices[] = {
         0, 1, 2, 2, 3, 0, 5, 4, 7, 7, 6, 5, 8, 9, 10, 10, 11, 8,
@@ -478,7 +509,7 @@ void Chapter15_Application::setupCube()
     glBindVertexArray(0);
 }
 
-void Chapter15_Application::setupLightCube()
+void Chapter17_Application::setupLightCube()
 {
     glGenVertexArrays(1, &m_LightCubeVaoID);
     glBindVertexArray(m_LightCubeVaoID);
@@ -490,7 +521,7 @@ void Chapter15_Application::setupLightCube()
     glBindVertexArray(0);
 }
 
-void Chapter15_Application::setupCoordinateGuide()
+void Chapter17_Application::setupCoordinateGuide()
 {
     float guideVertices[] = {
         0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
@@ -508,7 +539,7 @@ void Chapter15_Application::setupCoordinateGuide()
     glBindVertexArray(0);
 }
 
-void Chapter15_Application::drawMouseCapturePopup()
+void Chapter17_Application::drawMouseCapturePopup()
 {
     const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
     const ImGuiViewport *viewport = ImGui::GetMainViewport();

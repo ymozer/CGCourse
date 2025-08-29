@@ -1,7 +1,9 @@
 
 #pragma once
 #include <string>
+#include <filesystem>
 #include <unordered_map>
+
 #include <glm/glm.hpp>
 #if PLATFORM_DESKTOP
     #include <glad/gl.h>
@@ -27,6 +29,9 @@ public:
     Shader() = default;
     ~Shader();
 
+    Shader(const Shader&) = delete;
+    Shader& operator=(const Shader&) = delete;
+
     inline static std::string resolveAssetPath(const std::string& relativePath) {
         #ifdef __ANDROID__
             return relativePath;
@@ -35,11 +40,16 @@ public:
         #endif
     }
 
-    GLint getUniformLocation(const std::string &name) const;
+
     bool loadFromFile(const std::string& vertexPath, const std::string& fragmentPath);
-    bool compileFromSource(const char* vShaderCode, const char* fShaderCode);
-    
+    bool compileFromSource(const char *vShaderCode, const char *fShaderCode, std::string &outErrorLog);
+    bool tryReload();
     void use() const;
+
+    void updateFileTimestamps();
+    GLuint getProgramID() const {return m_ID;} 
+    const std::string& getVertexPath() const { return m_VertexPath; }
+    const std::string& getFragmentPath() const { return m_FragmentPath; }
 
     void setBool(const std::string& name, bool value) const;
     void setInt(const std::string& name, int value) const;
@@ -50,14 +60,17 @@ public:
     void setMat3(const std::string &name, const glm::mat3 &mat) const;
     void setMat4(const std::string& name, const glm::mat4& mat) const;
 
-    GLuint getProgramID() const {return m_ID;} 
+private:
+    bool checkCompileErrors(GLuint shader, const std::string& type, std::string& outErrorLog);
+    GLint getUniformLocation(const std::string &name) const;
 
-    Shader(const Shader&) = delete;
-    Shader& operator=(const Shader&) = delete;
 private:
     GLuint m_ID = 0;
-    bool checkCompileErrors(GLuint shader, const std::string& type);
     mutable std::unordered_map<std::string, GLint> m_UniformLocationCache;
+    std::string m_VertexPath;
+    std::string m_FragmentPath;
+    std::filesystem::file_time_type m_VertexFileTime;
+    std::filesystem::file_time_type m_FragmentFileTime;
 };
 
 } // namespace Base

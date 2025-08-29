@@ -407,7 +407,7 @@ else()
         )
     endif()
         add_dependencies(main CopyAssets)
-        target_link_libraries(main PRIVATE base)
+        target_link_libraries(main PRIVATE base ChapterCommon)
         target_include_directories(main PRIVATE
             "bundledApp"
             "chapters"

@@ -11,48 +11,28 @@
 #include <vector>
 #include <glm/vec3.hpp>
 
-struct Light;
 
-class Chapter15_Application : public ChapterBase
+class Chapter17_Application : public ChapterBase
 {
 public:
 #ifdef BUILD_STANDALONE
-    Chapter15_Application(std::string title, int width, int height);
-    Camera *getActiveCamera() override { return &m_Camera; }
+Chapter17_Application(std::string title, int width, int height);
 #else
-    Chapter15_Application();
-    Camera *getActiveCamera() { return &m_Camera; }
+Chapter17_Application();
 #endif
-    ~Chapter15_Application();
-
-private:
+protected:
     void setup() override;
     void shutdown() override;
     void render() override;
     void renderChapterUI() override;
-    void handleInput(float deltaTime) override;
     void update(float deltaTime) override;
+    void handleInput(float deltaTime) override;
+#ifdef BUILD_STANDALONE
+    Camera *getActiveCamera() override { return &m_Camera; }
+#else
+    Camera *getActiveCamera() { return &m_Camera; }
+#endif
 
-    // Setup helpers
-    void setupShaders();
-    void setupGeometry();
-    void setupCamera();
-    void setupEventListeners();
-
-    // Geometry setup
-    void setupCube();
-    void setupLightCube();
-    void setupCoordinateGuide();
-
-    // UI Draw helpers
-    void drawSceneSettingsUI();
-    void drawLightSettingsUI();
-    void drawMaterialSettingsUI();
-    void drawCubeTransformUI();
-    void drawCameraSettingsUI();
-    void drawCullingSettingsUI();
-    void drawMouseCapturePopup();
-    
 private:
     // Event Bus Subscriptions
     Base::SubscriptionHandle m_mouseButtonSub;
@@ -60,7 +40,8 @@ private:
 
     // Cube Objects
     std::unique_ptr<Base::Shader> m_Shader;
-    std::unique_ptr<Base::Texture> m_Texture;
+    std::unique_ptr<Base::Texture> m_DiffuseTexture;
+    std::unique_ptr<Base::Texture> m_SpecularTexture;
     GLuint m_VaoID = 0, m_VboID = 0, m_EboID = 0;
     glm::vec3 m_Position = glm::vec3(0.0f);
     glm::vec3 m_RotationEuler = glm::vec3(0.0f);
@@ -85,7 +66,29 @@ private:
     // Scene Objects
     float m_ClearColor[4] = {0.1f, 0.1f, 0.1f, 1.0f};
 
-    std::unique_ptr<Light> m_pLight; 
+    enum class LightType { Directional = 0, Point = 1, Spot = 2 };
+    LightType m_CurrentLightType = LightType::Point;
+
+    struct Light {
+        // Shared
+        glm::vec3 Ambient  = glm::vec3(0.1f);
+        glm::vec3 Diffuse  = glm::vec3(0.8f);
+        glm::vec3 Specular = glm::vec3(1.0f);
+
+        // Directional
+        glm::vec3 Direction = glm::vec3(-0.2f, -1.0f, -0.3f);
+
+        // Point & Spot
+        glm::vec3 Position = glm::vec3(1.2f, 1.0f, 2.0f);
+        float Constant  = 1.0f;
+        float Linear    = 0.09f;
+        float Quadratic = 0.032f;
+
+        // Spot only
+        float CutOff      = 12.5f;
+        float OuterCutOff = 17.5f;
+    };
+    Light m_Light;
 
     // Face Culling Settings
     bool m_FaceCullingEnabled = true;
@@ -95,5 +98,19 @@ private:
     // Material Properties
     std::vector<Material> m_MaterialPresets;
     int m_CurrentMaterialIndex = 0;
+
+    void setupShaders();
+    void setupGeometry();
+    void setupCamera();
+    void setupEventListeners();
+    void setupCube();
+    void setupCoordinateGuide();
+    void setupLightCube();
+    void drawMouseCapturePopup();
+    void drawSceneSettingsUI();
+    void drawLightSettingsUI();
+    void drawCubeTransformUI();
+    void drawCameraSettingsUI();
+    void drawCullingSettingsUI();
 
 };

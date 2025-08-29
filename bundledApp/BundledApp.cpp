@@ -13,6 +13,12 @@
 #include "Chapter12-FaceCulling/Chapter12.hpp"
 #include "Chapter13-LightingPhong/Chapter13.hpp"
 #include "Chapter14-LightingBlinnPhong/Chapter14.hpp"
+#include "Chapter15-Materials/Chapter15.hpp"
+#include "Chapter16-SpecularMapping/Chapter16.hpp"
+#include "Chapter17-LightTypes/Chapter17.hpp"
+#include "Chapter18-MultipleLights/Chapter18.hpp"
+
+
 
 void BundledApp::setup()
 {
@@ -30,6 +36,10 @@ void BundledApp::setup()
     m_AvailableChapters.push_back({"Chapter 12: Face Culling", []() { return std::make_unique<Chapter12_Application>(); }});
     m_AvailableChapters.push_back({"Chapter 13: Lighting & Phong Shading", []() { return std::make_unique<Chapter13_Application>(); }});
     m_AvailableChapters.push_back({"Chapter 14: Lighting & Blinn-Phong Shading", []() { return std::make_unique<Chapter14_Application>(); }});
+    m_AvailableChapters.push_back({"Chapter 15: Materials", []() { return std::make_unique<Chapter15_Application>(); }});
+    m_AvailableChapters.push_back({"Chapter 16: Specular Mapping", []() { return std::make_unique<Chapter16_Application>(); }});
+    m_AvailableChapters.push_back({"Chapter 17: Light Types", []() { return std::make_unique<Chapter17_Application>(); }});
+    m_AvailableChapters.push_back({"Chapter 18: Multiple Lights", []() { return std::make_unique<Chapter18_Application>(); }});
 
     // ... add all other chapters
 
@@ -65,7 +75,6 @@ void BundledApp::switchChapter(int chapterIndex)
 
 void BundledApp::update(float deltaTime)
 {
-    // If a chapter is active, call its update function.
     if (m_CurrentChapter) {
         m_CurrentChapter->update(deltaTime);
     }

@@ -367,11 +367,11 @@ void Chapter14_Application::setupCube()
         // positions          // normals           // texture Coords
         // Front Face (+Z) - Normal (0, 0, 1)
         {{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}}, // 0
-        {{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},  // 1
-        {{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},   // 2
-        {{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},  // 3
+        {{ 0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},  // 1
+        {{ 0.5f,  0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},   // 2
+        {{-0.5f,  0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},  // 3
 
-        // Back Face (-Z) - Normal (0, 0, -1) -- CORRECTED
+        // Back Face (-Z) - Normal (0, 0, -1)
         {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}}, // 4
         {{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}},  // 5
         {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},   // 6
@@ -383,7 +383,7 @@ void Chapter14_Application::setupCube()
         {{-0.5f, 0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},   // 10
         {{-0.5f, 0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},  // 11
 
-        // Right Face (+X) - Normal (1, 0, 0) -- CORRECTED
+        // Right Face (+X) - Normal (1, 0, 0)
         {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 12
         {{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},  // 13
         {{0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},   // 14
@@ -406,11 +406,11 @@ void Chapter14_Application::setupCube()
     // Index pattern 0, 1, 2 and 2, 3, 0 is CCW for the vertex order above.
     unsigned int indices[] = {
         0, 1, 2, 2, 3, 0,       // Front
-        5, 4, 7, 7, 6, 5,       // Back  (Note: Flipped order 5,4,7 to be CCW from outside)
+        5, 4, 7, 7, 6, 5,       // Back 
         8, 9, 10, 10, 11, 8,    // Left
         12, 13, 14, 14, 15, 12, // Right
         16, 17, 18, 18, 19, 16, // Top
-        20, 21, 22, 22, 23, 20  // Bottom (Note: Flipped order to be CCW from outside)
+        20, 21, 22, 22, 23, 20  // Bottom
     };
     //
     //clang-format on

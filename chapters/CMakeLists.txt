@@ -1,3 +1,5 @@
+add_subdirectory(common)
+
 function(add_chapter CHAPTER_PATH)
     get_filename_component(CHAPTER_NAME ${CHAPTER_PATH} NAME)
     message(STATUS "Adding chapter: ${CHAPTER_NAME}")
@@ -7,11 +9,11 @@ function(add_chapter CHAPTER_PATH)
     file(GLOB CHAPTER_SOURCES CONFIGURE_DEPENDS 
         "${CHAPTER_PATH}/*.cpp"
     )
-    
+
     if(PLATFORM_IS_ANDROID)
         add_library(main SHARED ${CHAPTER_SOURCES})
         set_target_properties(main PROPERTIES DEBUG_POSTFIX "")
-        target_link_libraries(main PRIVATE base)
+        target_link_libraries(main PRIVATE base ChapterCommon)
         set_target_properties(main PROPERTIES
             FOLDER "Course Projects/Chapters (Android)"
         )
@@ -23,7 +25,7 @@ function(add_chapter CHAPTER_PATH)
         endif()
         
         add_executable(${CHAPTER_NAME} ${CHAPTER_SOURCES})
-        target_link_libraries(${CHAPTER_NAME} PRIVATE base)
+        target_link_libraries(${CHAPTER_NAME} PRIVATE base ChapterCommon)
         add_dependencies(${CHAPTER_NAME} CopyAssets)
         
         if(PLATFORM_IS_APPLE)
