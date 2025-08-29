@@ -11,6 +11,7 @@
 #include <SDL3/SDL.h>
 
 #include "Camera.hpp"
+#include "Shader.hpp"
 #include "EventBus.hpp"
 
 namespace Base
@@ -24,15 +25,16 @@ namespace Base
             SDL_GLContext glcontext;
         };
 
-        Application(std::string title="", int width = 1280, int height = 720, int numOfThreads = 4);
+        Application(std::string title = "", int width = 1280, int height = 720, int numOfThreads = 4);
         Application(const Application &) = delete;
         Application &operator=(const Application &) = delete;
         virtual ~Application();
 
-        static Application& getInstance() { return *s_Instance; }
+        static Application &getInstance() { return *s_Instance; }
 
         void run();
-        
+
+        void setGridEnabled(bool enabled) { m_isGridEnabled = enabled; }
         float getViewportAspectRatio() const;
         SDL_Window *getWindow() const { return appContext.window; }
         int getWidth() const { return m_Width; }
@@ -40,10 +42,11 @@ namespace Base
         int getViewportWidth() const { return m_ViewportWidth; }
         int getViewportHeight() const { return m_ViewportHeight; }
 
-        virtual Camera* getActiveCamera() { return nullptr; }
+        virtual Camera *getActiveCamera() { return nullptr; }
         ParallelEventBus &getEventBus() { return m_EventBus; }
         const ParallelEventBus &getEventBus() const { return m_EventBus; }
         bool isViewportHovered() const { return m_ViewportHovered; }
+        bool isGridEnabled() const { return m_isGridEnabled; }
 
         template <typename EventType>
         void subscribeToEvent(SubscriptionHandle &handle, std::function<void(EventType &)> handler)
@@ -72,7 +75,6 @@ namespace Base
             subscribeToEvent(m_MouseButtonSub, std::move(handler));
         }
 
-
     protected:
         virtual void setup() = 0;
         virtual void shutdown() = 0;
@@ -81,7 +83,6 @@ namespace Base
         virtual void render() = 0;
         virtual void renderChapterUI() {}
 
-        
     private:
         void init();
         void cleanup();
@@ -94,6 +95,10 @@ namespace Base
         void beginImGuiFrame();
         void endImGuiFrame();
         void renderUI();
+        void renderGridUI();
+
+        void setupGrid();
+        void renderGrid();
 
         void mainLoopIteration();
 
@@ -116,6 +121,7 @@ namespace Base
         bool m_imGuiEnabled = false;
         bool m_isMinimized = false;
         bool m_ViewportHovered = false;
+        bool m_isGridEnabled = false;
 
         int m_Width = 0;
         int m_Height = 0;
@@ -124,7 +130,7 @@ namespace Base
 
         float m_RenderScale = 1.0f;
         float m_StyleScale = 1.0f;
-                
+
         ImGuiStyle m_BaseStyle;
         std::string m_ImGuiIniPath = "imgui.ini";
 
@@ -141,7 +147,7 @@ namespace Base
         GLuint m_ColorAttachmentID = 0;
         GLuint m_DepthAttachmentID = 0;
 
-        GLuint m_MsFboID = 0;            
+        GLuint m_MsFboID = 0;
         GLuint m_MsColorAttachmentID = 0;
         GLuint m_MsDepthAttachmentID = 0;
 
@@ -151,7 +157,19 @@ namespace Base
         int m_SelectedMsaaIndex = 0;
         float m_ViewportAspectRatio = 1.0f;
         std::vector<int> m_MsaaSampleOptions;
-        std::vector<const char*> m_MsaaSampleLabels;
+        std::vector<const char *> m_MsaaSampleLabels;
+
+        std::unique_ptr<Base::Shader> m_gridShader;
+        GLuint m_gridVao = 0;
+        GLuint m_gridVbo = 0;
+        GLuint m_gridEbo = 0;
+        glm::vec3 m_gridColorFine = glm::vec3(1.0f);
+        glm::vec3 m_gridColorMajor = glm::vec3(0.5f);
+        glm::vec3 m_gridColorOriginX = glm::vec3(1.0f, 0.0f, 0.0f);
+        glm::vec3 m_gridColorOriginZ = glm::vec3(0.0f, 0.0f, 1.0f);
+        float m_fadeStart = 5.0f;
+        float m_fadeEnd = 10.0f;
+        float m_linePixelWidth = 1.0f;
 
         static Application *s_Instance;
 #if PLATFORM_EMSCRIPTEN

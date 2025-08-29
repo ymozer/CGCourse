@@ -1,9 +1,8 @@
 // clang-format off
-// GLAD should be included first.
+
 #if PLATFORM_DESKTOP
     #include <glad/gl.h>
 #elif PLATFORM_ANDROID
-    // On Android, we need both EGL and GLES headers
     #include <glad/egl.h>
     #include <glad/gles2.h>
     #define IMGUI_IMPL_OPENGL_ES3
@@ -37,12 +36,22 @@
 #include <spdlog/spdlog.h>
 
 #include "Application.hpp"
+#include "ShaderEditor.hpp"
 #include "Shader.hpp"
 #include "Input.hpp"
 #include "Debug.hpp"
 #include "Log.hpp"
 #include "PathUtils.hpp"
 // clang-format on
+
+namespace
+{
+    struct CameraMatrices
+    {
+        glm::mat4 view;
+        glm::mat4 projection;
+    };
+}
 
 namespace Base
 {
@@ -188,7 +197,7 @@ namespace Base
         m_LastFrameTimeCounter = SDL_GetPerformanceCounter();
 
         GLint maxSize = 0;
-        glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxSize); //mac:16384
+        glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxSize); // mac:16384
         LOG_INFO("Max renderbuffer size: {}", maxSize);
 
 #if PLATFORM_DESKTOP
@@ -236,6 +245,7 @@ namespace Base
 #endif
         initImGui();
         setup();
+        setupGrid();
     }
 
     void Application::updateStyleAndFonts(float scale)
@@ -414,6 +424,11 @@ namespace Base
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         render();
 
+        if (m_isGridEnabled)
+        {
+            renderGrid();
+        }
+
 #if PLATFORM_DESKTOP
         // --- Blit from multisampled FBO to the final FBO for display ---
         glBindFramebuffer(GL_READ_FRAMEBUFFER, m_MsFboID);
@@ -469,6 +484,10 @@ namespace Base
         {
             delete[] m_MsaaSampleLabels[i];
         }
+
+        glDeleteVertexArrays(1, &m_gridVao);
+        glDeleteBuffers(1, &m_gridVbo);
+        glDeleteBuffers(1, &m_gridEbo);
 
         cleanupFramebuffer();
 
@@ -641,9 +660,10 @@ namespace Base
 
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0, 0});
             bool is_viewport_hovered = false;
+
             ImGui::Begin("Viewport");
             {
-                bool is_viewport_focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_None);
+                // --- Input Handling: Capture mouse for camera control ---
                 is_viewport_hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_None);
                 if (is_viewport_hovered && io.MouseDown[ImGuiMouseButton_Right] && !Base::Input::Get().IsRelativeMouseMode())
                 {
@@ -653,35 +673,39 @@ namespace Base
                 }
 
                 ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-                float displayScaleX = io.DisplayFramebufferScale.x;
-                float displayScaleY = io.DisplayFramebufferScale.y;
 
                 if (viewportPanelSize.y > 0)
                 {
                     m_ViewportAspectRatio = viewportPanelSize.x / viewportPanelSize.y;
                 }
 
+                float displayScaleX = io.DisplayFramebufferScale.x;
+                float displayScaleY = io.DisplayFramebufferScale.y;
                 int targetWidth = static_cast<int>(viewportPanelSize.x * displayScaleX * m_RenderScale);
                 int targetHeight = static_cast<int>(viewportPanelSize.y * displayScaleY * m_RenderScale);
 
-                if (m_ViewportWidth != targetWidth || m_ViewportHeight != targetHeight)
+                if (targetWidth > 0 && targetHeight > 0 && (m_ViewportWidth != targetWidth || m_ViewportHeight != targetHeight))
                 {
                     resizeFramebuffer(targetWidth, targetHeight);
                 }
-
-                Camera *activeCamera = getActiveCamera();
-                if (activeCamera && m_ViewportWidth > 0 && m_ViewportHeight > 0)
-                {
-                    activeCamera->setProjection(
-                        activeCamera->getFov(),
-                        static_cast<float>(m_ViewportWidth) / static_cast<float>(m_ViewportHeight),
-                        0.1f,
-                        100.0f);
-                }
                 ImGui::Image((ImTextureID)(intptr_t)m_ColorAttachmentID, viewportPanelSize, ImVec2(0, 1), ImVec2(1, 0));
             }
+
             ImGui::End();
             ImGui::PopStyleVar();
+
+            if (ImGui::BeginMainMenuBar())
+            {
+                if (ImGui::BeginMenu("Tools"))
+                {
+                    if (ImGui::MenuItem("Shader Editor"))
+                    {
+                        Base::ShaderEditor::getInstance().toggle();
+                    }
+                    ImGui::EndMenu();
+                }
+                ImGui::EndMainMenuBar();
+            }
 
             ImGui::Begin("Debug Info");
             {
@@ -754,59 +778,80 @@ namespace Base
                 ImGui::Text("Framebuffer Size: %d x %d", m_ViewportWidth, m_ViewportHeight);
             }
             ImGui::End();
+            Base::ShaderEditor::getInstance().render();
             renderChapterUI();
+            renderGridUI();
         }
         ImGui::End();
     }
 
-   void Application::createFramebuffer()
-{
-    m_ViewportWidth = m_RenderArea.w > 0 ? m_RenderArea.w : 1;
-    m_ViewportHeight = m_RenderArea.h > 0 ? m_RenderArea.h : 1;
+    void Application::renderGridUI()
+    {
+        if (ImGui::Begin("Grid Settings"))
+        {
+            ImGui::ColorEdit3("Fine Lines", glm::value_ptr(m_gridColorFine));
+            ImGui::ColorEdit3("Major Lines", glm::value_ptr(m_gridColorMajor));
+            ImGui::ColorEdit3("Origin X-Axis", glm::value_ptr(m_gridColorOriginX));
+            ImGui::ColorEdit3("Origin Z-Axis", glm::value_ptr(m_gridColorOriginZ));
+        
+
+            ImGui::SeparatorText("Thickness");
+            ImGui::DragFloat("Line Width (pixels)", &m_linePixelWidth, 0.1f, 0.5f, 10.0f, "%.2f");
+            ImGui::SeparatorText("Fade");
+            ImGui::DragFloat("Fade Start Distance", &m_fadeStart, 1.0f, 0.0f, m_fadeEnd);
+            ImGui::DragFloat("Fade End Distance", &m_fadeEnd, 1.0f, m_fadeStart, 2000.0f);
+        }
+        ImGui::End();
+    }
+
+    void Application::createFramebuffer()
+    {
+        m_ViewportWidth = m_RenderArea.w > 0 ? m_RenderArea.w : 1;
+        m_ViewportHeight = m_RenderArea.h > 0 ? m_RenderArea.h : 1;
 
 #if PLATFORM_DESKTOP
-    glGenFramebuffers(1, &m_MsFboID);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID);
+        glGenFramebuffers(1, &m_MsFboID);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID);
 
-    glGenTextures(1, &m_MsColorAttachmentID);
-    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID);
-    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_MsaaSamples, GL_RGBA, m_ViewportWidth, m_ViewportHeight, GL_TRUE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID, 0);
+        glGenTextures(1, &m_MsColorAttachmentID);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID);
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_MsaaSamples, GL_RGBA, m_ViewportWidth, m_ViewportHeight, GL_TRUE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_MsColorAttachmentID, 0);
 
-    glGenRenderbuffers(1, &m_MsDepthAttachmentID);
-    glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
-    glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_MsaaSamples, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_MsDepthAttachmentID);
+        glGenRenderbuffers(1, &m_MsDepthAttachmentID);
+        glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_MsaaSamples, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_MsDepthAttachmentID);
 
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    {
-        LOG_ERROR("MSAA Framebuffer is not complete!");
-    }
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            LOG_ERROR("MSAA Framebuffer is not complete!");
+        }
 #endif
-    glGenFramebuffers(1, &m_FboID);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_FboID);
+        glGenFramebuffers(1, &m_FboID);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_FboID);
 
-    glGenTextures(1, &m_ColorAttachmentID);
-    glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_ViewportWidth, m_ViewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorAttachmentID, 0);
+        glGenTextures(1, &m_ColorAttachmentID);
+        glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_ViewportWidth, m_ViewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorAttachmentID, 0);
 
 #if !PLATFORM_DESKTOP
-    glGenRenderbuffers(1, &m_MsDepthAttachmentID);
-    glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_MsDepthAttachmentID);
+        glGenRenderbuffers(1, &m_MsDepthAttachmentID);
+        glBindRenderbuffer(GL_RENDERBUFFER, m_MsDepthAttachmentID);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_ViewportWidth, m_ViewportHeight);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_MsDepthAttachmentID);
 #endif
 
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    {
-        LOG_ERROR("Final Framebuffer (FBO ID: {}) is not complete!", m_FboID);
-    }
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            LOG_ERROR("Final Framebuffer (FBO ID: {}) is not complete!", m_FboID);
+        }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 
     void Application::resizeFramebuffer(int width, int height)
     {
@@ -852,5 +897,99 @@ namespace Base
             return 1.0f;
         }
         return static_cast<float>(m_ViewportWidth) / static_cast<float>(m_ViewportHeight);
+    }
+
+    void Application::setupGrid()
+    {
+        try
+        {
+            m_gridShader = std::make_unique<Base::Shader>();
+            m_gridShader->loadFromFile("shaders/grid.vert", "shaders/grid.frag");
+        }
+        catch (const std::exception &e)
+        {
+            LOG_CRITICAL("Failed to create grid shader: {}", e.what());
+            return;
+        }
+        LOG_INFO("Grid shader loaded successfully.");
+        float gridSize = 1000.0f;
+        float gridVertices[] = {
+            // Positions (X, Y, Z)
+            gridSize, 0.0f, gridSize,
+            -gridSize, 0.0f, gridSize,
+            -gridSize, 0.0f, -gridSize,
+            gridSize, 0.0f, -gridSize};
+
+        unsigned int gridIndices[] = {
+            0, 1, 2, // First triangle
+            2, 3, 0  // Second triangle
+        };
+
+        glGenVertexArrays(1, &m_gridVao);
+        glGenBuffers(1, &m_gridVbo);
+        glGenBuffers(1, &m_gridEbo);
+
+        glBindVertexArray(m_gridVao);
+
+        glBindBuffer(GL_ARRAY_BUFFER, m_gridVbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(gridVertices), gridVertices, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_gridEbo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(gridIndices), gridIndices, GL_STATIC_DRAW);
+
+        m_gridShader->use();
+        unsigned int cameraUboIndex = glGetUniformBlockIndex(m_gridShader->getProgramID(), "CameraUBO");
+        if (cameraUboIndex != GL_INVALID_INDEX)
+        {
+            glUniformBlockBinding(m_gridShader->getProgramID(), cameraUboIndex, 0);
+            LOG_INFO("Grid shader 'CameraUBO' block bound to binding point 0.");
+        }
+        else
+        {
+            LOG_WARN("Grid shader does not contain 'CameraUBO' uniform block.");
+        }
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(0);
+
+        glBindVertexArray(0);
+    }
+
+    void Application::renderGrid()
+    {
+        if (!m_gridShader || m_gridVao == 0)
+            return;
+
+        GLboolean isCullingEnabled = glIsEnabled(GL_CULL_FACE);
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDepthMask(GL_FALSE);
+
+        m_gridShader->use();
+
+        glm::mat4 model = glm::mat4(1.0f);
+        m_gridShader->setMat4("model", model);
+
+        // --- FIX: Use member variables instead of hardcoded values ---
+        m_gridShader->setVec3("u_GridColorFine", m_gridColorFine);
+        m_gridShader->setVec3("u_GridColorMajor", m_gridColorMajor);
+        m_gridShader->setVec3("u_GridColorOriginX", m_gridColorOriginX);
+        m_gridShader->setVec3("u_GridColorOriginZ", m_gridColorOriginZ);
+        m_gridShader->setFloat("u_FadeStart", m_fadeStart);
+        m_gridShader->setFloat("u_FadeEnd", m_fadeEnd);
+        m_gridShader->setFloat("u_LinePixelWidth", m_linePixelWidth);
+
+        glBindVertexArray(m_gridVao);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+
+        if (isCullingEnabled)
+        {
+            glEnable(GL_CULL_FACE);
+        }
     }
 } // namespace Base
