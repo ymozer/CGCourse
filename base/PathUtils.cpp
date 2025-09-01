@@ -24,3 +24,13 @@ std::string getPrefPath(const char *fileName)
     }
     return prefPath + fileName;
 }
+
+std::string resolveAssetPath(const std::string& relativePath) {
+    #ifdef __ANDROID__
+        // On Android, paths are relative to the APK's assets root
+        return relativePath;
+    #else
+        // On desktop, prepend the "assets/" directory
+        return "assets/" + relativePath;
+    #endif
+}

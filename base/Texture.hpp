@@ -12,22 +12,19 @@
 
 namespace Base {
 
+enum class TextureType
+{
+    TEXTURE_2D,
+    CUBEMAP
+};
+
 class Texture {
 public:
     Texture();
     ~Texture();
 
-    inline static std::string resolveAssetPath(const std::string& relativePath) {
-        #ifdef __ANDROID__
-            // On Android, paths are relative to the APK's assets root
-            return relativePath;
-        #else
-            // On desktop, prepend the "assets/" directory
-            return "assets/" + relativePath;
-        #endif
-    }
-
     bool loadFromFile(const std::string& path);
+    bool loadCubemap(const std::vector<std::string>& faces);
 
     void bind(GLuint textureUnit = 0) const;
     void unbind(GLuint textureUnit = 0) const;
@@ -35,12 +32,16 @@ public:
     GLuint getID() const { return m_ID; }
     int getWidth() const { return m_Width; }
     int getHeight() const { return m_Height; }
+    std::string getPath() const { return m_Path; }
+    void setPath(const std::string& path) { m_Path = path; }
 
-    // Non-copyable
     Texture(const Texture&) = delete;
     Texture& operator=(const Texture&) = delete;
 
 private:
+    TextureType m_Type = TextureType::TEXTURE_2D;
+    std::string m_Path;
+
     GLuint m_ID = 0;
     int m_Width = 0;
     int m_Height = 0;

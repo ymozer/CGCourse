@@ -13,6 +13,7 @@
 #include "Camera.hpp"
 #include "Shader.hpp"
 #include "EventBus.hpp"
+#include "OnScreenJoystick.hpp"
 
 namespace Base
 {
@@ -41,6 +42,8 @@ namespace Base
         int getHeight() const { return m_Height; }
         int getViewportWidth() const { return m_ViewportWidth; }
         int getViewportHeight() const { return m_ViewportHeight; }
+        glm::vec2 getLeftJoystickDirection() const;
+        glm::vec2 getRightJoystickDirection() const;
 
         virtual Camera *getActiveCamera() { return nullptr; }
         ParallelEventBus &getEventBus() { return m_EventBus; }
@@ -153,6 +156,8 @@ namespace Base
 
         int m_ViewportWidth = 0;
         int m_ViewportHeight = 0;
+        ImVec2 m_ViewportPos = {0,0};
+        ImVec2 m_ViewportSize = {0,0};
         int m_MsaaSamples = 4;
         int m_SelectedMsaaIndex = 0;
         float m_ViewportAspectRatio = 1.0f;
@@ -172,6 +177,11 @@ namespace Base
         float m_linePixelWidth = 1.0f;
 
         static Application *s_Instance;
+
+#if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
+        std::unique_ptr<OnScreenJoystick> m_LeftJoystick;
+        std::unique_ptr<OnScreenJoystick> m_RightJoystick;
+#endif
 #if PLATFORM_EMSCRIPTEN
         static void emscriptenMainLoop(void *arg);
 #endif

@@ -131,7 +131,9 @@ namespace Base
         if (!appContext.window)
         {
             SDL_Quit();
-            throw std::runtime_error("Failed to create SDL window: " + std::string(SDL_GetError()));
+            std::string error_msg = "Failed to create SDL window: " + std::string(SDL_GetError());
+            LOG_CRITICAL("{}", error_msg); 
+            throw std::runtime_error(error_msg);
         }
 
         appContext.glcontext = SDL_GL_CreateContext(appContext.window);
@@ -244,6 +246,9 @@ namespace Base
         glGenQueries(2, m_GpuTimeQueries);
 #endif
         initImGui();
+#if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
+        m_LeftJoystick = std::make_unique<OnScreenJoystick>();
+#endif
         setup();
         setupGrid();
     }
@@ -374,6 +379,12 @@ namespace Base
         Base::Input::Get().PrepareForFrame();
         handleEvents();
         Base::Input::Get().Update();
+#if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
+        if (m_LeftJoystick)
+        {
+            m_LeftJoystick->update(m_ViewportPos, m_ViewportSize);
+        }
+#endif
         if (!m_Running)
             return;
 
@@ -412,6 +423,13 @@ namespace Base
 
         beginImGuiFrame();
         renderUI();
+
+#if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
+        if (m_LeftJoystick)
+        {
+            m_LeftJoystick->render();
+        }
+#endif
 
 #if PLATFORM_DESKTOP
         glBindFramebuffer(GL_FRAMEBUFFER, m_MsFboID);
@@ -672,23 +690,24 @@ namespace Base
                     Base::Input::Get().GetRelativeMouseState(nullptr, nullptr);
                 }
 
-                ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+                m_ViewportSize = ImGui::GetContentRegionAvail();
+                m_ViewportPos = ImGui::GetWindowPos();
 
-                if (viewportPanelSize.y > 0)
+                if (m_ViewportSize.y > 0)
                 {
-                    m_ViewportAspectRatio = viewportPanelSize.x / viewportPanelSize.y;
+                    m_ViewportAspectRatio = m_ViewportSize.x / m_ViewportSize.y;
                 }
 
                 float displayScaleX = io.DisplayFramebufferScale.x;
                 float displayScaleY = io.DisplayFramebufferScale.y;
-                int targetWidth = static_cast<int>(viewportPanelSize.x * displayScaleX * m_RenderScale);
-                int targetHeight = static_cast<int>(viewportPanelSize.y * displayScaleY * m_RenderScale);
+                int targetWidth = static_cast<int>(m_ViewportSize.x * displayScaleX * m_RenderScale);
+                int targetHeight = static_cast<int>(m_ViewportSize.y * displayScaleY * m_RenderScale);
 
                 if (targetWidth > 0 && targetHeight > 0 && (m_ViewportWidth != targetWidth || m_ViewportHeight != targetHeight))
                 {
                     resizeFramebuffer(targetWidth, targetHeight);
                 }
-                ImGui::Image((ImTextureID)(intptr_t)m_ColorAttachmentID, viewportPanelSize, ImVec2(0, 1), ImVec2(1, 0));
+                ImGui::Image((ImTextureID)(intptr_t)m_ColorAttachmentID, m_ViewportSize, ImVec2(0, 1), ImVec2(1, 0));
             }
 
             ImGui::End();
@@ -793,7 +812,6 @@ namespace Base
             ImGui::ColorEdit3("Major Lines", glm::value_ptr(m_gridColorMajor));
             ImGui::ColorEdit3("Origin X-Axis", glm::value_ptr(m_gridColorOriginX));
             ImGui::ColorEdit3("Origin Z-Axis", glm::value_ptr(m_gridColorOriginZ));
-        
 
             ImGui::SeparatorText("Thickness");
             ImGui::DragFloat("Line Width (pixels)", &m_linePixelWidth, 0.1f, 0.5f, 10.0f, "%.2f");
@@ -991,5 +1009,15 @@ namespace Base
         {
             glEnable(GL_CULL_FACE);
         }
+    }
+    glm::vec2 Application::getLeftJoystickDirection() const
+    {
+#if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
+        if (m_LeftJoystick)
+        {
+            return m_LeftJoystick->getDirection();
+        }
+#endif
+        return glm::vec2(0.0f);
     }
 } // namespace Base

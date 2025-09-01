@@ -17,7 +17,8 @@
 #include "Chapter16-SpecularMapping/Chapter16.hpp"
 #include "Chapter17-LightTypes/Chapter17.hpp"
 #include "Chapter18-MultipleLights/Chapter18.hpp"
-
+#include "Chapter19-Skybox/Chapter19.hpp"
+#include "Chapter20-ModelLoading/Chapter20.hpp"
 
 
 void BundledApp::setup()
@@ -40,7 +41,8 @@ void BundledApp::setup()
     m_AvailableChapters.push_back({"Chapter 16: Specular Mapping", []() { return std::make_unique<Chapter16_Application>(); }});
     m_AvailableChapters.push_back({"Chapter 17: Light Types", []() { return std::make_unique<Chapter17_Application>(); }});
     m_AvailableChapters.push_back({"Chapter 18: Multiple Lights", []() { return std::make_unique<Chapter18_Application>(); }});
-
+    m_AvailableChapters.push_back({"Chapter 19: Skybox", []() { return std::make_unique<Chapter19_Application>(); }});
+    m_AvailableChapters.push_back({"Chapter 20: Model Loading", []() { return std::make_unique<Chapter20_Application>(); }});
     // ... add all other chapters
 
     // Start with no chapter selected.
