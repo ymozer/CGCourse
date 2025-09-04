@@ -1,8 +1,6 @@
 out vec4 FragColor;
 
-in VS_OUT {
-    vec3 worldPos;
-} v;
+in vec3 worldPos_vs;
 
 uniform vec3 u_GridColorFine;
 uniform vec3 u_GridColorMajor;
@@ -24,10 +22,10 @@ vec2 aaLine(vec2 pos)
 
 void main()
 {
-    float d = length(v.worldPos.xz);
+    float d = length(worldPos_vs.xz);
     float fade = 1.0 - smoothstep(u_FadeStart, u_FadeEnd, d);
 
-    vec2 pos = v.worldPos.xz;
+    vec2 pos = worldPos_vs.xz;
 
     vec2 fineIntensity  = aaLine(pos);
     vec2 majorIntensity = aaLine(pos * 0.1);

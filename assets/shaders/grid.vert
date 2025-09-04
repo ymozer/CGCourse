@@ -6,12 +6,10 @@ layout (std140) uniform CameraUBO {
 };
 uniform mat4 model;
 
-out VS_OUT {
-    vec3 worldPos;
-} v_out;
+out vec3 worldPos_vs;
 
 void main()
 {
-    v_out.worldPos = vec3(model * vec4(aPos, 1.0));
-    gl_Position = projection * view * vec4(v_out.worldPos, 1.0);
+    worldPos_vs = vec3(model * vec4(aPos, 1.0));
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
