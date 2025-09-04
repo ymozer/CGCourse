@@ -89,11 +89,14 @@ namespace Base
     void Application::init()
     {
         LOG_INFO("Application created. Title: {} Size: {}x{}", m_Title, m_Width, m_Height);
-
+#ifdef __ANDROID__
+        SDL_SetHint(SDL_HINT_ORIENTATIONS, "Portrait LandscapeLeft LandscapeRight");
+#endif
         if (!SDL_Init(SDL_INIT_VIDEO))
         {
             throw std::runtime_error("Failed to initialize SDL: " + std::string(SDL_GetError()));
         }
+
 
 // FIX: Emscripten/WebGL does not support multisampled back buffers in the same way.
 // We will handle MSAA with a custom framebuffer, so disable this for all platforms to be consistent.
@@ -132,7 +135,7 @@ namespace Base
         {
             SDL_Quit();
             std::string error_msg = "Failed to create SDL window: " + std::string(SDL_GetError());
-            LOG_CRITICAL("{}", error_msg); 
+            LOG_CRITICAL("{}", error_msg);
             throw std::runtime_error(error_msg);
         }
 
@@ -247,7 +250,18 @@ namespace Base
 #endif
         initImGui();
 #if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
-        m_LeftJoystick = std::make_unique<OnScreenJoystick>();
+        const float outerRadius = 100.0f;
+        const float innerRadius = 50.0f;
+
+        // Left joystick for movement (offset from bottom-left)
+        m_LeftJoystick = std::make_unique<OnScreenJoystick>(
+            OnScreenJoystick::Alignment::BottomLeft,
+            ImVec2(150.0f, -150.0f), outerRadius, innerRadius);
+
+        // Right joystick for looking (offset from bottom-right)
+        m_RightJoystick = std::make_unique<OnScreenJoystick>(
+            OnScreenJoystick::Alignment::BottomRight,
+            ImVec2(150.0f, -150.0f), outerRadius, innerRadius);
 #endif
         setup();
         setupGrid();
@@ -293,6 +307,8 @@ namespace Base
                 m_isMinimized = false;
                 updateRenderingAndWorkAreas();
                 LOG_INFO("Window resized to {}x{}", m_Width, m_Height);
+                cleanupFramebuffer();
+                createFramebuffer();
                 m_EventBus.dispatchAsync(WindowResizeEvent(e.window.windowID, m_Width, m_Height));
 
                 break;
@@ -320,6 +336,17 @@ namespace Base
             {
                 m_isMinimized = false;
                 m_EventBus.dispatchAsync(WindowRestoreEvent(e.window.windowID));
+                break;
+            }
+            case SDL_EVENT_KEY_DOWN:
+            {
+                if (e.key.scancode == SDL_SCANCODE_VOLUMEDOWN)
+                {
+                    if (Base::Input::Get().IsRelativeMouseMode())
+                    {
+                        Base::Input::Get().SetRelativeMouseMode(false);
+                    }
+                }
                 break;
             }
             }
@@ -379,12 +406,62 @@ namespace Base
         Base::Input::Get().PrepareForFrame();
         handleEvents();
         Base::Input::Get().Update();
+
+        // FIX: The entire touch logic block has been moved here, BEFORE the joystick updates,
+        // and the "finger released" check has been made more robust.
 #if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
-        if (m_LeftJoystick)
+        auto &input = Base::Input::Get();
+
+        // --- Look Finger Tracking Logic (RUNS FIRST) ---
+        if (m_IsLooking)
         {
-            m_LeftJoystick->update(m_ViewportPos, m_ViewportSize);
+            // ROBUSTNESS FIX: Check if our look finger is still actually on the screen.
+            // This is better than checking for a single "release" event.
+            bool fingerStillDown = false;
+            auto activeFingers = input.GetActiveFingerIDs(0); // Assuming touch device 0
+            for (const auto &fingerId : activeFingers)
+            {
+                if (fingerId == m_LookFingerId)
+                {
+                    fingerStillDown = true;
+                    break;
+                }
+            }
+
+            if (!fingerStillDown)
+            {
+                m_IsLooking = false;
+                m_LookFingerId = -1;
+            }
         }
-#endif
+
+        // If we are not currently looking, check for a new finger press that can become the look finger.
+        if (!m_IsLooking)
+        {
+            auto fingerIds = input.GetActiveFingerIDs(0);
+            for (const auto &fingerId : fingerIds)
+            {
+                if (input.IsFingerPressed(0, fingerId))
+                {
+                    // This logic is simple now: if a finger is pressed, it's a look finger.
+                    // The joysticks will check later and ignore this finger if we've claimed it.
+                    m_IsLooking = true;
+                    m_LookFingerId = fingerId;
+                    m_LastLookPos = input.GetFingerPosition(0, fingerId);
+                    break; // Claim the first new finger we find and stop.
+                }
+            }
+        }
+
+        // --- Joystick Updates (RUNS SECOND) ---
+        // The joysticks will now ignore any finger that was just claimed by the look logic.
+        if (m_LeftJoystick)
+            m_LeftJoystick->update(m_ViewportPos, m_ViewportSize);
+        if (m_RightJoystick)
+            m_RightJoystick->update(m_ViewportPos, m_ViewportSize);
+
+#endif // PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
+
         if (!m_Running)
             return;
 
@@ -429,6 +506,10 @@ namespace Base
         {
             m_LeftJoystick->render();
         }
+        if (m_RightJoystick)
+        {
+            m_RightJoystick->render();
+        }
 #endif
 
 #if PLATFORM_DESKTOP
@@ -448,7 +529,6 @@ namespace Base
         }
 
 #if PLATFORM_DESKTOP
-        // --- Blit from multisampled FBO to the final FBO for display ---
         glBindFramebuffer(GL_READ_FRAMEBUFFER, m_MsFboID);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FboID);
         glBlitFramebuffer(0, 0, m_ViewportWidth, m_ViewportHeight,
@@ -683,12 +763,15 @@ namespace Base
             {
                 // --- Input Handling: Capture mouse for camera control ---
                 is_viewport_hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_None);
+
+#if PLATFORM_DESKTOP
                 if (is_viewport_hovered && io.MouseDown[ImGuiMouseButton_Right] && !Base::Input::Get().IsRelativeMouseMode())
                 {
                     ImGui::SetWindowFocus("Viewport");
                     Base::Input::Get().SetRelativeMouseMode(true);
                     Base::Input::Get().GetRelativeMouseState(nullptr, nullptr);
                 }
+#endif
 
                 m_ViewportSize = ImGui::GetContentRegionAvail();
                 m_ViewportPos = ImGui::GetWindowPos();
@@ -898,7 +981,7 @@ namespace Base
 
     void Application::cleanupFramebuffer()
     {
-#if !PLATFORM_EMSCRIPTEN
+#if PLATFORM_DESKTOP
         glDeleteFramebuffers(1, &m_MsFboID);
         glDeleteTextures(1, &m_MsColorAttachmentID);
 #endif
@@ -1010,6 +1093,7 @@ namespace Base
             glEnable(GL_CULL_FACE);
         }
     }
+
     glm::vec2 Application::getLeftJoystickDirection() const
     {
 #if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
@@ -1019,5 +1103,31 @@ namespace Base
         }
 #endif
         return glm::vec2(0.0f);
+    }
+
+    glm::vec2 Application::getRightJoystickDirection() const
+    {
+#if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
+        if (m_RightJoystick)
+        {
+            return m_RightJoystick->getDirection();
+        }
+#endif
+        return glm::vec2(0.0f);
+    }
+
+    glm::vec2 Application::getLookDelta()
+    {
+        glm::vec2 delta = {0.0f, 0.0f};
+#if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
+        if (m_IsLooking)
+        {
+            auto &input = Base::Input::Get();
+            glm::vec2 currentPos = input.GetFingerPosition(0, m_LookFingerId);
+            delta = currentPos - m_LastLookPos;
+            m_LastLookPos = currentPos;
+        }
+#endif
+        return delta;
     }
 } // namespace Base

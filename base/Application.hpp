@@ -44,6 +44,8 @@ namespace Base
         int getViewportHeight() const { return m_ViewportHeight; }
         glm::vec2 getLeftJoystickDirection() const;
         glm::vec2 getRightJoystickDirection() const;
+        glm::vec2 getLookDelta();
+
 
         virtual Camera *getActiveCamera() { return nullptr; }
         ParallelEventBus &getEventBus() { return m_EventBus; }
@@ -181,6 +183,9 @@ namespace Base
 #if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_EMSCRIPTEN
         std::unique_ptr<OnScreenJoystick> m_LeftJoystick;
         std::unique_ptr<OnScreenJoystick> m_RightJoystick;
+        bool m_IsLooking = false;
+        long long m_LookFingerId = -1;
+        glm::vec2 m_LastLookPos = {0.0f, 0.0f};
 #endif
 #if PLATFORM_EMSCRIPTEN
         static void emscriptenMainLoop(void *arg);

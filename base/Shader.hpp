@@ -32,21 +32,13 @@ public:
     Shader(const Shader&) = delete;
     Shader& operator=(const Shader&) = delete;
 
-    inline static std::string resolveAssetPath(const std::string& relativePath) {
-        #ifdef __ANDROID__
-            return relativePath;
-        #else
-            return "assets/" + relativePath;
-        #endif
-    }
-
-
     bool loadFromFile(const std::string& vertexPath, const std::string& fragmentPath);
     bool compileFromSource(const char *vShaderCode, const char *fShaderCode, std::string &outErrorLog);
     bool tryReload();
     void use() const;
 
     void updateFileTimestamps();
+    void updateFileTimestamps(std::string vertexPath, std::string fragmentPath);
     GLuint getProgramID() const {return m_ID;} 
     const std::string& getVertexPath() const { return m_VertexPath; }
     const std::string& getFragmentPath() const { return m_FragmentPath; }

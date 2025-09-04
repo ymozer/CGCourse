@@ -211,7 +211,7 @@ namespace Base
         glUniformMatrix4fv(glGetUniformLocation(m_ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
     }
 
-    bool Shader::checkCompileErrors(GLuint shader, const std::string &type, std::string& outErrorLog)
+    bool Shader::checkCompileErrors(GLuint shader, const std::string &type, std::string &outErrorLog)
     {
         GLint success;
         GLchar infoLog[1024];
@@ -240,7 +240,9 @@ namespace Base
 
     void Shader::updateFileTimestamps()
     {
-        if (m_VertexPath.empty() || m_FragmentPath.empty()) return;
+#ifndef PLATFORM_ANDROID
+        if (m_VertexPath.empty() || m_FragmentPath.empty())
+            return;
         try
         {
             m_VertexFileTime = std::filesystem::last_write_time(resolveAssetPath(m_VertexPath));
@@ -250,10 +252,14 @@ namespace Base
         {
             LOG_WARN("Could not update shader timestamp: {}", e.what());
         }
+#endif
     }
 
     bool Shader::tryReload()
     {
+#ifdef __ANDROID__
+        return false;
+#else
         if (m_VertexPath.empty() || m_FragmentPath.empty())
         {
             return false;
@@ -294,6 +300,6 @@ namespace Base
         }
 
         return false;
+#endif
     }
-
 } // namespace Base

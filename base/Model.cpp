@@ -32,18 +32,18 @@ namespace Base
 
         // Vertex Positions
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ModelVertex), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ModelVertex), (void *)0);
         // Vertex Normals
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(ModelVertex), (void*)offsetof(ModelVertex, Normal));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(ModelVertex), (void *)offsetof(ModelVertex, Normal));
         // Vertex Texture Coords
         glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(ModelVertex), (void*)offsetof(ModelVertex, TexCoords));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(ModelVertex), (void *)offsetof(ModelVertex, TexCoords));
 
         glBindVertexArray(0);
     }
 
-    void Mesh::Draw(Base::Shader& shader)
+    void Mesh::Draw(Base::Shader &shader)
     {
         unsigned int diffuseNr = 1;
         unsigned int specularNr = 1;
@@ -67,45 +67,55 @@ namespace Base
         glActiveTexture(GL_TEXTURE0);
     }
 
-    Model::Model(const std::string& path)
+    Model::Model(const std::string &path)
     {
         loadModel(path);
     }
 
-    void Model::Draw(Base::Shader& shader)
+    void Model::Draw(Base::Shader &shader)
     {
         for (unsigned int i = 0; i < m_meshes.size(); i++)
             m_meshes[i].Draw(shader);
     }
 
-    void Model::loadModel(const std::string& path)
+    // aiProcess_Triangulate: ensures all faces are triangles.
+    // aiProcess_GenSmoothNormals: generates smooth normals if the model doesn't have them.
+    // aiProcess_FlipUVs: flips texture coordinates on the y-axis, often needed.
+    // aiProcess_CalcTangentSpace: calculates tangents and bitangents for normal mapping.
+    void Model::loadModel(const std::string &path)
     {
-        std::string fullPath = resolveAssetPath(path);
-        
+        std::vector<char> fileBuffer = readAssetToBuffer(path);
+        if (fileBuffer.empty())
+        {
+            LOG_ERROR("Aborting model load because file buffer is empty for: {}", path);
+            return;
+        }
+
         Assimp::Importer importer;
-        // aiProcess_Triangulate: ensures all faces are triangles.
-        // aiProcess_GenSmoothNormals: generates smooth normals if the model doesn't have them.
-        // aiProcess_FlipUVs: flips texture coordinates on the y-axis, often needed.
-        // aiProcess_CalcTangentSpace: calculates tangents and bitangents for normal mapping.
-        const aiScene* scene = importer.ReadFile(fullPath, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+        const aiScene *scene = importer.ReadFileFromMemory(
+            fileBuffer.data(), // Pointer to the data in memory
+            fileBuffer.size(), // The size of the data
+            aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace,
+            nullptr); // We can leave the file extension hint as null
 
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
             LOG_ERROR("ASSIMP::ERROR::{}", importer.GetErrorString());
             return;
         }
-        m_directory = fullPath.substr(0, fullPath.find_last_of('/'));
+
+        m_directory = path.substr(0, path.find_last_of('/'));
 
         processNode(scene->mRootNode, scene);
-        LOG_INFO("Model loaded successfully: {}", path);
+        LOG_INFO("Model loaded successfully from memory: {}", path);
     }
 
-    void Model::processNode(aiNode* node, const aiScene* scene)
+    void Model::processNode(aiNode *node, const aiScene *scene)
     {
         // Process all the node's meshes (if any)
         for (unsigned int i = 0; i < node->mNumMeshes; i++)
         {
-            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+            aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
             m_meshes.push_back(processMesh(mesh, scene));
         }
         // Then do the same for each of its children
@@ -115,7 +125,7 @@ namespace Base
         }
     }
 
-    Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
+    Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
     {
         std::vector<ModelVertex> vertices;
         std::vector<unsigned int> indices;
@@ -125,14 +135,14 @@ namespace Base
         for (unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
             ModelVertex vertex;
-            vertex.Position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+            vertex.Position = {mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z};
             if (mesh->HasNormals())
             {
-                vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+                vertex.Normal = {mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z};
             }
             if (mesh->mTextureCoords[0]) // Does the mesh contain texture coordinates?
             {
-                vertex.TexCoords = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
+                vertex.TexCoords = {mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y};
             }
             else
             {
@@ -150,8 +160,8 @@ namespace Base
         }
 
         // Process material
-        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-        
+        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+
         // 1. Diffuse maps
         std::vector<ModelTexture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
@@ -162,7 +172,7 @@ namespace Base
         return Mesh(vertices, indices, textures);
     }
 
-    std::vector<ModelTexture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
+    std::vector<ModelTexture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName)
     {
         std::vector<ModelTexture> textures;
         for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
@@ -186,7 +196,7 @@ namespace Base
                 ModelTexture modelTex;
                 auto texture = std::make_shared<Base::Texture>();
                 std::string fullTexturePath = m_directory + '/' + relativeTexturePath;
-                if(texture->loadFromFile(fullTexturePath)) // Use your existing Texture class!
+                if (texture->loadFromFile(fullTexturePath)) // Use your existing Texture class!
                 {
                     texture->setPath(relativeTexturePath);
                     modelTex.texture = texture;
